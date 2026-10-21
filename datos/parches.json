@@ -869,8 +869,8 @@
       ]
     },
     "dragon_vel": {
-      "desc": "Velocidad 16.16 del proyectil del dragon de Hiei (tabla $90 de Hiei): 1.75 -> 0.875 px/frame",
-      "confianza": "CODIGO",
+      "desc": "LA VELOCIDAD 16.16 DEL PROYECTIL DEL DRAGON DE HIEI (la tabla $90 de Hiei, $012585-$012586): de 1,75 a 0,875 px/frame. *** AVISO: ESTE PARCHE NO ES QUIRURGICO *** La tabla $90 es COMPARTIDA por varios especiales de Hiei, no solo el dragon: el salto normal diagonal usa una entrada de la misma tabla, y al bajarla a la mitad el salto va lento. Por eso este grupo esta FUERA de la version unificada: el 'dragon' (el b6 del frame con hitbox, $0C8168) SI es quirurgico y hace falta el dragon mas lento sin tocar la tabla. Ver PARCHES.md seccion 3.",
+      "confianza": "CODIGO (la tabla $90 y el offset) / MEDIDO (que el salto diagonal de Hiei usa una entrada de la misma tabla y va lento con este parche)",
       "bytes": [
         {
           "addr": "0x012585",

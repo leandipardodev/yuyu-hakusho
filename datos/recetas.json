@@ -25,13 +25,12 @@
   "cambios": [
     {
       "id": "01_hiei_dragon_lento",
-      "titulo": "El dragon de Hiei va a media velocidad",
+      "titulo": "El dragon de Hiei va a media velocidad (solo el body de la onda)",
       "grupos": [
-        "dragon",
-        "dragon_vel"
+        "dragon"
       ],
-      "que_hace": "El dragon (炎殺黑龍波) de Hiei se desplaza a 1 px/frame en vez de 2, y el proyectil a 0,875 px/frame en vez de 1,75.",
-      "bytes": 3
+      "que_hace": "El dragon (炎殺黑龍波) de Hiei se desplaza a 1 px/frame en vez de 2. Es el cambio quirurgico: el b6 del frame con hitbox ($0C8168), que solo toca al dragon. La velocidad del PROYECTIL (dragon_vel) queda aparte porque esa tabla $90 es compartida con otros especiales de Hiei y hacia lento el salto diagonal.",
+      "bytes": 1
     },
     {
       "id": "02_hiei_dragon_hitbox",
@@ -150,6 +149,15 @@
       ],
       "que_hace": "Los frames del personaje en el especial (ids 166 y 167, los MEDIDOS) duran 0 ticks. El cambio de velocidad (÷4) va aparte, en el grupo kage_vel, porque esa parte afecta tambien al salto.",
       "bytes": 4
+    },
+    {
+      "id": "01b_hiei_dragon_proyectil_lento",
+      "titulo": "El PROYECTIL del dragon de Hiei va a media velocidad (NO quirurgico)",
+      "grupos": [
+        "dragon_vel"
+      ],
+      "que_hace": "La velocidad 16.16 del proyectil del dragon (la tabla $90 de Hiei) pasa de 1,75 a 0,875 px/frame. OJO: esa tabla es COMPARTIDA con otros especiales de Hiei, entre ellos el salto normal diagonal, que va a la mitad de velocidad. Sirve para hacer el A/B.",
+      "bytes": 2
     }
   ],
   "combinaciones": [

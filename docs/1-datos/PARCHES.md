@@ -313,7 +313,19 @@ parche `blob` del parcheador.
 | | Qué | Dónde | Original | Mitad |
 |---|---|---|---|---|
 | **A** | vX del frame con hitbox (el "cuerpo" de la onda) | `$0C8168` (b6) | `$82` = 2 px/f | `$81` = 1 px/f |
-| **B** | velocidad 16.16 del **proyectil** (tabla `$90` de Hiei) | `$012584` (largo) | `$0001C000` = 1.75 px/f | `$0000E000` = 0.875 px/f |
+| **B** | velocidad 16.16 del **proyectil** (tabla `$90` de Hiei) | `$012585` (largo) | `$0001C000` = 1.75 px/f | `$0000E000` = 0.875 px/f |
+
+> ### ⚠️ EL "B" ROMPIE EL SALTO DIAGONAL DE HIEI — ESTA CONFIRMADO
+>
+> La tabla `$90` de Hiei es **compartida**: el **salto normal diagonal** de Hiei
+> usa una entrada de la misma tabla, y al bajarla a la mitad **el salto va
+> lento**. Se comprobó jugando: con el grupo `dragon_vel` aplicado, el salto
+> diagonal de Hiei va a la mitad de velocidad.
+>
+> **Por eso `dragon_vel` está FUERA de la versión unificada** y solo queda el
+> **A**, que es el quirúrgico (el b6 del frame con hitbox, que solo toca al
+> dragón). La receta `01b_hiei_dragon_proyectil_lento` deja el B disponible
+> para hacer el A/B.
 
 El B sale de `move.l $c(a2), $10(a5)` (`0x1865C`), con `a2` = la tabla
 `$90` del personaje (ctx3 → base `$012578`, 10 entradas de 30 bytes). El
