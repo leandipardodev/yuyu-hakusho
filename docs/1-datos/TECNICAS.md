@@ -234,8 +234,8 @@ las tres comparten el mismo estado.
 | Contexto | **ctx6** = Itsuki, tabla base `$0CF99A` |
 | Bloque de frames | **`$0D044A`** |
 | Frames | 14 (anims 57, 58, 59 y luego el parpadeo visible/invisible) |
-| Duracion | **37 ticks** (original) / **27 ticks** (con el parche `itsuki_teleport`) |
+| Duracion | **37 ticks** (original) / **22 ticks** (con el parche `itsuki_teleport`) |
 
 El byte +0 de cada registro es la duracion del frame (la copia a `$5A` esta en
-`$01EB5A`). El parche `itsuki_teleport` escala esas duraciones por 0,70.
+`$01EB5A`). El parche `itsuki_teleport` lleva el total de 37 a 22 ticks (un 40,5% menos).
 

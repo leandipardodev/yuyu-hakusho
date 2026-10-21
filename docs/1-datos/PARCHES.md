@@ -766,7 +766,7 @@ Eso no se ha hecho: es un cambio de diseño del escenario, no una desactivación
 
 ---
 
-# 11. EL TELEPORT DE ITSUKI, UN 30% MAS RAPIDO
+# 11. EL TELEPORT DE ITSUKI, UN 40% MAS RAPIDO
 
 **La tecnica es el estado `$A4` de la tabla de Itsuki**, y su duracion se
 controla frame a frame en el propio bloque de la tabla.
@@ -786,17 +786,23 @@ copia a `$5A` esta en `$01EB5A`. Es el mismo byte que ya usa el grupo
 
 | Byte | De | A | Frame |
 |---|---|---|---|
-| `$0D044A` | `06` | `04` | 0 |
-| `$0D0452` | `06` | `04` | 1 |
-| `$0D045A` | `04` | `03` | 2 |
-| `$0D046A` | `04` | `03` | 4 |
+| `$0D044A` | `06` | `03` | 0 |
+| `$0D0452` | `06` | `03` | 1 |
+| `$0D045A` | `04` | `02` | 2 |
+| `$0D046A` | `04` | `02` | 4 |
 | `$0D047A` | `02` | `01` | 6 |
 | `$0D0492` | `02` | `01` | 9 |
 | `$0D04A2` | `03` | `02` | 11 |
-| `$0D04B2` | `04` | `03` | 13 |
+| `$0D04B2` | `04` | `02` | 13 |
 
-**37 ticks -> 27 ticks: un 27% menos de tiempo** (cada duracion escalada por
-0,70 con minimo de 1 tick). Los frames de 1 tick ya no se tocan.
+**37 ticks -> 22 ticks: un 40,5% menos de tiempo.**
+
+**Como se llega al 40%:** hay **6 frames de 1 tick** que ya estan en el minimo
+y no se pueden bajar. Escalar cada duracion por 0,60 da 24 ticks (35% menos),
+o sea que el minimo se come parte del descuento. Para llegar al 40% el resto se
+redistribuye quitandolo de los frames mas largos (los dos de 6 y el de 4).
+
+El parpadeo (el patron visible/invisible) se mantiene: solo se acorta.
 
 **Ojo:** el teleport es la unica tecnica que usa el estado `$A4` **en la tabla
 de Itsuki**. Los demas personajes tienen su propio `$A4` con otro contenido
