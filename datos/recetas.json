@@ -14,13 +14,13 @@
   "aceptados": [
     "01_hiei_dragon_lento",
     "02_hiei_dragon_hitbox",
-    "03_itsuki_kage_instantaneo",
     "04_itsuki_onda_lenta",
     "05_fijo_doble_salto",
     "06_kurama_planta_elevacion",
     "08_un_solo_plano",
     "09_rival_nace_delante",
-    "11_kuwabara_hoja_2_hits"
+    "11_kuwabara_hoja_2_hits",
+    "03_itsuki_kage_instantaneo"
   ],
   "cambios": [
     {
@@ -141,6 +141,15 @@
       ],
       "que_hace": "La hoja dimensional (el move $A6 de Kuwabara, DOWN,UP + A/B/C) deja de tener 3 cajas en su blob y se queda con 2: pega 2 veces en vez de 3, y el daño total baja de 8x3=24 a 8x2=16. El shuriken de Kuwabara, que tiene su propio blob, no se toca.",
       "bytes": 1
+    },
+    {
+      "id": "03_itsuki_kage_instantaneo",
+      "titulo": "Las manos de Itsuki (影手) salen instantaneas",
+      "grupos": [
+        "kage_dur"
+      ],
+      "que_hace": "Los frames del personaje en el especial (ids 166 y 167, los MEDIDOS) duran 0 ticks. El cambio de velocidad (÷4) va aparte, en el grupo kage_vel, porque esa parte afecta tambien al salto.",
+      "bytes": 4
     }
   ],
   "combinaciones": [

@@ -153,6 +153,24 @@ def main():
         print("      cambios: %s" % ", ".join(rec.get("aceptados", [])))
     print()
 
+    # ---------------------------------------------------- VERIFICACION FINAL
+    # Un parche puede poner los bytes correctos y aun asi romper el codigo
+    # (por ejemplo, cambiando un opcode por otro: los bytes son los que
+    # pedia el manifiesto, pero la instruccion hace otra cosa). Por eso se
+    # comprueba que las instrucciones tocadas siguen siendo las mismas.
+    print("--- verificando el DESENSAMBLADO de la version unificada")
+    ver = os.path.join(TOOLS, "verificar_desensamblado.py")
+    if os.path.exists(ver):
+        r = subprocess.run([sys.executable, ver, salida], capture_output=True,
+                           text=True, encoding="utf-8", errors="replace")
+        if r.returncode == 0:
+            print("  OK: las instrucciones tocadas siguen siendo las mismas.")
+        else:
+            print("  !! ALGO MAL: el informe completo esta abajo")
+            print(r.stdout)
+    else:
+        print("  (falta verificar_desensamblado.py)")
+
     # un indice legible de lo que se ha construido
     with io.open(os.path.join(RAIZ, "rom", "LEEME.md"), "w", encoding="utf-8", newline="") as f:
         f.write("# Las ROMs\n\n")

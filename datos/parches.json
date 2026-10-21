@@ -828,8 +828,8 @@
       ]
     },
     "kage_vel": {
-      "desc": "El desplazamiento durante el especial de Itsuki pasa de 1/2 a 1/4 de la velocidad",
-      "confianza": "CODIGO",
+      "desc": "EL DESPLAZAMIENTO DEL 影手 PASA A /4. **OJO: ESTE PARCHE ESTA EN CODIGO COMPARTIDO**: la instruccion esta en $018809, dentro de la rutina $0187DC, que es la que INICIA EL SALTO DIAGONAL (pone $5F = $28 y la velocidad Y negativa). El autor lo hizo para el 影手, pero el efecto es tambien un salto mas lento para TODOS los personajes. Por eso esta FUERA de la version unificada: se deja el grupo disponible por si lo quieres.",
+      "confianza": "CODIGO (la instruccion y la rutina) / MEDIDO (efecto secundario: el salto diagonal queda mas lento)",
       "bytes": [
         {
           "addr": "0x018809",
@@ -1390,8 +1390,8 @@
       ]
     },
     "un_plano": {
-      "desc": "UN SOLO PLANO. (1) Los dos cruces dejan de llevar al plano de atras: $019E8C y $019F50, de bne.b ($66) a bra.b ($60). El destino no cambia, asi que el desplazamiento sigue valiendo. (2) El dash no deja al personaje en un plano fantasma: el inmediato $013F0000 (319) pasa a $01400000 (320), en $018751. (3) Los CUATRO filtros de plano de los resolvers se anulan: en $01EE48, $01EF1E, $01F0BA y $01F252, 'move.w $9c(a3),d0' pasa a 'move.w $9c(a4),d0'. El atacante se compara consigo mismo, asi que la comprobacion de 'distinto plano' nunca salta. Con esto el rival (que arranca en el plano de atras) se puede golpear sin cruzar.",
-      "confianza": "CODIGO (leido del desensamblado; las direcciones y el mecanismo estan confirmados)",
+      "desc": "UN SOLO PLANO. (1) Los TRES bloques que alejan al personaje a otro plano se neutralizan: $019E0E y $019ED2 (que bajan $9c en $A800 y $5000 y reducen la escala $3E) y $019E8C (que lo pone a $9c = 304). Con 'bne.b' -> 'bra.b' el destino no cambia. (2) El dash deja $9c = 320 y no 319, para que un dash no deje al personaje en un plano distinto del rival. (3) Los CUATRO filtros de plano de los resolvers se anulan cambiando el REGISTRO de la instruccion 'move.w $9c(a3),d0' (byte 0x2b) por a4 (0x2c): el atacante se compara consigo mismo y la comprobacion de 'distinto plano' nunca salta.",
+      "confianza": "CODIGO (las cuatro instrucciones y los tres bloques de cruce, leidos del desensamblado) / MEDIDO (que el filtro es lo que separa a los peleadores)",
       "bytes": [
         {
           "addr": "0x018751",
@@ -1400,40 +1400,46 @@
           "nota": "el dash: $9c = $013F0000 (319) -> $01400000 (320, el plano delantero)"
         },
         {
+          "addr": "0x019E0E",
+          "old": "66",
+          "new": "60",
+          "nota": "cruce 1: bne.b $19e28 -> bra.b $19e28. Este bloque baja $9c en $A800 (40 px) y reduce la escala $3E en 3: es el que ALEJA al personaje. Sin el, el jugador no se va al otro plano"
+        },
+        {
           "addr": "0x019E8C",
           "old": "66",
           "new": "60",
-          "nota": "cruce 1: bne.b $19ea2 -> bra.b $19ea2 (el cruce ya no salta al plano de atras)"
+          "nota": "cruce 2: bne.b $19ea2 -> bra.b $19ea2 (aterrizaje a $9c = 304)"
         },
         {
-          "addr": "0x019F50",
+          "addr": "0x019ED2",
           "old": "66",
           "new": "60",
-          "nota": "cruce 2: bne.b $19f66 -> bra.b $19f66 (idem)"
+          "nota": "cruce 3: bne.b $19eec -> bra.b $19eec. Este bloque baja $9c en $5000 (20 px), sube $26 y reduce la escala $3E en 1"
         },
         {
-          "addr": "0x01EE48",
-          "old": "30",
-          "new": "32",
-          "nota": "filtro de plano 1: move.w $9c(a3),d0 -> move.w $9c(a4),d0"
+          "addr": "0x01EE49",
+          "old": "2B",
+          "new": "2C",
+          "nota": "filtro de plano 1: la instruccion es 'move.w $9c(a3),d0'. Cambiar el REGISTRO a3->a4 (byte 0x2b->0x2c) hace que compare al defensor consigo mismo: la comprobacion de 'distinto plano' nunca salta. NO hay que tocar el opcode 0x30: pasarlo a 0x32 loARIA en move.l"
         },
         {
-          "addr": "0x01EF1E",
-          "old": "30",
-          "new": "32",
+          "addr": "0x01EF1F",
+          "old": "2B",
+          "new": "2C",
           "nota": "filtro de plano 2"
         },
         {
-          "addr": "0x01F0BA",
-          "old": "30",
-          "new": "32",
+          "addr": "0x01F0BB",
+          "old": "2B",
+          "new": "2C",
           "nota": "filtro de plano 3"
         },
         {
-          "addr": "0x01F252",
-          "old": "30",
-          "new": "32",
-          "nota": "filtro de plano 4 (el del resolver hit vs hurt)"
+          "addr": "0x01F253",
+          "old": "2B",
+          "new": "2C",
+          "nota": "filtro de plano 4 (hit vs hurt)"
         }
       ]
     },
