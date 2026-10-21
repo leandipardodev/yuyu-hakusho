@@ -98,6 +98,8 @@ movelist) esta en `DATOS_VERIFICADOS.md` §3e.
 | **`$71`** bit 1 | **Elige el estado del DEFENSOR entre `$2C` y `$2D` en `0x1F3F6`** (`btst.b #$1, $71(a4)`), y de ahi sale si el siguiente golpe pega completo o reducido. **Es el mejor de los cuatro candidatos a blockstun: el unico con mecanismo DEMOSTRADO** (los otros tres solo se deducen). `$2D` ademas es uno de los seis estados que resetean el combo `$C6` |
 | Empujón (long) | `$14` = `move.l #$FFFC0000/$FFFB0000/$FFFA0000` |
 | ID de personaje | **`$9E`**, no `$9C`. Ver la trampa de abajo |
+| Suelo del plano | **`$9C`** = 320 (delantero) / 304 (atras). Copiado a `$44` con `move.l $9c(a5), $44(a5)`, que es **la rutina de "ponerse en el suelo"** del juego: esta copiada en **14 sitios** |
+| El teleport de Itsuki | Estado **`$A4`** de ctx6 (base `$0CF99A`), frames en **`$0D044A`** (14 frames, 37 ticks). Transicion `$A4`->`$A5` en **`$01926A`** (unica llamada, desde el handler de `$A4` en `$01B6E8`). Cadena: `$A4` -> `$A5` (aterrizaje) -> `$A9` (en el suelo) -> `$00`. **Al entrar en `$A5` hay que poner la Y en el suelo** (si no, queda flotando): parche `itsuki_teleport_suelo`, 6 bytes en `$01927A` |
 | Byte de equipo/rol | `$6E` |
 
 ### Globales

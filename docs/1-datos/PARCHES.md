@@ -809,3 +809,74 @@ de Itsuki**. Los demas personajes tienen su propio `$A4` con otro contenido
 (Hiei 6 frames, Kurama 7, Yusuke 9, Chui 5, ...), y NO se tocan: el parche es
 solo sobre los bytes de `$0D044A`, que son los de ctx6.
 
+
+## 12. EL TELEPORT DE ITSUKI: QUE TERMINE PISANDO EL SUELO
+
+**Receta:** `14_itsuki_teleport_pisa_el_suelo`. **Grupo:** `itsuki_teleport_suelo`.
+**6 bytes** en `$01927A`. **Aceptado** en la unificada.
+
+### Que se ve
+
+Al terminar el teleport, Itsuki **queda flotando en el aire** unos frames
+(las notas del usuario: *"61 a 65: Itsuki esta en el aire: es lo que tarda en
+pisar el suelo"*) en vez de quedarse plantado en el piso.
+
+### Por que
+
+El teleport de Itsuki es el estado **`$A4`** de su tabla (ctx6 = Itsuki, base
+`$0CF99A`; bloque de frames en `$0D044A`, 14 frames, 37 ticks). La cadena es:
+
+```
+$A4 (teleport)  ->  $A5 (aterrizaje)  ->  $A9 (en el suelo)  ->  $00
+```
+
+La transicion `$A4 -> $A5` esta en **`$01926A`**, y es la **unica llamada** a
+esa rutina (la hace el handler de `$A4` en `$01B6E8`):
+
+```
+01926a:  1b 7c 00 a5 00 5f   move.b    #$a5, $5f(a5)
+019270:  1b 7c 00 03 00 5d   move.b    #$3,  $5d(a5)
+019276:  42 2d 00 6b         clr.b     $6b(a5)
+01927a:  1b 7c 00 00 00 6c   move.b    #$0,  $6c(a5)      <-- SE CAMBIA
+019280:  60 00 99 9a         bra.w     $19c1c
+```
+
+Al entrar en `$A5` la **Y del personaje (`$44`) conservaba la altura del arco**,
+asi que aparecia en el aire y luego tardaba en caer.
+
+### El cambio
+
+Se sustituyen **6 bytes** por otros **6 bytes**: `move.b #$0, $6c(a5)` ->
+`move.l $9c(a5), $44(a5)`.
+
+`$44` es la **posicion Y en mundo** (16.16 con el entero en la palabra baja) y
+`$9c` es el **suelo del plano** (320 el delantero, 304 el de atras). La
+instruccion `move.l $9c(a5), $44(a5)` es **la rutina que el propio juego usa
+para ponerse en el suelo**: esta copiada en **14 sitios** del ROM (por ejemplo
+`$01B656`, `$019CEE`, `$019DBC`, `$019DF6`, `$019EBE`, `$019F82`, `$019FD6`,
+`$01A0A2`, `$01A144`, `$01A288`, `$01A2F2`, `$01BDC4`, `$01BE26`).
+
+Como el cambio es del **mismo tamano**, no se desplaza ningun byte y no hay
+que recalcular ningun salto.
+
+| Byte | De | A |
+|---|---|---|
+| `$01927A` | `1B` | `2B` |
+| `$01927B` | `7C` | `6D` |
+| `$01927C` | `00` | `00` |
+| `$01927D` | `00` | `9C` |
+| `$01927E` | `00` | `00` |
+| `$01927F` | `6C` | `44` |
+
+### Nota
+
+`$6c` son los **flags de subsistema** (bits 0-4: handlers `$15CB0` `$15DE6`
+`$15E28` `$15EFE` `$15F24`). Ponerlo a 0 ahi era limpiar el frame en curso; el
+siguiente frame los vuelve a escribir en `$01EB76`, asi que la perdida es
+nula.
+
+### Comprobacion
+
+El verificador de desensamblado (`verificar_desensamblado.py`) da **OK**: la
+instruccion nueva desensambla y ocupa los mismos 6 bytes. La ROM unificada
+queda en **61 bytes**, checksum **`$023A`**.

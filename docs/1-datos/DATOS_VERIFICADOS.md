@@ -3227,3 +3227,24 @@ Y esto ya se **resolvio** desde la ultima version, no sigue pendiente:
 
 Ver tambien `COLISIONES_Y_HITBOXES.md` §8 para los errores concretos del
 material externo de Discord / BizHawk.
+
+
+## EL TELEPORT DE ITSUKI: LA CADENA DE ESTADOS
+
+**Fuente: desensamblado** (`datos/desensamblado_68000.asm`).
+
+| Dato | Valor | Donde |
+|---|---|---|
+| Estado del teleport en curso | **`$A4`** | tabla ctx6 (base `$0CF99A`) |
+| Bloque de frames | **`$0D044A`** | 14 frames, 37 ticks |
+| Transicion `$A4` -> `$A5` | **`$01926A`** | unica llamada desde `$01B6E8` |
+| Handler de `$A4` | **`$01B6E0`** | `cmpi.b #$a4, $5f(a5)` |
+| Estado "aterrizaje" | **`$A5`** | ctx6, 16 frames, 45 ticks |
+| Estado "en el suelo" | **`$A9`** | ctx6, 1 frame, dur 0 |
+| Y en mundo | **`$44`** | 16.16, entero en la palabra baja |
+| Suelo del plano | **`$9c`** | 320 el delantero, 304 el de atras |
+| "Ponerse en el suelo" | **`move.l $9c(a5), $44(a5)`** | copiada en **14 sitios** del ROM |
+
+**El cambio:** en `$01927A` se sustituyen 6 bytes
+(`move.b #$0, $6c(a5)`) por otros 6 (`move.l $9c(a5), $44(a5)`). Mismo tamano.
+Receta `14_itsuki_teleport_pisa_el_suelo`, grupo `itsuki_teleport_suelo`.

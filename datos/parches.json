@@ -1595,6 +1595,48 @@
           "nota": "ctx6 (Itsuki) estado $A4 frame 13: duracion 4 -> 2 ticks"
         }
       ]
+    },
+    "itsuki_teleport_suelo": {
+      "desc": "QUE EL TELEPORT DE ITSUKI TERMINE PISANDO EL SUELO en vez de quedar en el aire. El teleport es el estado $A4 de su tabla (ctx6 = Itsuki, base $0CF99A), con su bloque de frames en $0D044A: 14 frames, 37 ticks. Al acabar, la transicion $A4 -> $A5 pasa por $01926A (llamada unica desde el handler de $A4 en $01B6E8). Ahi la Y del personaje ($44) conservaba la altura del arco, asi que se quedaba flotando unos frames antes de caer. El cambio sustituye 6 bytes: 'move.b #$0, $6c(a5)' -> 'move.l $9c(a5), $44(a5)'. Es la rutina que el propio juego usa para ponerse en el suelo (esta copiada en 14 sitios), y $9c es el suelo del plano. Mismo tamano: no se desplaza ningun byte.",
+      "confianza": "CODIGO (el byte $44 es la Y en mundo, $9c el suelo del plano, y 'move.l $9c(a5), $44(a5)' es la rutina de aterrizaje del juego) + MEDIDO (el estado $A4 como teleport en curso, y sus 14 frames)",
+      "bytes": [
+        {
+          "addr": "0x01927A",
+          "old": "1B",
+          "new": "2B",
+          "nota": "$01927A+0: la instruccion pasa de 'move.b #$0, $6c(a5)' (6 bytes) a 'move.l $9c(a5), $44(a5)' (6 bytes). Mismo tamano. Al pasar de $A4 a $A5 le pone la Y en el suelo del plano, para que el teleport termine en el piso y no en el aire."
+        },
+        {
+          "addr": "0x01927B",
+          "old": "7C",
+          "new": "6D",
+          "nota": "$01927A+1: la instruccion pasa de 'move.b #$0, $6c(a5)' (6 bytes) a 'move.l $9c(a5), $44(a5)' (6 bytes). Mismo tamano. Al pasar de $A4 a $A5 le pone la Y en el suelo del plano, para que el teleport termine en el piso y no en el aire."
+        },
+        {
+          "addr": "0x01927C",
+          "old": "00",
+          "new": "00",
+          "nota": "$01927A+2: la instruccion pasa de 'move.b #$0, $6c(a5)' (6 bytes) a 'move.l $9c(a5), $44(a5)' (6 bytes). Mismo tamano. Al pasar de $A4 a $A5 le pone la Y en el suelo del plano, para que el teleport termine en el piso y no en el aire."
+        },
+        {
+          "addr": "0x01927D",
+          "old": "00",
+          "new": "9C",
+          "nota": "$01927A+3: la instruccion pasa de 'move.b #$0, $6c(a5)' (6 bytes) a 'move.l $9c(a5), $44(a5)' (6 bytes). Mismo tamano. Al pasar de $A4 a $A5 le pone la Y en el suelo del plano, para que el teleport termine en el piso y no en el aire."
+        },
+        {
+          "addr": "0x01927E",
+          "old": "00",
+          "new": "00",
+          "nota": "$01927A+4: la instruccion pasa de 'move.b #$0, $6c(a5)' (6 bytes) a 'move.l $9c(a5), $44(a5)' (6 bytes). Mismo tamano. Al pasar de $A4 a $A5 le pone la Y en el suelo del plano, para que el teleport termine en el piso y no en el aire."
+        },
+        {
+          "addr": "0x01927F",
+          "old": "6C",
+          "new": "44",
+          "nota": "$01927A+5: la instruccion pasa de 'move.b #$0, $6c(a5)' (6 bytes) a 'move.l $9c(a5), $44(a5)' (6 bytes). Mismo tamano. Al pasar de $A4 a $A5 le pone la Y en el suelo del plano, para que el teleport termine en el piso y no en el aire."
+        }
+      ]
     }
   },
   "instrumentacion": {

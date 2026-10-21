@@ -108,6 +108,7 @@ def main():
         "kage_dur",        # duraciones a 0
         "kurama_planta", "kurama_ventana", "kurama_ciego",  # el nibble $67/$68
         "kuwabara_hoja_2hits", "kuwabara_hoja_2hits_alt",  # datos, no codigo
+        "itsuki_teleport_suelo",  # sustituye una instruccion por otra del mismo tamano
     }
 
     problemas = 0

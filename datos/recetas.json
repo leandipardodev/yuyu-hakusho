@@ -21,6 +21,7 @@
     "09_rival_nace_delante",
     "11_kuwabara_hoja_2hits_doble",
     "03_itsuki_kage_instantaneo",
+    "14_itsuki_teleport_pisa_el_suelo",
     "13_itsuki_teleport_40mas_rapido"
   ],
   "cambios": [
@@ -168,6 +169,15 @@
       ],
       "que_hace": "El teleport (abajo+arriba + A/B/C) dura 37 ticks y pasa a 22: un 40,5% menos. El personaje se coloca antes en la zona de destino y recupera el control antes.",
       "bytes": 8
+    },
+    {
+      "id": "14_itsuki_teleport_pisa_el_suelo",
+      "titulo": "El teleport de Itsuki termina pisando el suelo",
+      "grupos": [
+        "itsuki_teleport_suelo"
+      ],
+      "que_hace": "Al acabar el teleport, Itsuki queda en el suelo en vez de quedarse flotando unos frames. Es un solo byte: le pone la Y en el suelo del plano.",
+      "bytes": 1
     }
   ],
   "combinaciones": [

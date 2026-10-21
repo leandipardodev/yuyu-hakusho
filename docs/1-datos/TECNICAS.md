@@ -231,11 +231,25 @@ las tres comparten el mismo estado.
 | Dato | Valor |
 |---|---|
 | Estado | **`$A4`** (el teleport en curso) |
+| Siguiente | **`$A5`** (aterrizaje, 16 frames) -> `$A9` (en el suelo) -> `$00` |
 | Contexto | **ctx6** = Itsuki, tabla base `$0CF99A` |
 | Bloque de frames | **`$0D044A`** |
 | Frames | 14 (anims 57, 58, 59 y luego el parpadeo visible/invisible) |
 | Duracion | **37 ticks** (original) / **22 ticks** (con el parche `itsuki_teleport`) |
+| Transicion `$A4`->`$A5` | **`$01926A`** (unica llamada: el handler de `$A4` en `$01B6E8`) |
 
 El byte +0 de cada registro es la duracion del frame (la copia a `$5A` esta en
 `$01EB5A`). El parche `itsuki_teleport` lleva el total de 37 a 22 ticks (un 40,5% menos).
 
+
+
+### 1.9.bis EL FINAL DEL TELEPORT: QUE PISE EL SUELO
+
+Al acabar el teleport el personaje **quedaba en el aire** unos frames (notas
+del usuario: *"61 a 65: Itsuki esta en el aire: es lo que tarda en pisar el
+suelo"*). La causa: al entrar en `$A5` (aterrizaje) la **Y (`$44`) conservaba
+la altura del arco**.
+
+El parche `itsuki_teleport_suelo` (6 bytes en `$01927A`) sustituye
+`move.b #$0, $6c(a5)` por `move.l $9c(a5), $44(a5)`: le pone la Y en el suelo
+del plano. Ver **PARCHES.md seccion 12**.
