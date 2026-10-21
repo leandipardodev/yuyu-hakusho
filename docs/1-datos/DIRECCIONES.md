@@ -366,6 +366,25 @@ autodetecta por firma. [NOTAS]
 
 ---
 
+## 8. Los planos
+
+| Dato | Valor | Dirección | Fuente |
+|---|---|---|---|
+| **Plano del personaje** | 16.16 con la Y de referencia | `$9c(a5)` | [ROM] |
+| — plano **delantero** | **320** (`$01400000`) | `move.l #$1400000,$9c(a0)` | [ROM] |
+| — plano de **atrás** | **304** (`$01300000`) | `move.l #$1300000,$9c(a0)` | [ROM] |
+| El rival de la CPU arranca en el de atrás (escala `$D8`, más pequeño) | | `$00AA8C`, `$00FB1A` | [ROM] |
+| El cruce (C+arriba / botón Y) | move **`$0F`** | `move.b #$f,$5f(a5)` en `$018748` | [ROM] |
+| El cruce, al aterrizar | Y = 304, escala `$D8`, `$26 = $C0` | `$019E8E`, `$019F52` | [ROM] |
+| La vuelta al plano delantero | move **`$10`** | `$019EAA`, `$019F6E` | [ROM] |
+| **El filtro de plano** (4 copias) | `cmp.w $9c(a4),d0` / `bne.w` | `$01EE48` `$01EF1E` `$01F0BA` `$01F252` | [ROM] |
+| `$26` | **plano + rol**: `$3C`/`$BC` (atacante), `$40`/`$C0` (defensor); bit 7 = plano, bit 6 = rol | `$01F7B2` | [NOTAS] |
+
+**El filtro de plano es lo que hace intocable al rival de la otra arena.** Se
+anula cambiando `move.w $9c(a3),d0` por `move.w $9c(a4),d0` (el atacante se
+compara consigo mismo): 4 bytes. Ver `docs/1-datos/PARCHES.md` §9.
+
+
 ## 9. Lo que NO se sabe
 
 | Dato | Estado |

@@ -1388,6 +1388,75 @@
           "nota": "estado $68 = 4"
         }
       ]
+    },
+    "un_plano": {
+      "desc": "UN SOLO PLANO. (1) Los dos cruces dejan de llevar al plano de atras: $019E8C y $019F50, de bne.b ($66) a bra.b ($60). El destino no cambia, asi que el desplazamiento sigue valiendo. (2) El dash no deja al personaje en un plano fantasma: el inmediato $013F0000 (319) pasa a $01400000 (320), en $018751. (3) Los CUATRO filtros de plano de los resolvers se anulan: en $01EE48, $01EF1E, $01F0BA y $01F252, 'move.w $9c(a3),d0' pasa a 'move.w $9c(a4),d0'. El atacante se compara consigo mismo, asi que la comprobacion de 'distinto plano' nunca salta. Con esto el rival (que arranca en el plano de atras) se puede golpear sin cruzar.",
+      "confianza": "CODIGO (leido del desensamblado; las direcciones y el mecanismo estan confirmados)",
+      "bytes": [
+        {
+          "addr": "0x018751",
+          "old": "3F",
+          "new": "40",
+          "nota": "el dash: $9c = $013F0000 (319) -> $01400000 (320, el plano delantero)"
+        },
+        {
+          "addr": "0x019E8C",
+          "old": "66",
+          "new": "60",
+          "nota": "cruce 1: bne.b $19ea2 -> bra.b $19ea2 (el cruce ya no salta al plano de atras)"
+        },
+        {
+          "addr": "0x019F50",
+          "old": "66",
+          "new": "60",
+          "nota": "cruce 2: bne.b $19f66 -> bra.b $19f66 (idem)"
+        },
+        {
+          "addr": "0x01EE48",
+          "old": "30",
+          "new": "32",
+          "nota": "filtro de plano 1: move.w $9c(a3),d0 -> move.w $9c(a4),d0"
+        },
+        {
+          "addr": "0x01EF1E",
+          "old": "30",
+          "new": "32",
+          "nota": "filtro de plano 2"
+        },
+        {
+          "addr": "0x01F0BA",
+          "old": "30",
+          "new": "32",
+          "nota": "filtro de plano 3"
+        },
+        {
+          "addr": "0x01F252",
+          "old": "30",
+          "new": "32",
+          "nota": "filtro de plano 4 (el del resolver hit vs hurt)"
+        }
+      ]
+    },
+    "sin_cruce": {
+      "desc": "Solo el CRUCE, sin tocar los filtros de plano. El jugador no puede pasar al plano de atras, pero el rival que este arranca ahi sigue siendo intocable. Son 3 bytes.",
+      "confianza": "CODIGO",
+      "bytes": [
+        {
+          "addr": "0x018751",
+          "old": "3F",
+          "new": "40"
+        },
+        {
+          "addr": "0x019E8C",
+          "old": "66",
+          "new": "60"
+        },
+        {
+          "addr": "0x019F50",
+          "old": "66",
+          "new": "60"
+        }
+      ]
     }
   },
   "instrumentacion": {

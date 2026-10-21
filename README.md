@@ -106,7 +106,7 @@ yuyu-hakusho/
 
 Estaban repartidos en ROMs distintas, en tres carpetas. Ahora están en **una**:
 
-**`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** — SHA1 `4D0459F8CB420BA2` — 33 bytes.
+**`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** — SHA1 `76CF9236E136720C` — 40 bytes.
 
 | Cambio | Qué hace | Bytes |
 |---|---|---|
@@ -114,6 +114,7 @@ Estaban repartidos en ROMs distintas, en tres carpetas. Ahora están en **una**:
 | **Manos de Itsuki** | 影手 sale instantáneo (las duraciones **medidas**, ids 166/167), se desplaza ÷4 y su onda va a media velocidad | `$0D053A` `$0D0542` `$0D054A` `$0D0552` `$018809` `$01FD0D` `$01FD59` |
 | **Fix del doble salto** | la rutina de reset limpia `$87(a5)`, el **contador de saltos** | `$015D03` `$015D17` + 16 bytes en `$018443` |
 | **Planta de Kurama** | su 2º golpe pasa a **elevación recta** (estado `$30`): cae de otra forma y da **430 frames** con ventana para conectar | `$0D9C69` |
+| **Un solo plano** | el juego tiene 2 arenas en 2 planos y el rival arranca en el de atrás. Se desactiva: no se puede cruzar y el rival se puede golpear desde tu plano | 7 bytes |
 
 Reconstruirla:
 
@@ -121,7 +122,7 @@ Reconstruirla:
 python herramientas\desensamblado\patch_rom.py `
     "rom\base\yuyu_makyou_base.bin" `
     "rom\modificadas\yuyu_makyou_UNIFICADA.bin" `
-    dragon dragon_vel blob kage_dur kage_vel onda_vel doble_salto kurama_planta
+    dragon dragon_vel blob kage_dur kage_vel onda_vel doble_salto kurama_planta un_plano
 ```
 
 > **El checksum de la cabecera se reescribe SIEMPRE al final.** El juego lo

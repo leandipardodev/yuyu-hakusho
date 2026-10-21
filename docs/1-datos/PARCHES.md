@@ -402,7 +402,7 @@ tres carpetas: `base/`, `modificadas/` y `fuentes/`.
 | Fichero | SHA1 (16) | Cambios | Qué hace |
 |---|---|---|---|
 | `rom/base/yuyu_makyou_base.bin` | `BE4461EBA61F3999` | 8 | base reparada + checksum al día |
-| **`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** | `4D0459F8CB420BA2` | 33 | **LA UNIFICADA**: dragón de Hiei + 影手 de Itsuki + fix del doble salto + planta de Kurama (estado `$30`) |
+| **`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** | `76CF9236E136720C` | 40 | **LA UNIFICADA**: dragón de Hiei + 影手 de Itsuki + fix del doble salto + planta de Kurama (estado `$30`) |
 | **`rom/modificadas/yuyu_makyou_UNIFICADA_EXPERIMENTAL.bin`** | `DE29A8119B2903D9` | 89 | la anterior + el refactor del camino del proyectil (experimental) |
 
 ### Las que hubo mientras (ya no están)
@@ -621,7 +621,7 @@ cd "...\yuyu-limpio"
 python herramientas/desensamblado\patch_rom.py `
     "rom\base\yuyu_makyou_base.bin" `
     "rom\modificadas\yuyu_makyou_UNIFICADA.bin" `
-    dragon dragon_vel blob kage_dur kage_vel onda_vel doble_salto kurama_planta
+    dragon dragon_vel blob kage_dur kage_vel onda_vel doble_salto kurama_planta un_plano
 ```
 
 Los otros dos valores de la planta se cambian por el grupo:
@@ -643,8 +643,97 @@ nada**.
 | `rom/modificadas/yuyu_makyou_UNIFICADA_EXPERIMENTAL.bin` | (idem + `kage_proj`) | 89 bytes |
 | `rom/modificadas/yuyu_makyou_UNIFICADA_VENTANA.bin` | `2DB5976139592474` | 33 bytes | la misma, con la planta en derribo **con ventana** (290 f) |
 | `rom/modificadas/yuyu_makyou_UNIFICADA_CIEGO.bin` | `21A859C88FA046D0` | 33 bytes | la misma, con la planta en derribo **ciego** (164 f): el parche que se había entregado |
+| `rom/modificadas/yuyu_makyou_UNIFICADA_SINCRUCE.bin` | `210025AA6D680E86` | 36 bytes | la misma, con el cruce bloqueado pero **sin** quitar el filtro de plano |
 
 `v17` = `v16` + `kage_proj` (el refactor de `$01C3BA`/`$021A08` que hace el
 usuario en su ROM más reciente). **Va aparte porque cambia qué ruta crea el
 proyectil** (la de `$1A430` con sus condiciones, en vez de la inline de
 `$1C3CA`), y eso no se ha medido.
+
+---
+
+# 9. LOS PLANOS: una sola arena
+
+## 9.1 Qué es un "plano"
+
+El juego tiene **dos arenas en dos planos**. El plano de cada personaje está en
+**`$9c(a5)`**, un 16.16 con la Y de referencia:
+
+| Valor | Plano | Quién |
+|---|---|---|
+| **320** (`$01400000`) | **delantero** | P1 (el jugador) |
+| **304** (`$01300000`) | **de atrás** | P2 (el rival de la CPU) |
+
+Y en un 1v1 **el rival arranca en el plano de atrás**: la inicialización del
+slot `$8800` (`0x00AA8C` y `0x00FB1A`) pone `$9c = 304`, `$3e = $D8` (escala
+216 = **se ve más pequeño**) y `$40 = $3D0` (X = 976). P1 arranca en el
+delantero, con `$40 = $3B0` (X = 944).
+
+**Por eso hay que cruzar**: el rival está en la otra arena, y ahí no te
+alcanza nadie.
+
+## 9.2 El filtro de plano
+
+Los cuatro resolvers comparan el plano del atacante con el del defensor y **si
+son distintos no hay golpe**:
+
+```asm
+01f252:  move.w    $9c(a3), d0      ; el plano del atacante
+01f256:  cmp.w     $9c(a4), d0      ; contra el del defensor
+01f25a:  bne.w     $1f50a           ; si NO son el mismo -> no hay golpe
+```
+
+Las cuatro copias están en `$01EE48`, `$01EF1E`, `$01F0BA` y `$01F252` (el
+resolver hit-vs-hurt y sus ramas).
+
+## 9.3 El cruce
+
+El cambio de plano es el move **`$0F`** (C+arriba; el botón Y de Sega hace lo
+mismo). Cuando el personaje aterriza:
+
+```asm
+019e86:  cmpi.b    #$f, $5f(a5)      ; ¿es el cruce?
+019e8c:  66 14              bne.b     $19ea2
+019e8e:  move.l    #$1300000, $9c(a5)   ; Y = 304  -> PLANO DE ATRAS
+019e96:  move.w    #$d8, $3e(a5)        ; escala mas pequena
+019e9c:  move.b    #$c0, $26(a5)        ; $26 = plano B + rol
+```
+
+Y el **vuelo de vuelta** es el move `$10` (`$019EAA`: Y = 320). Hay una segunda
+copia de los dos bloques en `$019F4A`–`$019F82`.
+
+El dash es lo que dispara el cruce: en `$0186D2` se compara `$9c` con 320; si
+está en el plano delantero, el dash pone `$5F = $0F` y `Y = 319` (`$01874E`),
+y al aterrizar salta al plano de atrás.
+
+## 9.4 El parche `un_plano` (7 bytes)
+
+| Byte | De | A | Qué hace |
+|---|---|---|---|
+| `$019E8C` | `66` (bne.b) | `60` (bra.b) | el cruce ya no lleva al plano de atrás |
+| `$019F50` | `66` (bne.b) | `60` (bra.b) | ídem (la segunda copia) |
+| `$018751` | `3F` | `40` | el dash deja `$9c = 320` y no 319 (un "plano" fantasma) |
+| `$01EE48` | `30` | `32` | filtro 1: `move.w $9c(a3),d0` → `move.w $9c(a4),d0` |
+| `$01EF1E` | `30` | `32` | filtro 2 |
+| `$01F0BA` | `30` | `32` | filtro 3 |
+| `$01F252` | `30` | `32` | filtro 4 (hit vs hurt) |
+
+Los dos primeros: `bne.b $19ea2` → `bra.b $19ea2`. **El destino no cambia**,
+así que el desplazamiento sigue valiendo: el bloque del cruce se salta siempre.
+
+Los cuatro últimos: el atacante se compara **consigo mismo**, así que la
+comprobación de "distinto plano" nunca salta. Con eso el rival, que está en el
+plano de atrás, **se puede golpear sin cruzar**.
+
+**Resultado: el juego se comporta como si hubiera un solo plano.** El rival
+sigue viéndose en su arena (más pequeño) y su posición, pero ya no es una zona
+intocable.
+
+> El grupo `sin_cruce` (3 bytes) es la variante mínima: solo bloquea el cruce y
+> **no** toca los filtros. Con ella el rival de atrás sigue siendo
+> intocable, porque para Reacharlo hay que cruzar.
+
+**Nota**: si lo que se quiere es además que el rival **nazca en el plano
+delantero** (y con su tamaño normal), hay que tocar las 4 inicializaciones a
+304 (`$00AA8C`, `$00AB0C`, `$00FB1A`, `$00FBA0`) y sus escalas `$D8` → `$100`.
+Eso no se ha hecho: es un cambio de diseño del escenario, no una desactivación.
