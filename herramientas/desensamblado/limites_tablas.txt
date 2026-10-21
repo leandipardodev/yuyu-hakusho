@@ -1,10 +1,43 @@
-ctx0 base=$0BF75A moves=195 datos=$0BF75A-$0C04BA
-ctx1 base=$0C229A moves=195 datos=$0C229A-$0C31D2
-ctx2 base=$0C4EEA moves=195 datos=$0C4EEA-$0C5D9A
-ctx3 base=$0C7C9A moves=195 datos=$0C7C9A-$0C8BDA
-ctx4 base=$0CA6DA moves=195 datos=$0CA6DA-$0CB37A
-ctx5 base=$0CCC7A moves=195 datos=$0CCC7A-$0CDEF2
-ctx6 base=$0CF99A moves=195 datos=$0CF99A-$0D0692
-ctx7 base=$0D1E5A moves=195 datos=$0D1E5A-$0D2C62
-ctx8 base=$0D4A9A moves=195 datos=$0D4A9A-$0D59EA
-ctx9 base=$0D777A moves=401 datos=$0D777A-$0E76DB
+# Limites de las tablas de moves
+#
+# CORREGIDO 2026-10-07. Antes decia "moves=195" para los ctx0..8 y "moves=401"
+# para el ctx9. LAS DOS COSAS ESTABAN MAL, y el 191 vino del material externo.
+#
+# QUE PASABA
+#
+# $50(a5) NO es la tabla de frames: es una tabla de INDICES de word. El builder
+# lo dice (loc_01EB40):
+#
+#   01eb42:  add.b   $5f(a5), d0      ; d0 = id de move
+#   01eb46:  add.w   d0, d0           ; x2 -> offset de word
+#   01eb48:  movea.l $50(a5), a2      ; a2 = base de la tabla INDICE
+#   01eb4c:  adda.w  (a2, d0.w), a2   ; a2 += indice[$5F]
+#
+# O sea que hay 195 words de indice, y el destino del frame sale de sumar el
+# indice a la misma base.
+#
+# indice[191] es 0 en LOS DIEZ contextos. Offset 0 quiere decir que ese move no
+# existe: el registro cae en la propia base, o sea que se esta leyendo la tabla
+# de indices como si fueran frames. Por eso:
+#
+#   - hay 195 indices, pero solo 191 moves de verdad
+#   - las 4 entradas 191..194 del volcado son basura y hay que podarlas
+#   - el "401" del ctx9 era el numero de bytes de la tabla de datos mal leido
+#     como cantidad de moves. Todos los contextos son iguales.
+#
+# VERIFICADO con auditar_moves.py, que ademas revalida las 1950 entradas que
+# tenemos contra el ROM: 1950 de 1950 coinciden byte a byte, o sea que nuestro
+# volcado NO estaba desalineado. El error era solo el recorte final.
+#
+# Formato: ctxN base=$0XXXXXX indices=N moves=M datos=$0XXXXXX-$0XXXXXX
+# Formato: ctxN base=$0XXXXXX indices=N moves=M datos=$0XXXXXX-$0XXXXXX
+ctx0 base=$0BF75A indices=195 moves=191 datos=$0BF75A-$0C04BA
+ctx1 base=$0C229A indices=195 moves=191 datos=$0C229A-$0C31D2
+ctx2 base=$0C4EEA indices=195 moves=191 datos=$0C4EEA-$0C5D9A
+ctx3 base=$0C7C9A indices=195 moves=191 datos=$0C7C9A-$0C8BDA
+ctx4 base=$0CA6DA indices=195 moves=191 datos=$0CA6DA-$0CB37A
+ctx5 base=$0CCC7A indices=195 moves=191 datos=$0CCC7A-$0CDEF2
+ctx6 base=$0CF99A indices=195 moves=191 datos=$0CF99A-$0D0692
+ctx7 base=$0D1E5A indices=195 moves=191 datos=$0D1E5A-$0D2C62
+ctx8 base=$0D4A9A indices=195 moves=191 datos=$0D4A9A-$0D59EA
+ctx9 base=$0D777A indices=401 moves=191 datos=$0D777A-$0E76DB
