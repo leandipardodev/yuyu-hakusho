@@ -1457,6 +1457,60 @@
           "new": "60"
         }
       ]
+    },
+    "rival_delante": {
+      "desc": "EL RIVAL NACE EN EL PLANO DELANTERO. En un 1v1 el slot $8800 (el rival de la CPU) se inicializa en el PLANO DE ATRAS: $9c = 304 y escala $D8 (216), o sea que aparece en la otra arena y mas pequeno. Este grupo cambia las CUATRO inicializaciones a $9c = 320 y escala $100 (256), que es lo mismo que el jugador. Los sitios: $00AA8C y $00AB0C (la copia del init del jugador) y $00FB1A y $00FBA0 (la copia del init del rival).",
+      "confianza": "CODIGO (las cuatro instrucciones estan en el desensamblado)",
+      "bytes": [
+        {
+          "addr": "0x00AA8F",
+          "old": "30",
+          "new": "40",
+          "nota": "$9c = $01300000 (304) -> $01400000 (320): el rival, init 1"
+        },
+        {
+          "addr": "0x00AA96",
+          "old": "00",
+          "new": "01",
+          "nota": "escala $00D8 (216) -> $0100 (256): el rival, init 1"
+        },
+        {
+          "addr": "0x00AB0F",
+          "old": "30",
+          "new": "40",
+          "nota": "$9c: el rival, init 2"
+        },
+        {
+          "addr": "0x00AB16",
+          "old": "00",
+          "new": "01",
+          "nota": "escala: el rival, init 2"
+        },
+        {
+          "addr": "0x00FB1D",
+          "old": "30",
+          "new": "40",
+          "nota": "$9c: el rival, init 3"
+        },
+        {
+          "addr": "0x00FB24",
+          "old": "00",
+          "new": "01",
+          "nota": "escala: el rival, init 3"
+        },
+        {
+          "addr": "0x00FBA3",
+          "old": "30",
+          "new": "40",
+          "nota": "$9c: el rival, init 4"
+        },
+        {
+          "addr": "0x00FBAA",
+          "old": "00",
+          "new": "01",
+          "nota": "escala: el rival, init 4"
+        }
+      ]
     }
   },
   "instrumentacion": {

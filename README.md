@@ -55,11 +55,22 @@ yuyu-hakusho/
 │   └── 4-emulador/               <- cómo funciona el emulador propio
 │
 ├── rom/
+│   ├── LEEME.md                  <- el índice de las ROM: qué hay y qué hace cada una
 │   ├── base/
-│   │   └── yuyu_makyou_base.bin      la ROM limpia (SHA1 BE4461EB…)
-│   ├── modificadas/
-│   │   ├── yuyu_makyou_UNIFICADA.bin           ★ LOS 4 CAMBIOS JUNTOS
-│   │   └── yuyu_makyou_UNIFICADA_EXPERIMENTAL.bin   v16 + un refactor sin medir
+│   │   └── yuyu_makyou_base.bin  la ROM original reparada (SHA1 BE4461EB…)
+│   ├── cambios/                  ← ★ UNA ROM POR CAMBIO, cada una con SOLO ese cambio
+│   │   ├── 01_hiei_dragon_lento.bin
+│   │   ├── 02_hiei_dragon_hitbox.bin
+│   │   ├── 03_itsuki_kage_instantaneo.bin
+│   │   ├── 04_itsuki_onda_lenta.bin
+│   │   ├── 05_fijo_doble_salto.bin
+│   │   ├── 06_kurama_planta_elevacion.bin
+│   │   ├── 07_gameplay_extras.bin
+│   │   ├── 08_un_solo_plano.bin
+│   │   ├── 09_rival_nace_delante.bin
+│   │   └── 10_diagnostico_sinz80.bin
+│   ├── combinaciones/            <- ROMs con varios cambios a la vez
+│   │   └── yuyu_makyou_TODO.bin   ★ los 4 cambios + un solo plano
 │   └── fuentes/                  <- los dumps de referencia (del autor y otros)
 │
 ├── herramientas/
@@ -70,6 +81,7 @@ yuyu-hakusho/
 │   │   ├── auditar_moves.py       audita ese volcado contra el ROM
 │   │   ├── blob_chain.py          la cadena de cajas de un move
 │   │   ├── ctx_hits.py            qué moves tienen hitbox
+│   │   ├── construir_roms.py      construye TODAS las ROMs desde las recetas
 │   │   ├── emulador_68000.py      emulador propio (Unicorn + Z80 + VDP)
 │   │   └── …                     60 herramientas más
 │   ├── lua/                      <- scripts para FBNeo / Fightcade
@@ -83,6 +95,7 @@ yuyu-hakusho/
 │
 ├── datos/
 │   ├── parches.json               ★ EL CATÁLOGO DE PARCHES (dirección → valor)
+│   ├── recetas.json               ★ LAS RECETAS: qué ROMs se construyen y con qué grupos
 │   ├── desensamblado_68000.asm    28.168 instrucciones desensambladas
 │   ├── desensamblado_z80.asm      el driver de sonido
 │   ├── mapa_rom.txt               qué es código y qué son datos
@@ -102,43 +115,57 @@ yuyu-hakusho/
 
 ---
 
-## 3. Los cuatro cambios, unificados
+## 3. Los cambios, uno a uno
 
-Estaban repartidos en ROMs distintas, en tres carpetas. Ahora están en **una**:
+Cada cambio que hemos ido haciendo está **por separado en su propia ROM**, hecho
+solo sobre la base original. La idea es elegir cuáles quieres y aplicar solo
+esos.
 
-**`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** — SHA1 `76CF9236E136720C` — 40 bytes.
+| Fichero en `rom/cambios/` | Qué hace |
+|---|---|
+| `01_hiei_dragon_lento.bin` | el dragón de Hiei va a media velocidad (1 px/frame, y el proyectil a 0,875) |
+| `02_hiei_dragon_hitbox.bin` | la hitbox del dragón se estrecha de 68 a 9 px |
+| `03_itsuki_kage_instantaneo.bin` | las manos de Itsuki (影手) salen instantáneas y se desplazan ÷4 |
+| `04_itsuki_onda_lenta.bin` | la onda de Itsuki viaja a media velocidad |
+| `05_fijo_doble_salto.bin` | el fix del doble salto (la rutina de reset limpia `$87`, el contador de saltos) |
+| `06_kurama_planta_elevacion.bin` | la planta de Kurama: su 2º golpe cae en elevación recta (430 frames, con ventana) |
+| `07_gameplay_extras.bin` | 8 ajustes de gameplay (hitstun, empuje, muerte, tope de combo, slow-mo) |
+| `08_un_solo_plano.bin` | **un solo plano**: no se puede cruzar y el rival se puede golpear |
+| `09_rival_nace_delante.bin` | el rival nace en el plano delantero y a su tamaño normal |
+| `10_diagnostico_sinz80.bin` | diagnóstico: el juego arranca sin depender del Z80 |
 
-| Cambio | Qué hace | Bytes |
-|---|---|---|
-| **Habilidad de Hiei** | el dragón 炎殺黒龍波 va a media velocidad y su hitbox se estrecha de 68 a 9 px | `$0C8168` `$012585` `$012586` `$0C99AE` `$0C99B6` |
-| **Manos de Itsuki** | 影手 sale instantáneo (las duraciones **medidas**, ids 166/167), se desplaza ÷4 y su onda va a media velocidad | `$0D053A` `$0D0542` `$0D054A` `$0D0552` `$018809` `$01FD0D` `$01FD59` |
-| **Fix del doble salto** | la rutina de reset limpia `$87(a5)`, el **contador de saltos** | `$015D03` `$015D17` + 16 bytes en `$018443` |
-| **Planta de Kurama** | su 2º golpe pasa a **elevación recta** (estado `$30`): cae de otra forma y da **430 frames** con ventana para conectar | `$0D9C69` |
-| **Un solo plano** | el juego tiene 2 arenas en 2 planos y el rival arranca en el de atrás. Se desactiva: no se puede cruzar y el rival se puede golpear desde tu plano | 7 bytes |
+En `rom/combinaciones/` están las ROMs con varios cambios a la vez. La
+principal es **`yuyu_makyou_TODO.bin`** (los 4 cambios + un solo plano).
 
-Reconstruirla:
+**El índice completo, con los bytes de cada uno: `rom/LEEME.md`.**
+
+### Reconstruirlas todas
+
+```powershell
+python herramientas\desensamblado\construir_roms.py
+```
+
+Lee `datos/recetas.json` (qué ROMs hay) y `datos/parches.json` (los bytes de
+cada grupo), y las construye y verifica una a una: relee cada ROM y comprueba
+byte a byte que están los valores correctos y que el checksum cuadra.
+
+### Aplicar una combinación que tú elijas
 
 ```powershell
 python herramientas\desensamblado\patch_rom.py `
-    "rom\base\yuyu_makyou_base.bin" `
-    "rom\modificadas\yuyu_makyou_UNIFICADA.bin" `
-    dragon dragon_vel blob kage_dur kage_vel onda_vel doble_salto kurama_planta un_plano
+    "romase\yuyu_makyou_base.bin" `
+    "rom\combinaciones\mi_combinacion.bin" `
+    dragon dragon_vel blob kage_dur kage_vel onda_vel doble_salto kurama_planta un_plano rival_delante
 ```
+
+Los grupos son los de `datos/parches.json` (dirección → valor, con el nivel de
+confianza de cada uno).
 
 > **El checksum de la cabecera se reescribe SIEMPRE al final.** El juego lo
 > verifica al arrancar (`0x4318`): si no cuadra escribe `0x0E` en `$E080` y se
 > queda clavado en el logo SEGA. Cada byte del manifiesto declara su valor
 > esperado; si el ROM de entrada no lo tiene, el parcheador **aborta sin
 > escribir nada**.
-
-Todos los grupos: `python herramientas\desensamblado\patch_rom.py --list`
-
-**Las ROMs de `rom/fuentes/`** son los dumps de referencia (las tuyas de trabajo,
-la inglesa y la Dual Language). Las 13 variantes intermedias que se hicieron
-mientras (`v2`…`v15`) **no están**: se regeneran con `patch_rom.py` y su
-historia está en `docs/1-datos/PARCHES.md` §6.
-
----
 
 ## 4. Requisitos
 
@@ -179,7 +206,7 @@ Están todas en `MEMORIA.md`, pero estas son las que más importan:
 | Emulador 68000 propio | **80 %**: arranca, resuelve el Z80, 200 frames. La VRAM queda vacía y no llega a combate |
 | Gráficos | **bloqueados**: el ROM tiene los gráficos comprimidos y los sprites de personaje nunca están en plano |
 | Parches de ROM | 14 grupos, todos verificados byte a byte |
-| Los 4 cambios unificados | ✓ en `rom/modificadas/` |
+| Los 4 cambios unificados | ✓ en `rom/combinaciones/` |
 
 **Lo que NO se sabe todavía:** el frame data exacto de cada golpe, el
 blockstun, el emparejamiento id de move ↔ nombre, y el slot del jugador 2.

@@ -394,16 +394,30 @@ Y dos trampas grandes:
 
 ## 6. Las ROMs
 
-El ROM **no se distribuye con el repo** (derechos de autor). Va en `rom/`, con
-tres carpetas: `base/`, `modificadas/` y `fuentes/`.
+El ROM **no se distribuye con el repo** (derechos de autor). Va en `rom/`:
+
+| Carpeta | Qué hay |
+|---|---|
+| `base/` | la ROM original reparada (los 2 parches rotos del autor revertidos, checksum al día) |
+| **`cambios/`** | **una ROM por cambio**, cada una con SOLO ese cambio sobre la base |
+| `combinaciones/` | ROMs con varios cambios a la vez |
+| `fuentes/` | los dumps de referencia (los del autor, el inglés, el Dual Language) |
+| `LEEME.md` | el índice: qué hay y qué hace cada ROM |
+
+Se construyen todas con `python herramientas\desensamblado\construir_roms.py`,
+que lee `datos/recetas.json` y `datos/parches.json`, y **verifica cada ROM**
+releyéndola y comprobando byte a byte los valores y el checksum.
+
+Los grupos de parche (los "atomos") están en `datos/parches.json`. Las recetas
+(los "cambios" y las "combinaciones") en `datos/recetas.json`.
 
 ### Las que hay ahora
 
-| Fichero | SHA1 (16) | Cambios | Qué hace |
-|---|---|---|---|
-| `rom/base/yuyu_makyou_base.bin` | `BE4461EBA61F3999` | 8 | base reparada + checksum al día |
-| **`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** | `76CF9236E136720C` | 40 | **LA UNIFICADA**: dragón de Hiei + 影手 de Itsuki + fix del doble salto + planta de Kurama (estado `$30`) |
-| **`rom/modificadas/yuyu_makyou_UNIFICADA_EXPERIMENTAL.bin`** | `DE29A8119B2903D9` | 89 | la anterior + el refactor del camino del proyectil (experimental) |
+| Fichero | Qué es |
+|---|---|
+| `rom/base/yuyu_makyou_base.bin` | la base limpia (SHA1 `BE4461EBA61F3999`) |
+| `rom/cambios/*.bin` | **una por cambio**, con solo ese cambio. El indice esta en `rom/LEEME.md` |
+| `rom/combinaciones/yuyu_makyou_TODO.bin` | los 4 cambios + un solo plano |
 
 ### Las que hubo mientras (ya no están)
 
