@@ -1465,3 +1465,11 @@ Se puede bajar con 1 byte: `move.w #$ff, $7e(a5)` en `$01A282` (p.ej.
 ### El mash solo mira `$72` (los flags de boton)
 No mira `$71` ni `$73`, o sea que el mash con las **direcciones** podria no
 contar. No comprobado.
+
+### EL RIVAL NACE EN EL PLANO DE ATRAS, Y ESO SE DEJO ASI
+El rival de la CPU arranca en el **plano de atras** (304) y **mas pequeno**
+(escala `$D8` = 216), en las 4 inicializaciones de `$00AA8C`, `$00AB0C`,
+`$00FB1A` y `$00FBA0`. **Hubo un parche para ponerlo en el delantero
+(plano 320, escala 256) y el usuario lo pidio revirter: forma parte del
+juego.** No lo volvemos a poner. Lo que si se queda es `un_plano` (que
+impide el CRUCE a la otra arena) y `sin_cruce`.

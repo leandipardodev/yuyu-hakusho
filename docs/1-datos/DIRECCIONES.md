@@ -379,6 +379,7 @@ autodetecta por firma. [NOTAS]
 | — plano **delantero** | **320** (`$01400000`) | `move.l #$1400000,$9c(a0)` | [ROM] |
 | — plano de **atrás** | **304** (`$01300000`) | `move.l #$1300000,$9c(a0)` | [ROM] |
 | El rival de la CPU arranca en el de atrás (escala `$D8`, más pequeño) | | `$00AA8C`, `$00FB1A` | [ROM] |
+| - **hubo un parche para ponerlo en el delantero y se revirtió** | `move.l #$1400000` + escala `$100` | `$00AA8F` `$00AA96` ... | [ROM] |
 | El cruce (C+arriba / botón Y) | move **`$0F`** | `move.b #$f,$5f(a5)` en `$018748` | [ROM] |
 | El cruce, al aterrizar | Y = 304, escala `$D8`, `$26 = $C0` | `$019E8E`, `$019F52` | [ROM] |
 | La vuelta al plano delantero | move **`$10`** | `$019EAA`, `$019F6E` | [ROM] |

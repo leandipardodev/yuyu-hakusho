@@ -18,7 +18,6 @@
     "05_fijo_doble_salto",
     "06_kurama_planta_elevacion",
     "08_un_solo_plano",
-    "09_rival_nace_delante",
     "11_kuwabara_hoja_2hits_doble",
     "03_itsuki_kage_instantaneo",
     "14_itsuki_teleport_pisa_el_suelo",
@@ -117,15 +116,6 @@
       ],
       "que_hace": "El juego tiene dos arenas en dos planos (Y=320 el delantero, Y=304 el de atras) y el rival de la CPU arranca en el de atras. Este grupo anula los dos cruces y los cuatro filtros de plano de los resolvers.",
       "bytes": 7
-    },
-    {
-      "id": "09_rival_nace_delante",
-      "titulo": "El rival nace en el plano delantero y a su tamano normal",
-      "grupos": [
-        "rival_delante"
-      ],
-      "que_hace": "Las cuatro inicializaciones del rival en el plano de atras ($9c = 304) pasan a $9c = 320, y su escala de $D8 (216, mas pequeno) a $100 (256). Con esto el rival esta en la misma arena y con el mismo tamano que el jugador.",
-      "bytes": 8
     },
     {
       "id": "10_diagnostico_sinz80",
@@ -244,8 +234,7 @@
         "onda_vel",
         "doble_salto",
         "kurama_ventana",
-        "un_plano",
-        "rival_delante"
+        "un_plano"
       ],
       "que_hace": "Igual que yuyu_makyou_TODO pero la planta usa el derribo con ventana (290 frames) en vez de la elevacion recta (430)."
     },
@@ -261,8 +250,7 @@
         "onda_vel",
         "doble_salto",
         "kurama_ciego",
-        "un_plano",
-        "rival_delante"
+        "un_plano"
       ],
       "que_hace": "Igual que yuyu_makyou_TODO pero la planta usa el derribo ciego (164 frames)."
     },
@@ -279,7 +267,6 @@
         "doble_salto",
         "kurama_planta",
         "un_plano",
-        "rival_delante",
         "kage_proj"
       ],
       "que_hace": "Anade el refactor de 0x1C3BA/0x21A08, que cambia QUE ruta crea el proyectil de 影手. No esta medido: puede romper algo."

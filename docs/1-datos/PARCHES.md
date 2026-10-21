@@ -1023,3 +1023,48 @@ los tres sitios de esta rutina). As que el cambio afecta a todos.
 
 Verificador de desensamblado: **OK** (solo cambian los operandos). La
 unificada queda en **69 bytes**, checksum **`$E1B3`**.
+
+
+## 15. REVERTIDO: `rival_delante` (el rival en el plano delantero)
+
+**Este cambio ya NO se aplica.** La receta `09_rival_nace_delante` y el
+grupo `rival_delante` se han quitado del manifiesto; la ROM unificada
+vuelve al comportamiento original del ROM.
+
+### Que hacia
+
+El rival de la CPU arranca en el **plano de atras** y **mas pequeno** que el
+jugador. Eso se decide en **cuatro inicializaciones** (dos del jugador y dos
+del rival, mas sus copias):
+
+| Direccion | Instruccion | Original | Con el parche |
+|---|---|---|---|
+| `$00AA8C` | `move.l #$1300000, $9c(a0)` | 304 (atras) | 320 (delantero) |
+| `$00AA94` | `move.w #$d8, $3e(a0)` | escala 216 | escala 256 |
+| `$00AB0C` | `move.l #$1300000, $9c(a0)` | 304 | 320 |
+| `$00AB14` | `move.w #$d8, $3e(a0)` | 216 | 256 |
+| `$00FB1A` | `move.l #$1300000, $9c(a0)` | 304 | 320 |
+| `$00FB22` | `move.w #$d8, $3e(a0)` | 216 | 256 |
+| `$00FBA0` | `move.l #$1300000, $9c(a0)` | 304 | 320 |
+| `$00FBA8` | `move.w #$d8, $3e(a0)` | 216 | 256 |
+
+Los 8 bytes que se tocaban eran: `$00AA8F` (`30`->`40`), `$00AA96`
+(`00`->`01`), `$00AB0F`, `$00AB16`, `$00FB1D`, `$00FB24`, `$00FBA3`,
+`$00FBAA`.
+
+### Por que se revirtieso
+
+Lo pidio el usuario: el cruce de planos es parte del juego y el rival debe
+nacer en su arena. El parche hacia que los dos peleadores estuvieran en la
+misma arena, lo que quitaba esa mecanica.
+
+### Que queda
+
+El resto de los cambios de planos siguen: **`un_plano`** (la receta
+`08_un_solo_plano`, que neutraliza los tres bloques que alejan al
+personaje a otro plano, el dash y los 4 filtros de plano) y
+**`sin_cruce`**. Esos son los que hacen que el juego no tenga dos arenas.
+
+**OJO:** `un_plano` y `rival_delante` son cosas distintas. `un_plano` evita
+que el CRUCE (C+arriba / abajo+Y) te mande a la otra arena; `rival_delante`
+era solo donde nace el rival. Revertir el segundo **no** toca el primero.

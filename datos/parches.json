@@ -1464,60 +1464,6 @@
         }
       ]
     },
-    "rival_delante": {
-      "desc": "EL RIVAL NACE EN EL PLANO DELANTERO. En un 1v1 el slot $8800 (el rival de la CPU) se inicializa en el PLANO DE ATRAS: $9c = 304 y escala $D8 (216), o sea que aparece en la otra arena y mas pequeno. Este grupo cambia las CUATRO inicializaciones a $9c = 320 y escala $100 (256), que es lo mismo que el jugador. Los sitios: $00AA8C y $00AB0C (la copia del init del jugador) y $00FB1A y $00FBA0 (la copia del init del rival).",
-      "confianza": "CODIGO (las cuatro instrucciones estan en el desensamblado)",
-      "bytes": [
-        {
-          "addr": "0x00AA8F",
-          "old": "30",
-          "new": "40",
-          "nota": "$9c = $01300000 (304) -> $01400000 (320): el rival, init 1"
-        },
-        {
-          "addr": "0x00AA96",
-          "old": "00",
-          "new": "01",
-          "nota": "escala $00D8 (216) -> $0100 (256): el rival, init 1"
-        },
-        {
-          "addr": "0x00AB0F",
-          "old": "30",
-          "new": "40",
-          "nota": "$9c: el rival, init 2"
-        },
-        {
-          "addr": "0x00AB16",
-          "old": "00",
-          "new": "01",
-          "nota": "escala: el rival, init 2"
-        },
-        {
-          "addr": "0x00FB1D",
-          "old": "30",
-          "new": "40",
-          "nota": "$9c: el rival, init 3"
-        },
-        {
-          "addr": "0x00FB24",
-          "old": "00",
-          "new": "01",
-          "nota": "escala: el rival, init 3"
-        },
-        {
-          "addr": "0x00FBA3",
-          "old": "30",
-          "new": "40",
-          "nota": "$9c: el rival, init 4"
-        },
-        {
-          "addr": "0x00FBAA",
-          "old": "00",
-          "new": "01",
-          "nota": "escala: el rival, init 4"
-        }
-      ]
-    },
     "kuwabara_hoja_2hits_doble": {
       "desc": "LA HOJA DIMENSIONAL DE KUWABARA: 2 GOLPES QUE PEGAN EL DOBLE, Y UN RECOVERY UN POCO MAS LENTO. La hoja es el move $A6 (ABAJO,ARRIBA + A/B/C, 20 de mana) y sus golpes salen de un objeto con la sub-lista $0D9A3A. Su cadena (registro $0D948A) tiene TRES frames con hitbox: f0 (b1=24, flags en $0D9A9A), f1 (b1=25, $0D9A9E) y f2 (b1=26, $0D9AA2), con blobs de dano 8, stun 6, empuje $1E y $67=2 (lo que la distingue del shuriken, que tiene $67=1). (1) Se quita el bit de hitbox (bit 6) de f2: la hoja pega DOS veces, en f0 y f1. (2) Se dobla el dano: el $65 del blob del f0 ($0D9CAA) pasa de 8 a 16. El dano es CRUDO (el motor resta $65 tal cual en $01F420-$01F424), sin multiplicador, asi que 16 es exactamente el doble de 8. (3) Se alarga el recovery 8 ticks: la duracion del f10 del personaje ($0C2EA2, el ultimo frame de su cadena, donde espera a que el objeto termine) pasa de 12 a 20. El personaje queda bloqueado 61 ticks en vez de 53. OJO: el byte $0D9CAA es AMBIGUO: es el $65 de este blob y tambien el radioX de una caja de los blobs $0D9CA2, $0D9CA6 y $0D9C9E (los b1 = 15, 16 y 22 de la misma tabla). Al pasar de 8 a 16, esas tres cajas pasan de radioX 8 a radioX 16 (el bit 7 se queda en 0, asi que no se alargan las cadenas de cajas). Si en el juego eso se nota en otra tecnica, este byte es el culpable.",
       "confianza": "CODIGO (la cadena del objeto, los flags de la sub-lista y el blob) / MEDIDO (la ficha dice 8x3 y stun 6x3; el dano es crudo, sin multiplicador) / SIN_CONFIRMAR (que f1 y f2 sean los dos golpes que sobran, y el efecto colateral en las 3 cajas)",

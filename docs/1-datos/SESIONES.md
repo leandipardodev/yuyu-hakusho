@@ -9,6 +9,7 @@ Indice de sesiones:
 | Sesion | Tema | Resultado |
 |---|---|---|
 | [S-2024-10-21](#s-2024-10-21) | el teleport de Itsuki y el mash del aturdimiento | 4 parches |
+| [S-2024-10-21b](#s-2024-10-21b) | **reversion**: el rival vuelve a nacer en el plano de atras | 1 receta quitada |
 
 ---
 
@@ -146,3 +147,38 @@ cambio afecta a los 11 personajes.
 Las dos tocan **duraciones de frame**, que es el mismo byte (`byte+0`) que
 usa el grupo `kage_dur` para el especial de Itsuki. No se solapan (bloques
 distintos) pero conviene recordarlo al tocar el frame data de ctx6.
+
+
+<a name="s-2024-10-21b"></a>
+
+## S-2024-10-21b: el rival vuelve a nacer en el plano de atras
+
+**Pedido:** *"quiero volver atras el cambio de cruzar enfrente"*.
+
+**Que era:** la receta `09_rival_nace_delante` (grupo `rival_delante`,
+8 bytes) hacia que el rival de la CPU naciera en el **plano delantero** (320)
+y a su **tamano normal** (escala 256), en vez de en el **plano de atras**
+(304) y mas pequeno (escala `$D8` = 216).
+
+**Como se analizo:** con Capstone sobre el ROM base y la unificada, en las 4
+inicializaciones del rival:
+
+```
+$00AA8C  base      : move.l  #$1300000, $9c(a0)   (304, atras)
+$00AA8C  unificada : move.l  #$1400000, $9c(a0)   (320, delantero)
+$00AA94  base      : move.w  #$d8, $3e(a0)        (escala 216)
+$00AA94  unificada : move.w  #$100, $3e(a0)       (escala 256)
+```
+
+Los 8 bytes tocados: `$00AA8F` (`30`->`40`), `$00AA96` (`00`->`01`),
+`$00AB0F`, `$00AB16`, `$00FB1D`, `$00FB24`, `$00FBA3`, `$00FBAA`.
+
+**Que se hizo:** se quito la receta de `datos/recetas.json` (de `cambios` y
+de `aceptados`) y el grupo de `datos/parches.json`, y se reconstruyeron las
+ROMs. **Verificado byte a byte**: la unificada vuelve a tener los 8 bytes
+iguales que la base, y las 4 instrucciones vuelven a ser
+`move.l #$1300000, $9c(a0)`.
+
+**Ojo:** esto **no** toca `un_plano` ni `sin_cruce`, que son otra cosa (el
+cruce de planos durante la partida). El usuario quiere que el rival nazca en
+su arena, pero el juego sigue sin dos arenas.
