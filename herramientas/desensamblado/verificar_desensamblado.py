@@ -109,6 +109,7 @@ def main():
         "kurama_planta", "kurama_ventana", "kurama_ciego",  # el nibble $67/$68
         "kuwabara_hoja_2hits", "kuwabara_hoja_2hits_alt",  # datos, no codigo
         "itsuki_teleport_suelo",  # sustituye una instruccion por otra del mismo tamano
+        "cruce_dano",  # llama a una rutina nueva en un hueco del ROM
     }
 
     problemas = 0

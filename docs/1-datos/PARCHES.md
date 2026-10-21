@@ -1068,3 +1068,107 @@ personaje a otro plano, el dash y los 4 filtros de plano) y
 **OJO:** `un_plano` y `rival_delante` son cosas distintas. `un_plano` evita
 que el CRUCE (C+arriba / abajo+Y) te mande a la otra arena; `rival_delante`
 era solo donde nace el rival. Revertir el segundo **no** toca el primero.
+
+## 16. `cruce_dano` (cruzar hace perder 1 de vida cada 3 frames)
+
+**Pedido:** *"quiero que si alguien cruza enfrente vaya perdiendo 1 de vida
+cada 3 frames"*.
+
+### Que hace
+
+Mientras un personaje esta en el **cruce de planos** (el estado `$0F`)
+pierde **1 de vida cada 3 frames**. Afecta a los **11 personajes**, jugador
+y rival, porque el handler del cruce es **UNICO en todo el ROM**.
+
+El HP es `$78` (word), con un maximo de 223; a 0 es la muerte. Con un cruce
+tipico de 30-60 frames se pierden 10-20 puntos de vida.
+
+### Los datos que lo sostienen
+
+| Dato | Valor | Donde |
+|---|---|---|
+| El cruce es el estado | **`$0F`** | |
+| Su handler | **`$01CA9C`** | **UNICO en todo el ROM** (una sola copia del bloque) |
+| El frame del cruce | **uno solo, duracion 255** | el frame data de cada ctx |
+| El tick `$5B` | de 0 a 254 | **es el contador de frames del cruce** (porque hay un solo frame) |
+| El HP | `$78` (word) | maximo 223; a 0 es la muerte |
+| Como se entra al cruce | `move.b #$f, $5f(a5)` | `$018748`, **unico en todo el ROM** |
+
+**Lo clave:** el cruce tiene **un solo frame** (duracion 255, o sea "espera"),
+asi que el tick `$5B` va de 0 a 254 y hace de **contador de frames**. Por eso
+"cada 3 frames" es exactamente "tick multiplo de 3".
+
+### El cambio
+
+El handler del cruce (en la base):
+
+```
+$01CABA  move.l  $10(a5), d1     ; la velocidad
+$01CABE  btst.b  #$0, $61(a5)    ; el facing
+$01CAC2  beq.b   $01CAC6
+$01CAC4  neg.l   d1
+$01CAC8  add.l   d1, $40(a5)     ; avanza hacia el otro plano
+$01CACC  tst.b   $59(a5)         ; ¿el frame es 0?      <- ESTE SE CAMBIA
+$01CAD0  beq.b   $01CB04
+$01CAD2  tst.b   $5b(a5)         ; ¿el tick 0?
+$01CAD6  bne.b   $01CB04
+$01CAD8  move.l  $10(a5), d0     ; FRENA (la velocidad a la mitad)
+$01CADC  asr.l   #$1, d0
+$01CAE0  move.l  d0, $10(a5)
+$01CAE2  bra.w   $15afc          ; <- NO SE TOCA
+```
+
+El handler no tiene hueco para las 14 bytes que hacen falta, asi que el
+cambio es:
+
+| Direccion | Antes | Despues |
+|---|---|---|
+| `$01CACC` | `tst.b $59(a5)` (4 bytes) | **`bsr $021B67`** (4 bytes) |
+| `$01CAD0`-`$01CAE1` | el check de la frenada + la frenada (18 bytes) | **18 nop** |
+| `$021B67`-`$021B8C` | relleno `$FF` (hueco libre) | **la rutina nueva** (38 bytes) |
+| `$01CAE2` | `bra.w $15afc` | *igual* (no se toca) |
+
+La rutina nueva:
+
+```
+$021B67  move.b  $5b(a5), d0     ; el tick (contador de frames del cruce)
+$021B6B  andi.b  #$3, d0         ; ¿multiplo de 3?
+$021B6F  bne.b   $021B79          ; no -> la frenada
+$021B71  move.w  #$1, d0
+$021B75  sub.w   d0, $78(a5)      ; -1 DE VIDA
+$021B79  cmpi.b  #$0, $5b(a5)    ; ¿el tick 0? (la frenada)
+$021B7F  bne.b   $021B8B          ; no -> fuera
+$021B81  move.l  $10(a5), d0      ; FRENA
+$021B85  asr.l   #$1, d0
+$021B87  move.l  d0, $10(a5)
+$021B8B  rts
+```
+
+**La frenada se mantiene**: estaba en el handler y ahora esta dentro de la
+rutina, con la misma condicion (el tick 0 del cruce). El `cmpi.b #$0,
+$5b(a5)` sustituye al antiguo "frame 0 **y** tick 0" porque el cruce tiene
+un solo frame: el frame **siempre** es el 0.
+
+### Por que la rutina va en un hueco del ROM
+
+No habia hueco en el handler. Se busco un hueco **libre de verdad**:
+
+| Tramo | Bytes | Destinos de salto dentro |
+|---|---|---|
+| `$021A32`-`$024001` | 9679 | **285** (no sirve tal cual) |
+| **`$021B67`-`$021BCD`** | **102** | **0** <- el elegido |
+
+Se verifico con un escaneo de **todos** los destinos de salto del ROM
+(`bra`/`bsr`/`jmp`/`bra.l`/`jmp.l` con los 4 modos de direccion): **ningun
+salto de todo el ROM apunta a `$021B67`**, asi que escribir ahi no rompe
+nada. La distancia desde el handler (`$01CACC`) es de 20377 bytes, o sea
+que cabe en el desplazamiento de 16 bits de un `bsr`.
+
+### Ojo: `un_plano` NO lo anula
+
+`un_plano` y `sin_cruce` cambian `$018751` (el plano 319 -> 320) y anulan
+el cambio de plano, pero **el estado `$0F` sigue entrando igual** (la
+entrada es `$018748`, antes de ese byte). Por eso el **daño se sigue
+viendo** en la version unificada, que tiene `un_plano`.
+
+**60 bytes** en total (4 del handler, 18 de relleno y 38 de la rutina).

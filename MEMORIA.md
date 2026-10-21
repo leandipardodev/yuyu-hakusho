@@ -1473,3 +1473,40 @@ El rival de la CPU arranca en el **plano de atras** (304) y **mas pequeno**
 (plano 320, escala 256) y el usuario lo pidio revirter: forma parte del
 juego.** No lo volvemos a poner. Lo que si se queda es `un_plano` (que
 impide el CRUCE a la otra arena) y `sin_cruce`.
+
+### El handler del CRUCE es UNICO en todo el ROM ($01CA9C)
+El cruce de planos es el estado `$0F` y su handler esta en **`$01CA9C`**,
+con **una sola copia** del bloque en todo el ROM: lo usan los 11
+personajes, jugador y rival. La entrada (`move.b #$f, $5f(a5)`) tambien
+es unica: `$018748`. **Cualquier parche del cruce se hace una vez y vale
+para todos.** El frame del cruce es **uno solo de duracion 255**, asi que
+el tick `$5B` va de 0 a 254 y **es el contador de frames del cruce**.
+
+### El hueco libre del ROM: $021B67
+El bloque de relleno `$FF` de `$021A32`-`$024001` (9679 bytes) **esta
+atravessado por 285 destinos de salto**: no se puede escribir ahi sin
+arreglarlos. El tramo **`$021B67`-`$021BCD`** (102 bytes) es el primero con
+**CERO** destinos de salto dentro. En las paginas de codigo
+(`$010000`-`$030000`) **no hay ningun hueco de 40+ bytes libre**. En todo
+el ROM hay **774** huecos libres de 40+ bytes.
+
+**Metodo para buscar un hueco seguro:** escanear **todos** los destinos de
+salto del ROM (los 4 modos de direccion de `bra`/`bsr`/`jmp`/`bra.l`/
+`jmp.l`), y quedarse con un tramo de relleno que no tenga ninguno dentro.
+
+### Codificar 68000: el EA `(d8,An)` va registro PRIMERO
+`sub.w d0, $78(a5)` = **`91 6D 00 78`** (4 bytes): opcode, **byte del
+registro**, luego el desplazamiento de 16 bits. Al reves (`91 00 78 05`)
+Capstone lo lee como `subx.b`. Lo mismo con `cmpi.b #$0, $5b(a5)` =
+`0C 2D 00 00 00 5B`.
+
+**Regla: no codifiques instrucciones a mano. Copia los bytes de una
+instruccion equivalente que YA exista en el ROM y valida con Capstone.**
+Las trampas de esta sesion (una hora las perdio):
+
+1. `subi.w #$1, $78(a5)` no existe en esa forma: en el modo `(d8,An)` el
+   inmediato de 16 bits no cabe. La solucion es `move.w #$1, d0` +
+   `sub.w d0, $78(a5)`.
+2. `52 00 01 00 78 00 05` se desensambla como `addq.b #$1, d0`: el opcode
+   `52` es SUBI.**B**, no SUBI.W.
+3. El EA `(d8,An)` son **3 bytes** (registro + desplazamiento), no 2.

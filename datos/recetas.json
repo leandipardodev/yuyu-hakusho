@@ -23,7 +23,8 @@
     "14_itsuki_teleport_pisa_el_suelo",
     "13_itsuki_teleport_40mas_rapido",
     "15_itsuki_teleport_colocacion_rapida",
-    "16_mash_aturdimiento_x15"
+    "16_mash_aturdimiento_x15",
+    "17_cruzar_hace_perder_vida"
   ],
   "cambios": [
     {
@@ -188,6 +189,16 @@
       ],
       "que_hace": "Cada tecla mashada baja 3 frames el contador de aturdimiento en vez de 2 (y alarga el frame proporcionalmente). Salir del aturdimiento post-knockdown es 1,5 veces mas facil. 2 bytes.",
       "bytes": 2
+    },
+    {
+      "id": "17_cruzar_hace_perder_vida",
+      "titulo": "Cruzar al otro plano hace perder 1 de vida cada 3 frames",
+      "grupos": [
+        "cruce_dano"
+      ],
+      "que_hade": "",
+      "que_hace": "Mientras un personaje esta en el cruce (el estado $0F) pierde 1 de vida cada 3 frames. Afecta a los 11 personajes, jugador y rival. 58 bytes.",
+      "bytes": 59
     }
   ],
   "combinaciones": [

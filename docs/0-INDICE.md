@@ -44,10 +44,10 @@ En todo el proyecto, un dato lleva siempre su procedencia:
 
 | Fichero | Qué es | Tamaño |
 |---|---|---|
-| `docs/1-datos/DIRECCIONES.md` | **la tabla maestra de direcciones** (aquí y en las notas, fundidas) | 11 secciones |
+| `docs/1-datos/DIRECCIONES.md` | **la tabla maestra de direcciones** (aquí y en las notas, fundidas) | 13 secciones |
 | `docs/1-datos/TECNICAS.md` | **las técnicas** de cada personaje (ids, comandos, objetos) | empieza por Kuwabara |
 | `docs/1-datos/DATOS_VERIFICADOS.md` | **la fuente de verdad**: todo verificado, con su dirección | largo |
-| `docs/1-datos/PARCHES.md` | los grupos de parche, con el porqué de cada byte | 14 secciones |
+| `docs/1-datos/PARCHES.md` | los grupos de parche, con el porqué de cada byte | 16 secciones |
 | `docs/1-datos/SESIONES.md` | **la bitácora**: qué se averiguó en cada sesión, cómo y qué quedó pendiente | nuevo |
 | `docs/1-datos/COLISIONES_Y_HITBOXES.md` | las 5 listas de cajas, el dispatcher, los resolvers | |
 | `docs/1-datos/FISICAS_Y_MOVIMIENTO.md` | física, struct del jugador, arquitectura de moves | |

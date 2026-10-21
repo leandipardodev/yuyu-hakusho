@@ -182,3 +182,62 @@ iguales que la base, y las 4 instrucciones vuelven a ser
 **Ojo:** esto **no** toca `un_plano` ni `sin_cruce`, que son otra cosa (el
 cruce de planos durante la partida). El usuario quiere que el rival nazca en
 su arena, pero el juego sigue sin dos arenas.
+
+
+<a name="s-2024-10-21c"></a>
+
+## S-2024-10-21c: cruzar hace perder 1 de vida cada 3 frames
+
+**Pedido:** *"quiero que si alguien cruza enfrente vaya perdiendo 1 de vida
+cada 3 frames"*.
+
+**Que se averiguo:**
+
+1. **El cruce es el estado `$0F`.** Su handler esta en **`$01CA9C`** y es
+   **UNICO en todo el ROM** (una sola copia del bloque de 18 bytes), o sea
+   que sirve para los 11 personajes, jugador y rival. La entrada al cruce
+   (`move.b #$f, $5f(a5)`) tambien es **unica**: `$018748`.
+
+2. **El cruce tiene UN solo frame, de duracion 255.** Por eso el tick `$5B`
+   va de 0 a 254 y **hace de contador de frames**: "cada 3 frames" es
+   exactamente "tick multiplo de 3" (`andi.b #$3`).
+
+3. **El handler no tiene hueco.** Hacen falta 14 bytes y no caben.
+
+4. **Hay un hueco libre de verdad en el ROM**: `$021B67`-`$021BCD` (102
+   bytes) con **CERO** destinos de salto dentro. Se verifico escaneando
+   **todos** los saltos del ROM (`bra`/`bsr`/`jmp`/`bra.l`/`jmp.l` con los
+   4 modos). El hueco grande de `$021A32` **no** sirve: tiene **285**
+   destinos dentro.
+
+**Que se hizo:** grupo `cruce_dano` (60 bytes), receta
+`17_cruzar_hace_perder_vida`.
+
+- `$01CACC`: `tst.b $59(a5)` -> **`bsr $021B67`**
+- `$01CAD0`-`$01CAE1`: 18 bytes rellenos con nop (el check de la frenada ya
+  no hace falta: la frenada esta ahora dentro de la rutina)
+- `$021B67`-`$021B8C`: la rutina nueva (38 bytes) en el hueco
+
+La rutina hace el dano (`sub.w d0, $78(a5)`, con `$78` = el HP) y mantiene
+la frenada final del cruce (que estaba en el handler).
+
+**Dos cosas que salir bien gracias al metodo:**
+
+- **Copiar los bytes de una instruccion equivalente que ya existe en el
+  ROM** en vez de codificarlos a mano. `sub.w d0, $78(a5)` salio de
+  `sub.w d0, $7e(a4)` del resolver (`$01F42C` = `91 6C 00 78`): el byte del
+  registro va primero (`6D` para a5), luego el desplazamiento.
+- **Validar la rutina entera con Capstone antes de escribir nada.** La
+  primera version tenia el `bne.b` antes del `cmpi.b` y hacia falta
+  reordenar las instrucciones.
+
+**Ojo:**
+
+- `un_plano` y `sin_cruce` **NO** anulan este parche: solo cambian el
+  cambio de plano (`$018751`), pero el estado `$0F` sigue entrando. El
+  dano se sigue viendo en la unificada.
+- El HP maximo es **223**, asi que quedarse mucho tiempo en el cruce mata.
+
+**Estado:** implementado, reconstruido y verificado con Capstone. La
+unificada queda en **121 bytes, checksum `$8CC5`**. Falta que lo pruebes en
+el emulador.

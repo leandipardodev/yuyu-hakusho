@@ -3309,3 +3309,57 @@ el parche (x1,5, o sea -3) hacen falta **~85**.
 **Parche:** `mash_aturdimiento_x15`, 2 bytes: `$01A29A` (`$55`->`$57`) y
 `$01A2A6` (`$54`->`$56`). Ojo: el dato de SUBQ/ADDQ va en los bits 11-9
 del opcode, no en un byte aparte.
+
+
+## EL CRUCE DE PLANOS (el estado $0F)
+
+**Fuente: desensamblado** (verificado con Capstone, que es la verdad).
+
+| Dato | Valor | Donde |
+|---|---|---|
+| Como se entra al cruce | `move.b #$f, $5f(a5)` | `$018748` (**unico en todo el ROM**) |
+| El handler del cruce | `$01CA9C` | (**unico en todo el ROM**: 1 sola copia del bloque de 18 bytes) |
+| El frame del cruce | **UNO solo, duracion 255** | el frame data de cada ctx |
+| El tick `$5B` | de 0 a 254 | **es el contador de frames del cruce** (porque hay un solo frame) |
+| Que hace en el cruce | avanza en X hacia el otro plano | `$01CABA`-`$01CAC8` |
+| La frenada final | velocidad a la mitad, en el tick 0 | `$01CAD8`-`$01CAE0` |
+| Al aterrizar en el otro plano | Y = 304, escala `$D8`, `$26` = `$C0` | `$019E8E` / `$019F52` |
+| La vuelta al plano delantero | `move.b #$10, $5f(a5)` | `$019EAA` / `$019F6E` |
+| Donde se compara con `$0F` | 4 sitios | `$019E08`, `$019E86`, `$019ECC`, `$019F4A` |
+
+**El cruce lo usan los 11 personajes** (el handler es unico), asi que
+cualquier parche ahi afecta a todos, jugador y rival.
+
+**El HP** es `$78` (word con signo), maximo **223**; a 0 es la muerte. El
+resolver lo resta crudo en `$01F424` (`sub.w d0, $78(a4)`).
+
+### Codificacion de las instrucciones del parche (verificada con Capstone)
+
+| Instruccion | Bytes |
+|---|---|
+| `move.b $5b(a5), d0` | `10 2D 00 5B` |
+| `andi.b #$3, d0` | `02 00 00 03` |
+| `move.w #$1, d0` | `30 3C 00 01` |
+| `sub.w d0, $78(a5)` | `91 6D 00 78` |
+| `cmpi.b #$0, $5b(a5)` | `0C 2D 00 00 00 5B` |
+| `move.l $10(a5), d0` | `20 2D 00 10` |
+| `asr.l #$1, d0` | `E2 80` |
+| `move.l d0, $10(a5)` | `2B 40 00 10` |
+| `rts` | `4E 75` |
+| `bsr $021B67` | `61 00 50 99` |
+
+**Ojo con el EA `(d8,An)`:** el byte del registro va **primero** y luego
+el desplazamiento de 16 bits (`91 6D 00 78` = `sub.w d0, $78(a5)`). Con el
+orden al reves (`91 00 78 05`) Capstone lo lee como otra cosa.
+
+### El hueco libre del ROM
+
+| Tramo | Bytes | Destinos de salto dentro |
+|---|---|---|
+| `$021A32`-`$024001` | 9679 | **285** |
+| `$035961`-`$0375A6` | 7237 | ? |
+| **`$021B67`-`$021BCD`** | **102** | **0** |
+
+Huecos de 40+ bytes sin **ningun** destino de salto dentro: **774** en todo
+el ROM. En las paginas de codigo (`$010000`-`$030000`) **no hay ninguno**:
+los huecos grandes de `$02xxxx` estan atravesados por saltos.

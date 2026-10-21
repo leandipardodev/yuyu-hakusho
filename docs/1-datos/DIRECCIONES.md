@@ -520,3 +520,31 @@ parche sobre `$0D044A` solo afecta a Itsuki.
 | Cuando se levanta | `$84 <= 1` (`$01A2AA`) -> `$18440` (estado `$00`) |
 | Los botones que cuentan | los de **`$72`** |
 | La tabla de handlers por estado | **`$15a68`** (256 entradas), leida por el dispatcher de `$015A5A` (que usa `$5D` = estado siguiente) |
+
+## 13. El cruce de planos (el estado `$0F`)
+
+**Fuente: desensamblado con Capstone.** Verificado.
+
+| Direccion | Instruccion | Que es |
+|---|---|---|
+| `$018748` | `move.b #$f, $5f(a5)` | **se entra al cruce** (unico en todo el ROM) |
+| `$01CA9C` | `cmpi.b #$1, $60(a5)` | **el handler del cruce** (unico en todo el ROM) |
+| `$01CABA` | `move.l $10(a5), d1` | la velocidad |
+| `$01CAC8` | `add.l d1, $40(a5)` | avanza hacia el otro plano |
+| `$01CACC` | `bsr $021B67` | **(con el parche `cruce_dano`)** la rutina del dano |
+| `$01CAD8` | `move.l $10(a5), d0` | la frenada final (ahora dentro de la rutina) |
+| `$01CAE2` | `bra.w $15afc` | el final del handler |
+| `$01CAE6` | `clr.b $60(a5)` | el handler del estado `$10` (la vuelta) |
+| `$021B67` | `move.b $5b(a5), d0` | **(con el parche `cruce_dano`)** la rutina nueva en el hueco |
+
+**El frame del cruce es UNO solo, de duracion 255**, asi que el tick `$5B`
+va de 0 a 254 y **es el contador de frames del cruce**.
+
+**El HP** es `$78` (word con signo, maximo 223). El resolver lo resta en
+`$01F424` (`sub.w d0, $78(a4)`).
+
+**Los 4 sitios donde se compara con `$0F`** (todos en el bloque de Itsuki,
+que es donde esta el codigo del cruce): `$019E08`, `$019E86`, `$019ECC`,
+`$019F4A`. Al aterrizar en el otro plano: Y = 304, escala `$D8`, `$26` =
+`$C0` (`$019E8E` / `$019F52`). La vuelta al plano delantero:
+`move.b #$10, $5f(a5)` (`$019EAA` / `$019F6E`).
