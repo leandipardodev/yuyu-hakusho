@@ -1376,6 +1376,39 @@ ni `event.onframestart`. No portar esos scripts, reescribirlos.
 
 ---
 
+### EL DATO DE SUBQ/ADDQ VA EN EL OPCODE, NO EN UN BYTE
+`subq.w #$2, $84(a5)` son **4 bytes**: `55 6D 00 84`. El dato va en los
+**bits 11-9** del opcode: `$53`=1, `$55`=2, `$57`=3, `$59`=4. Para cambiar
+el 2 por el 4 hay que tocar **el primer byte** de la instruccion, no un
+"byte del inmediato" (que no existe). **Y el .asm del proyecto no marca
+ese byte**, asi que a ojo no se ve donde esta. Ojo tambien con
+`addq.b`: `$52`=1, `$54`=2, `$56`=3, `$58`=4.
+
+### EL .ASM DEL PROYECTO OMITE ALGUNA LINEA
+A `$01A288` falta el `move.l $9c(a5), $44(a5)` (son 6 bytes) en el
+handler del estado `$0C`. Las direcciones siguientes **no** se desalinean
+(el desensamblador sabe el tamano), pero la linea no esta. **Para el codigo
+critico, desensambla con Capstone**: el proyecto lo usa como fuente, pero
+el `.asm` guardado no coincide siempre. Como el dato de SUBQ/ADDQ esta en
+el opcode, el `.asm` ademas **no lo muestra**.
+
+### UNA DURACION DE FRAME DE 255 = "ESPERA"
+El frame se repite hasta que algo lo corte. Es la marca de los estados de
+espera: el "aire" del teleport (`$25` de ctx6, durs 4,4,8,**255**), el
+dash (`$24`, 8,8,4,4,4,**255**), y `$26`/`$27` (1 frame, dur 255).
+
+### `$5D` = EL ESTADO SIGUIENTE
+El dispatcher de `$015A5A` lee `$5D` y salta a la tabla de handlers
+`$15a68` (256 entradas, una por estado). Los handlers de Itsuki estan en
+`$019xxx`-`$01Cxxx`. **No hay un dispatcher por `$5F`**: el unico
+`add.b $5f(a5)` del ROM es el de los frames (`$01EB42`).
+
+### EL ATURDIMIENTO POST-KNOCKDOWN USA UN CONTADOR PROPIO
+No es la barra `$7E` (esa solo la baja el dano de los golpes, en
+`$01F42C`). El contador real es **`$84`** (word), en el estado `$0C`
+(handler `$01A282`): -1 por frame, **-2 por pulsacion de boton** (`$72`),
+y +2 ticks al frame. Con 255 frames hacen falta ~128 pulsaciones.
+
 ## Pendiente (lo siguiente que hay que hacer)
 
 1. **Medidor de super**: `$B8` (maná/TA, tope 223) es casi seguro lo que se
@@ -1414,3 +1447,21 @@ ni `event.onframestart`. No portar esos scripts, reescribirlos.
    de slots. **`detectar_slots()` ya esta puesto** asi que cualquier `.lua` que
    lea del slot del P2 no depende de esta respuesta. Lo que falta es saber cual
    es el caso **habitual**: el HUD dibuja igual con las dos.
+
+### El handler de $A5 de Itsuki (para el fix "solo el teleport")
+La receta `14_itsuki_teleport_pisa_el_suelo` mata el estado `$25` **de
+siempre**, o sea que el **dash de Itsuki (8 de mana) deja de hacer su
+salto y su espera**. Para que solo afecte al teleport, haria falta tocar
+el handler de `$A5` (el que pone `$5D = $25` al final de la colocacion),
+que **no se ha localizado**: la tabla `$15a68` lleva a `$0167DF`, que es
+una tabla de datos y no codigo. Pista: el bloque de Itsuki esta en
+`$019xxx`-`$01Cxxx`, y `$01B1CE`/`$01B1E8`/`$01B21E`/`$01B246`/`$01B2BC`
+son los handlers de `$24`/`$25`/`$26`/`$27`/`$28`.
+
+### El aturdimiento base (sin machar) son 255 frames = 4,25 s
+Se puede bajar con 1 byte: `move.w #$ff, $7e(a5)` en `$01A282` (p.ej.
+`#$80` = 2,1 s). El usuario todavia no lo ha pedido.
+
+### El mash solo mira `$72` (los flags de boton)
+No mira `$71` ni `$73`, o sea que el mash con las **direcciones** podria no
+contar. No comprobado.

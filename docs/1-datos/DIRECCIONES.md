@@ -480,3 +480,42 @@ parche sobre `$0D044A` solo afecta a Itsuki.
 **El byte +0 de cada registro de 8 bytes = la duracion del frame** (la copia a
 `$5A` esta en `$01EB5A`). Y el byte +1 = el indice de animacion.
 
+
+
+## 12. El teleport de Itsuki y el mash del aturdimiento
+
+*(Sesion del 2024-10-21. Ver `SESIONES.md` para como se averiguo.)*
+
+### El teleport de Itsuki (ctx6, base `$0CF99A`)
+
+| Que | Donde |
+|---|---|
+| Estado del teleport en curso | **`$A4`** |
+| Su bloque de frames | **`$0D044A`** (14 frames, 37 ticks -> 22 con el parche) |
+| Estado de la colocacion | **`$A5`** |
+| Su bloque de frames | **`$0D04BA`** (16 frames, 45 ticks -> 25 con el parche) |
+| Estado del "aire" (el dash) | **`$25`** |
+| Su bloque de frames | **`$0CFE4A`** (durs 4, 4, 8, **255** = espera) |
+| El dash de Itsuki (8 de mana) | estado **`$24`**, frames en **`$0CFE1A`** (8, 8, 4, 4, 4, **255**) |
+| La rutina de colocacion | **`$01BE08`** |
+| La salida de `$A4` (a `$A5`) | **`$01926A`** |
+| El dash (8 de mana) | **`$01904E`** |
+| El unico escritor de `$5D = $25` (el salto) | **`$01905E`** |
+| La zona del teleport | `$48` = 0/1/2 -> `$a010` + `$20`/`$A0`/`$120` = **912 / 1040 / 1168** |
+| Limite izquierdo del escenario | **`$a010` = 880** |
+| Limite derecho del escenario | **`$a012` = 1168** |
+
+### El mash del aturdimiento (estado `$0C`)
+
+| Que | Donde |
+|---|---|
+| Estado del "aturdido" post-knockdown | **`$0C`** |
+| Su handler | **`$01A282`** |
+| La barra de aturdimiento al entrar | **255** (`move.w #$ff, $7e(a5)`) |
+| El contador real | **`$84`** (word) |
+| Cuanto baja por frame | **1** (`$01A28E`) |
+| Cuanto baja por pulsacion de boton | **2** (original) / **3** (con el parche) (`$01A29A`) |
+| Ticks extra al frame por pulsacion | **2** / **3** (`$01A2A6`) |
+| Cuando se levanta | `$84 <= 1` (`$01A2AA`) -> `$18440` (estado `$00`) |
+| Los botones que cuentan | los de **`$72`** |
+| La tabla de handlers por estado | **`$15a68`** (256 entradas), leida por el dispatcher de `$015A5A` (que usa `$5D` = estado siguiente) |

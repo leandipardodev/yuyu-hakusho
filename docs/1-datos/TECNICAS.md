@@ -268,3 +268,30 @@ El parche `itsuki_teleport_colocacion` (9 bytes, todos el byte+0 = duracion)
 la deja en **25 ticks**: el parpadeo en 15 y el aterrizaje en 10. Mismo
 criterio que el parche del blink: minimo 1 tick por frame y el descuento se
 saca de los frames mas largos. Ver **PARCHES.md seccion 13**.
+
+
+### 1.9.quater EL MASH DEL ATURDIMIENTO (el estado `$0C`)
+
+Cuando la barra de aturdimiento se agota el personaje **cae** (knockdown), se
+levanta y queda **aturdido** unos 4 segundos. Ese estado es el **`$0C`**, con
+su handler en **`$01A282`**:
+
+```
+$01A282  move.w   #$ff, $7e(a5)   ; la barra = 255 frames (4,25 s)
+$01A288  move.l   $9c(a5), $44(a5)  ; al suelo
+$01A28E  subq.w   #$1, $84(a5)    ; el contador real baja 1 por frame
+$01A292  cmpi.b   #$0, $72(a5)    ; ?hay boton pulsado?
+$01A29A  subq.w   #$2, $84(a5)    ; <-- EL MASH: -2 mas por pulsacion
+$01A2A6  addq.b   #$2, $5b(a5)   ; <-- +2 ticks al frame
+$01A2AA  cmpi.w   #$1, $84(a5)    ; ?llego a <=1? -> se levanta ($18440)
+```
+
+**El contador real es `$84`** (word), no la barra `$7E` (esa solo la baja el
+dano de los golpes). Con 255 frames y **-2 por pulsacion** hacen falta **~128
+pulsaciones**: por eso es casi imposible sacarlo.
+
+El parche `mash_aturdimiento_x15` (2 bytes) pone los dos `2` en `3`: el mash
+cuenta **x1,5** -> ~85 pulsaciones. Ver **PARCHES.md seccion 14**.
+
+Es **generico**: el estado `$0C` es el mismo para los 11 personajes y el mash
+es UNO solo en todo el ROM, asi que el cambio vale para todos.

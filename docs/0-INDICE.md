@@ -19,6 +19,7 @@ Ninguno de los dos se lee entero. Este índice dice **qué leer para qué**.
 | **qué está verificado y cómo** | `docs/1-datos/DATOS_VERIFICADOS.md` |
 | **las reglas del juego** (comandos, maná, cancelaciones, reacciones) | `notas/GENERAL/SISTEMAS.txt` ← se lee entero |
 | **por qué el golpe hace lo que hace** | `docs/1-datos/PARCHES.md` §8 y `docs/1-datos/VARIACION_DANOS_HITPAUSE_KNOCKDOWN.md` |
+| **qué se averiguó en las últimas sesiones** | `docs/1-datos/SESIONES.md` **la bitácora** |
 
 ---
 
@@ -46,7 +47,8 @@ En todo el proyecto, un dato lleva siempre su procedencia:
 | `docs/1-datos/DIRECCIONES.md` | **la tabla maestra de direcciones** (aquí y en las notas, fundidas) | 11 secciones |
 | `docs/1-datos/TECNICAS.md` | **las técnicas** de cada personaje (ids, comandos, objetos) | empieza por Kuwabara |
 | `docs/1-datos/DATOS_VERIFICADOS.md` | **la fuente de verdad**: todo verificado, con su dirección | largo |
-| `docs/1-datos/PARCHES.md` | los 14 grupos de parche, con el porqué de cada byte | 8 secciones |
+| `docs/1-datos/PARCHES.md` | los grupos de parche, con el porqué de cada byte | 14 secciones |
+| `docs/1-datos/SESIONES.md` | **la bitácora**: qué se averiguó en cada sesión, cómo y qué quedó pendiente | nuevo |
 | `docs/1-datos/COLISIONES_Y_HITBOXES.md` | las 5 listas de cajas, el dispatcher, los resolvers | |
 | `docs/1-datos/FISICAS_Y_MOVIMIENTO.md` | física, struct del jugador, arquitectura de moves | |
 | `docs/1-datos/TABLAS_MOVES_Y_TIMING.md` | registro de 8 bytes, 12 tablas, blockstun | |
