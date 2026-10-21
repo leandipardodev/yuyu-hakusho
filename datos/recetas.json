@@ -19,7 +19,7 @@
     "06_kurama_planta_elevacion",
     "08_un_solo_plano",
     "09_rival_nace_delante",
-    "11_kuwabara_hoja_2_hits",
+    "11_kuwabara_hoja_1hit_doble",
     "03_itsuki_kage_instantaneo"
   ],
   "cambios": [
@@ -134,13 +134,13 @@
       "bytes": 5
     },
     {
-      "id": "11_kuwabara_hoja_2_hits",
-      "titulo": "La hoja dimensional de Kuwabara pega 2 veces en vez de 3",
+      "id": "11_kuwabara_hoja_1hit_doble",
+      "titulo": "La hoja dimensional de Kuwabara: 1 solo hit que pega el doble",
       "grupos": [
-        "kuwabara_hoja_2hits"
+        "kuwabara_hoja_1hit_doble"
       ],
-      "que_hace": "La hoja dimensional (el move $A6 de Kuwabara, ABAJO,ARRIBA + A/B/C) pega 2 veces en vez de 3: se le quita el hitbox al tercer frame de su cadena de objeto. El shuriken (ABAJO,ABAJO) queda intacto.",
-      "bytes": 1
+      "que_hace": "La hoja dimensional (el move $A6 de Kuwabara, ABAJO,ARRIBA + A/B/C) pega UNA sola vez, y ese golpe pega el doble: 16 de dano en vez de 8 (el dano es crudo, sin multiplicador). El shuriken (ABAJO,ABAJO) queda intacto.",
+      "bytes": 3
     },
     {
       "id": "03_itsuki_kage_instantaneo",
@@ -150,15 +150,6 @@
       ],
       "que_hace": "Los frames del personaje en el especial (ids 166 y 167, los MEDIDOS) duran 0 ticks. El cambio de velocidad (÷4) va aparte, en el grupo kage_vel, porque esa parte afecta tambien al salto.",
       "bytes": 4
-    },
-    {
-      "id": "11b_kuwabara_hoja_2hits_cajas",
-      "titulo": "ALTERNATIVA: la hoja dimensional recorta la 3a caja de su blob",
-      "grupos": [
-        "kuwabara_hoja_2hits_alt"
-      ],
-      "que_hace": "La misma idea que 11_kuwabara_hoja_2_hits pero recortando la cadena de cajas del blob en vez de quitar un hitbox. Es la version que se probo primero y que parecio afectar al shuriken.",
-      "bytes": 1
     }
   ],
   "combinaciones": [

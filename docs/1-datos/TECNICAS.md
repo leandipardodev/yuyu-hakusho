@@ -124,21 +124,49 @@ Los tres frames con hitbox de cada uno, y el blob de cada uno:
 > **Y OJO con `$0D9CB6`**: es a la vez la **caja 2** del blob `$0D9CAA` y la
 > **cabecera** del blob `$0D9CB6`. Por eso un parche ahi es ambiguo.
 
-### 1.6 Parche: que la hoja dimensional pegue 2 veces en vez de 3
+### 1.6 Parche: 1 solo hit que pegue el doble
 
-**Grupo `kuwabara_hoja_2hits` — 1 byte: `$0D9AA2` `$60` → `$20`.**
+**Grupo `kuwabara_hoja_1hit_doble` — 3 bytes:**
 
-Quita el bit de hitbox (bit 6) del **tercer frame** de la cadena de la hoja
-(`b1 = 26`, entrada de sub-lista `$0D9AA2`). Ese frame deja de golpear, y la
-hoja pega **2 veces** (f0 y f1) en vez de 3.
+| Byte | De | A | Qué hace |
+|---|---|---|---|
+| `$0D9A9E` | `60` | `20` | flags del **f1** (b1=25): se quita el bit 6, el de hitbox |
+| `$0D9AA2` | `60` | `20` | flags del **f2** (b1=26): ídem |
+| `$0D9CAA` | `08` | `10` | `$65` = **el daño** del blob del f0: de 8 a **16** |
 
-**No toca el shuriken**: sus blobs son `$0D9CD6`, `$0D9CE2` y `$0D9CEE`.
+**1 hit:** solo queda el f0 con hitbox (los 4 primeros ticks).
+**Doble daño:** el daño es **crudo** — el motor resta `$65` tal cual, sin
+multiplicador (`0x1F420` carga `$65` en d0 y `0x1F424` lo resta) — así que
+16 es exactamente el doble de 8.
 
-**Alternativa** (`kuwabara_hoja_2hits_alt`, 1 byte, `$0D9CB2` `$8E` → `$0E`):
-recortar la **cadena de cajas** del primer blob de la hoja en vez de quitar un
-hitbox. Es la versión que se probó primero y que parecía afectar al shuriken
-— el byte `$0D9CB6` es a la vez caja y cabecera, así que el efecto de esa
-versión no está claro.
+El shuriken (↓↓+A/B) **no se toca**: sus blobs son `$0D9CD6`, `$0D9CE2` y
+`$0D9CEE`.
+
+### ⚠️ El byte del daño es ambiguo
+
+`$0D9CAA` es a la vez:
+
+- el `$65` (daño) del blob del f0 de la hoja dimensional, **y**
+- el **radioX** de una caja de los blobs `$0D9CA2`, `$0D9CA6` y `$0D9C9E`
+  (los `b1` = 15, 16 y 22 de la misma tabla de objetos).
+
+Al pasar de 8 a 16, esas **tres cajas pasan de radioX 8 a radioX 16**. El bit 7
+se queda en 0 (8 = `0000 1000`, 16 = `0001 0000`), así que **no se alargan las
+cadenas de cajas**; solo se ensanchan esas tres hitboxes.
+
+**Si en el juego se nota que otra técnica pega más lejos, este byte es el
+culpable.** La alternativa sería tocar el daño en otro sitio, pero el daño sale
+de `$65` y no hay otro.
+
+### Cómo queda el frame data con el parche
+
+| | Antes | Después |
+|---|---|---|
+| golpes | 3 (f0, f1, f2) | **1** (solo f0) |
+| daño por golpe | 8 | **16** |
+| daño total | 24 | **16** |
+| ventana activa | 12 ticks (97..108) | **4 ticks** |
+| último golpe | tick 12 | **tick 4** |
 
 ### 1.4 Lo que NO se sabe
 
