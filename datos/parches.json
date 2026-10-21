@@ -1518,27 +1518,27 @@
         }
       ]
     },
-    "kuwabara_hoja_1hit_doble": {
-      "desc": "LA HOJA DIMENSIONAL DE KUWABARA: 1 SOLO HIT, Y PEGUE EL DOBLE. La hoja es el move $A6 (ABAJO,ARRIBA + A/B/C, 20 de mana) y sus golpes salen de un objeto con la sub-lista $0D9A3A. Su cadena (registro $0D948A) tiene TRES frames con hitbox: f0 (b1=24, flags en $0D9A9A), f1 (b1=25, $0D9A9E) y f2 (b1=26, $0D9AA2). Los tres usan blobs de dano 8, stun 6, empuje $1E y $67=2 (lo que la distingue del shuriken, que tiene $67=1). (1) Se quita el bit de hitbox (bit 6) de f1 y de f2, y con eso la hoja pega UNA vez, en f0. (2) Se dobla el dano: el $65 del blob del f0 ($0D9CAA) pasa de 8 a 16. El dano es CRUDO (el motor resta $65 tal cual en $01F420-$01F424), sin multiplicador, asi que 16 es exactamente el doble de 8. OJO: el byte $0D9CAA es AMBIGUO: es el $65 de este blob y tambien el radioX de una caja de los blobs $0D9CA2, $0D9CA6 y $0D9C9E (los b1=15, 16 y 22 de la misma tabla). Al pasar de 8 a 16, esas tres cajas pasan de radioX 8 a radioX 16 (el bit 7 se queda en 0, asi que no se alargan las cadenas de cajas). Si en el juego eso se nota en otra tecnica, este byte es el culprit.",
+    "kuwabara_hoja_2hits_doble": {
+      "desc": "LA HOJA DIMENSIONAL DE KUWABARA: 2 GOLPES QUE PEGAN EL DOBLE, Y UN RECOVERY UN POCO MAS LENTO. La hoja es el move $A6 (ABAJO,ARRIBA + A/B/C, 20 de mana) y sus golpes salen de un objeto con la sub-lista $0D9A3A. Su cadena (registro $0D948A) tiene TRES frames con hitbox: f0 (b1=24, flags en $0D9A9A), f1 (b1=25, $0D9A9E) y f2 (b1=26, $0D9AA2), con blobs de dano 8, stun 6, empuje $1E y $67=2 (lo que la distingue del shuriken, que tiene $67=1). (1) Se quita el bit de hitbox (bit 6) de f2: la hoja pega DOS veces, en f0 y f1. (2) Se dobla el dano: el $65 del blob del f0 ($0D9CAA) pasa de 8 a 16. El dano es CRUDO (el motor resta $65 tal cual en $01F420-$01F424), sin multiplicador, asi que 16 es exactamente el doble de 8. (3) Se alarga el recovery 8 ticks: la duracion del f10 del personaje ($0C2EA2, el ultimo frame de su cadena, donde espera a que el objeto termine) pasa de 12 a 20. El personaje queda bloqueado 61 ticks en vez de 53. OJO: el byte $0D9CAA es AMBIGUO: es el $65 de este blob y tambien el radioX de una caja de los blobs $0D9CA2, $0D9CA6 y $0D9C9E (los b1 = 15, 16 y 22 de la misma tabla). Al pasar de 8 a 16, esas tres cajas pasan de radioX 8 a radioX 16 (el bit 7 se queda en 0, asi que no se alargan las cadenas de cajas). Si en el juego eso se nota en otra tecnica, este byte es el culpable.",
       "confianza": "CODIGO (la cadena del objeto, los flags de la sub-lista y el blob) / MEDIDO (la ficha dice 8x3 y stun 6x3; el dano es crudo, sin multiplicador) / SIN_CONFIRMAR (que f1 y f2 sean los dos golpes que sobran, y el efecto colateral en las 3 cajas)",
       "bytes": [
-        {
-          "addr": "0x0D9A9E",
-          "old": "60",
-          "new": "20",
-          "nota": "flags de la entrada de sub-lista b1=25 (el f1 de la hoja): se quita el bit 6, el de hitbox. Este frame deja de golpear."
-        },
         {
           "addr": "0x0D9AA2",
           "old": "60",
           "new": "20",
-          "nota": "flags de la entrada de sub-lista b1=26 (el f2 de la hoja): idem, se quita el bit de hitbox."
+          "nota": "flags de la entrada de sub-lista b1=26 (el f2 de la hoja): se quita el bit 6, el de hitbox. Ese frame deja de golpear y la hoja pega 2 veces (f0 y f1) en vez de 3."
         },
         {
           "addr": "0x0D9CAA",
           "old": "08",
           "new": "10",
-          "nota": "$65 = el dano del blob del f0 ($0D9CAA): de 8 a 16, o sea el doble. Es el primer byte del blob. OJO: este byte es tambien el radioX de una caja de los blobs $0D9CA2, $0D9CA6 y $0D9C9E."
+          "nota": "$65 = el dano del blob del f0 ($0D9CAA): de 8 a 16, o sea el doble. OJO: este byte es tambien el radioX de una caja de los blobs $0D9CA2, $0D9CA6 y $0D9C9E."
+        },
+        {
+          "addr": "0x0C2EA2",
+          "old": "0C",
+          "new": "14",
+          "nota": "duracion del f10 del personaje (el ultimo frame de su cadena, donde espera a que el objeto termine): de 12 a 20 ticks. El recovery se alarga 8 ticks (0,13 s) y el personaje queda bloqueado 61 ticks en vez de 53."
         }
       ]
     }

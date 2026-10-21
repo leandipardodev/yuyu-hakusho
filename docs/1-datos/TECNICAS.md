@@ -124,20 +124,24 @@ Los tres frames con hitbox de cada uno, y el blob de cada uno:
 > **Y OJO con `$0D9CB6`**: es a la vez la **caja 2** del blob `$0D9CAA` y la
 > **cabecera** del blob `$0D9CB6`. Por eso un parche ahi es ambiguo.
 
-### 1.6 Parche: 1 solo hit que pegue el doble
+### 1.6 Parche: 2 hits que pegan el doble, y más recovery
 
-**Grupo `kuwabara_hoja_1hit_doble` — 3 bytes:**
+**Grupo `kuwabara_hoja_2hits_doble` — 3 bytes:**
 
 | Byte | De | A | Qué hace |
 |---|---|---|---|
-| `$0D9A9E` | `60` | `20` | flags del **f1** (b1=25): se quita el bit 6, el de hitbox |
-| `$0D9AA2` | `60` | `20` | flags del **f2** (b1=26): ídem |
+| `$0D9AA2` | `60` | `20` | flags del **f2** (b1=26): se quita el bit 6, el de hitbox |
 | `$0D9CAA` | `08` | `10` | `$65` = **el daño** del blob del f0: de 8 a **16** |
+| `$0C2EA2` | `0C` | `14` | duración del **f10 del personaje**: de 12 a 20 ticks |
 
-**1 hit:** solo queda el f0 con hitbox (los 4 primeros ticks).
+**2 hits:** queda el f0 y el f1 con hitbox (los dos primeros, 4 ticks cada uno).
 **Doble daño:** el daño es **crudo** — el motor resta `$65` tal cual, sin
-multiplicador (`0x1F420` carga `$65` en d0 y `0x1F424` lo resta) — así que
-16 es exactamente el doble de 8.
+multiplicador (`0x1F420` lo carga en d0 y `0x1F424` lo resta) — así que 16 es
+exactamente el doble de 8.
+
+**Más recovery:** el f10 es el **último frame de la cadena del personaje**
+(`$0C2E52`), donde espera a que el objeto termine. Alargarlo de 12 a 20 ticks
+deja al personaje **61 ticks bloqueados en vez de 53** (+8 ticks = +0,13 s).
 
 El shuriken (↓↓+A/B) **no se toca**: sus blobs son `$0D9CD6`, `$0D9CE2` y
 `$0D9CEE`.
@@ -155,18 +159,25 @@ se queda en 0 (8 = `0000 1000`, 16 = `0001 0000`), así que **no se alargan las
 cadenas de cajas**; solo se ensanchan esas tres hitboxes.
 
 **Si en el juego se nota que otra técnica pega más lejos, este byte es el
-culpable.** La alternativa sería tocar el daño en otro sitio, pero el daño sale
-de `$65` y no hay otro.
+culpable.** El daño sale de `$65` y no hay otro sitio.
 
 ### Cómo queda el frame data con el parche
 
-| | Antes | Después |
+| | Original | Con el parche |
 |---|---|---|
-| golpes | 3 (f0, f1, f2) | **1** (solo f0) |
+| golpes | 3 (f0, f1, f2) | **2** (f0, f1) |
 | daño por golpe | 8 | **16** |
-| daño total | 24 | **16** |
-| ventana activa | 12 ticks (97..108) | **4 ticks** |
-| último golpe | tick 12 | **tick 4** |
+| daño total | 24 | **32** |
+| ventana activa | 12 ticks (97..108) | **8 ticks** |
+| último golpe | tick 12 | **tick 8** |
+| personaje bloqueado | 53 ticks | **61 ticks** |
+
+### Otros bytes para ajustar el recovery
+
+| Byte | Qué | Actual |
+|---|---|---|
+| `$0C2E82` | duración del **f6** del personaje | 8 ticks (+4) |
+| `$0D94A2` | duración del **f3** del objeto (el frame sin hitbox) | 4 ticks (+4) |
 
 ### 1.4 Lo que NO se sabe
 

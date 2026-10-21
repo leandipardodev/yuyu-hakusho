@@ -19,7 +19,7 @@
     "06_kurama_planta_elevacion",
     "08_un_solo_plano",
     "09_rival_nace_delante",
-    "11_kuwabara_hoja_1hit_doble",
+    "11_kuwabara_hoja_2hits_doble",
     "03_itsuki_kage_instantaneo"
   ],
   "cambios": [
@@ -133,12 +133,12 @@
       "bytes": 5
     },
     {
-      "id": "11_kuwabara_hoja_1hit_doble",
-      "titulo": "La hoja dimensional de Kuwabara: 1 solo hit que pega el doble",
+      "id": "11_kuwabara_hoja_2hits_doble",
+      "titulo": "La hoja dimensional de Kuwabara: 2 hits que pegan el doble, con mas recovery",
       "grupos": [
-        "kuwabara_hoja_1hit_doble"
+        "kuwabara_hoja_2hits_doble"
       ],
-      "que_hace": "La hoja dimensional (el move $A6 de Kuwabara, ABAJO,ARRIBA + A/B/C) pega UNA sola vez, y ese golpe pega el doble: 16 de dano en vez de 8 (el dano es crudo, sin multiplicador). El shuriken (ABAJO,ABAJO) queda intacto.",
+      "que_hace": "La hoja dimensional (el move $A6 de Kuwabara, ABAJO,ARRIBA + A/B/C) pega DOS veces (f0 y f1), y cada golpe pega 16 de dano en vez de 8. Ademas el recovery es 8 ticks mas largo: el personaje queda bloqueado 61 ticks en vez de 53. El shuriken (ABAJO,ABAJO) queda intacto.",
       "bytes": 3
     },
     {
