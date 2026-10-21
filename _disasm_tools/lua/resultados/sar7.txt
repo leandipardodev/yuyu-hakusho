@@ -1,0 +1,29 @@
+=== S/A/R en modo PRACTICA ===
+en combate. T1=0xAD HP1=223 HP4=223
+
+=== verificando que el dummy no ataca (120 frames en reposo) ===
+HP1: inicio=223 minimo=223  -> dummy NO ataca
+
+=== MEDICIONES (Yusuke, practica) ===
+A parado             | inp= 8 | startup=20   | recov=48   | dmg= 16 | recibio=no
+abajo+A              | inp=20 | startup=24   | recov=56   | dmg=  0 | recibio=no
+B parado             | inp= 8 | startup=-    | recov=-    | dmg=  0 | recibio=no
+abajo+B              | inp=20 | startup=20   | recov=60   | dmg=  0 | recibio=no
+->+B                 | inp=20 | startup=64   | recov=16   | dmg=  0 | recibio=no
+->+A agarre          | inp=20 | startup=-    | recov=-    | dmg= 32 | recibio=no
+Reimu QCF+A          | inp=44 | startup=104  | recov=20   | dmg=  0 | recibio=no
+Reimu QCF+B          | inp=44 | startup=-    | recov=-    | dmg=  0 | recibio=no
+DD+A                 | inp=32 | startup=-    | recov=-    | dmg=  0 | recibio=no
+
+=== RESUMEN ===
+move                 |  startup |    recov |   dmg
+----------------------------------------------------------
+>+B                  |       64 |       16 |     0
+abajo+B              |       20 |       60 |     0
+->+A agarre          |        - |        - |    32
+Reimu QCF+B          |        - |        - |     0
+Reimu QCF+A          |      104 |       20 |     0
+abajo+A              |       24 |       56 |     0
+B parado             |        - |        - |     0
+A parado             |       20 |       48 |    16
+DD+A                 |        - |        - |     0

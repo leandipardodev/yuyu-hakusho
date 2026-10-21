@@ -1,0 +1,17 @@
+=== Extrayendo tabla de dano exacta (modo practica) ===
+en combate. HP1=223 HP4=223
+
+move                   |  startup |   dano | nota
+---------------------------------------------------------------
+A parado (fuerte)      | SIN IMPACTO
+B parado (ligero)      | SIN IMPACTO
+abajo+A                | startup=?     | DANO=32   | PC-capturado=false
+abajo+B                | SIN IMPACTO
+->+A agarre            | SIN IMPACTO
+->+B                   | SIN IMPACTO
+Reimu QCF+A            | SIN IMPACTO
+Reimu QCF+B            | SIN IMPACTO
+DD+A escopetazo        | SIN IMPACTO
+DD+B                   | SIN IMPACTO
+
+=== RESUMEN (personaje actual) ===

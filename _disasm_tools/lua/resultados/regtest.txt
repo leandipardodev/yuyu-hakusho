@@ -1,0 +1,49 @@
+=== registros expuestos por el core ===
+total: 35
+  M68K A0=324966
+  M68K A1=420
+  M68K A2=11530
+  M68K A3=4294959264
+  M68K A4=4294958399
+  M68K A5=4294934528
+  M68K A6=0
+  M68K A7=4294966950
+  M68K D0=3145727
+  M68K D1=59522
+  M68K D2=8323072
+  M68K D3=65282
+  M68K D4=3072
+  M68K D5=0
+  M68K D6=0
+  M68K D7=65535
+  M68K IR=17176
+  M68K ISP=4294966950
+  M68K PC=17170
+  M68K SP=4294966950
+  M68K SR=9984
+  M68K USP=0
+  Z80 af2=0
+  Z80 af=68
+  Z80 bc2=0
+  Z80 bc=0
+  Z80 de2=0
+  Z80 de=0
+  Z80 hl2=0
+  Z80 hl=16385
+  Z80 ix=62451
+  Z80 iy=0
+  Z80 pc=96
+  Z80 sp=7936
+  Z80 wz=8191
+
+=== prueba getregister ===
+  d0   -> ok=true val=0
+  D0   -> ok=true val=0
+  pc   -> ok=true val=0
+  PC   -> ok=true val=0
+  a5   -> ok=true val=0
+  A5   -> ok=true val=0
+  d1   -> ok=true val=0
+  d2   -> ok=true val=0
+  x    -> ok=true val=0
+  sp   -> ok=true val=0

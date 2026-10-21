@@ -1,0 +1,18 @@
+=== PARTE 1: verificando valores de dano (modo practica) ===
+en combate. HP1=223 HP4=223
+
+move                   |  startup |   dano
+----------------------------------------------
+A parado               | 5 intentos SIN impacto
+B parado               | 5 intentos SIN impacto
+abajo+A                | 5 intentos SIN impacto
+abajo+B                | 5 intentos SIN impacto
+->+A agarre            | 5 intentos SIN impacto
+->+B                   | 5 intentos SIN impacto
+
+=== PARTE 2: damage table consolidada (contrasta con tabla web) ===
+Los valores medidos en vivo deben coincidir con la tabla de newton.com.tw:
+  1=conectado | 12=dash/escopetazo | 16=立A Yusuke | 20=立A Kuwabara/Chui
+  24=立A Hiei/Genkai | 32=gancho Ryuujin | 48=Reimu nivel alto | 81=super Genkai
+
+Dano medido por move (este personaje):

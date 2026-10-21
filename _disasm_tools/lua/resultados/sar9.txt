@@ -1,0 +1,20 @@
+=== S/A/R FINAL (modo practica, 3 repeticiones) ===
+en combate (Yusuke vs dummy)
+
+move               | conexion |  startup_avg |   dmg
+-----------------------------------------------------------------------
+A parado           | SIN CONEXION en 3 intentos
+B parado           | SIN CONEXION en 3 intentos
+abajo+A            | 2/3 ok | startup avg= 42.5 f | dmg= 32 | [20 65 ]
+abajo+B            | 1/3 ok | startup avg= 38.0 f | dmg= 32 | [38 ]
+->+B               | SIN CONEXION en 3 intentos
+->+A agarre        | SIN CONEXION en 3 intentos
+Reimu QCF+A        | 1/3 ok | startup avg=103.0 f | dmg= 32 | [103 ]
+Reimu QCF+B        | SIN CONEXION en 3 intentos
+
+=== RESUMEN FINAL S/A/R (Yusuke) ===
+move               |  startup |   dmg
+-------------------------------------
+Reimu QCF+A        |    103.0 |    32
+abajo+A            |     42.5 |    32
+abajo+B            |     38.0 |    32

@@ -1,0 +1,1435 @@
+{
+  "_meta": {
+    "proyecto": "Yu Yu Hakusho: Makyou Toitsusen (Mega Drive, 1994, Treasure)",
+    "fecha": "2026-10-20",
+    "que_es": "Datos y parches ROM VERIFICADOS (por lectura del codigo y/o medicion en el emulador). Formato pensado para que un agente lo pueda aplicar solo.",
+    "rom_de_referencia": {
+      "path": "C:\\proyectos\\roms\\yuyu_makyou_base.bin",
+      "sha1": "5198F9FBF258AF2AD5E08C07D61B345B8FC7C79B",
+      "nota": "base reparada (2 parches del usuario revertidos) + checksum de cabecera al dia"
+    },
+    "roms_originales_del_usuario": {
+      "path": "C:\\Users\\leand\\Downloads\\ROM A MODIFICAR - HIEI DRAGON LENTO v1 NO SIRVE + BLOB B 68=9.md",
+      "sha1": "810BAA877AE48D6B5432A16B1E3D75A00D5111C3",
+      "diferencias_con_la_base": "6 bytes en 2 parches (ver grupo 'fix')"
+    },
+    "niveles_de_confianza": {
+      "CODIGO": "leido del desensamblado 68k, con la instruccion exacta y su direccion",
+      "MEDIDO": "medido en el emulador (FBNeo) con yuyu_seq.lua / yuyu_obj.lua",
+      "DEDUCIDO": "conclusion razonable a partir de CODIGO/MEDIDO, sin comprobar de forma directa",
+      "SIN_CONFIRMAR": "hipotesis pendiente de confirmacion en el juego"
+    },
+    "regla_de_oro": "El juego VERIFICA el checksum de la cabecera al arrancar (0x4318). Todo parche tiene que reescribirlo o el ROM no arranca."
+  },
+  "estructuras": {
+    "jugador": {
+      "confianza": "CODIGO",
+      "base": "$FF8400 + n*$400",
+      "slots": {
+        "1": "$FF8400",
+        "2": "$FF8800",
+        "3": "$FF8C00",
+        "4": "$FF9000"
+      },
+      "campos": {
+        "$50": "puntero a la tabla de moves del personaje",
+        "$58": "tipo de objeto (NO es el id de personaje)",
+        "$59": "indice del frame de la animacion",
+        "$5A": "duracion del frame actual (en ticks)",
+        "$5B": "tick dentro del frame",
+        "$5F": "id de move",
+        "$60": "variante del move",
+        "$6C": "flags de subsistemas (bit0=$15CB0, bit1=$15DE6, bit2=$15E28, bit3=$15EFE, bit4=$15F24)",
+        "$6D": "flags (OR con $6C)",
+        "$7E": "stun actual (word)",
+        "$78": "HP (word signed)",
+        "$80": "stun maximo (word)",
+        "$8C": "puntero a la sub-lista de moves",
+        "$90": "puntero a la tabla de 30 bytes con velocidades",
+        "$A0": "segundo frame de la cadena (offset)"
+      }
+    },
+    "objeto": {
+      "confianza": "CODIGO",
+      "nota": "proyectiles, ondas y las 'manos flotantes' son OBJETOS, no el personaje",
+      "campos": {
+        "$00": "puntero del handler (4 bytes)",
+        "$04": "flag de ocupado (word $0080 = ocupado)",
+        "$06": "contador de ticks (word)",
+        "$10": "velocidad X (16.16)",
+        "$14": "velocidad Y (16.16)",
+        "$24": "id grafico",
+        "$27": "flags",
+        "$40": "posicion X en mundo (word)",
+        "$44": "posicion Y en mundo (word)",
+        "$50": "puntero a la tabla de moves DEL OBJETO",
+        "$58": "tipo de objeto (indice de la tabla de handlers en $14A00)",
+        "$5F": "id de move (en la tabla del objeto)"
+      },
+      "pool": {
+        "confianza": "CODIGO para el allocator; DEDUCIDO para la direccion",
+        "num": 16,
+        "stride": "$80",
+        "allocator": "0x1FAB4: addi.w #$80,$a036.w / andi.w #$7ff,$a036.w / movea.w $a036.w,a0 / adda.w #$9400,a0 / tst.w $4(a0) / move.l d0,$0(a0) / move.w #$80,$4(a0) / clr.w $6(a0)",
+        "direccion_calculada": "$009400 + indice*$80 (24 bits, movea.w sign-extiende)",
+        "direccion_no_confirmada": "la direccion real en FBNeo NO esta verificada; el script yuyu_obj.lua la autodetecta por firma",
+        "contador_del_pool": "$A036 (word)"
+      },
+      "tabla_de_handlers": {
+        "confianza": "CODIGO",
+        "direccion": "$14A00",
+        "formato": "entrada de 2 bytes = offset relativo a su propia direccion",
+        "entradas": [
+          {
+            "tipo": 0,
+            "handler": "$14AD6",
+            "tabla_moves": "$14D6C"
+          },
+          {
+            "tipo": 1,
+            "handler": "$14AEA",
+            "tabla_moves": "$14D76"
+          },
+          {
+            "tipo": 2,
+            "handler": "$14AFE",
+            "tabla_moves": "$14D82"
+          },
+          {
+            "tipo": 3,
+            "handler": "$14B12",
+            "tabla_moves": "$14D90"
+          },
+          {
+            "tipo": 4,
+            "handler": "$14B26",
+            "tabla_moves": "$14D9A"
+          },
+          {
+            "tipo": 5,
+            "handler": "$14B3A",
+            "tabla_moves": "$14DA6"
+          },
+          {
+            "tipo": 6,
+            "handler": "$14B4E",
+            "tabla_moves": "$14DBE"
+          },
+          {
+            "tipo": 7,
+            "handler": "$14B62",
+            "tabla_moves": "$14DC8"
+          },
+          {
+            "tipo": 8,
+            "handler": "$14B76",
+            "tabla_moves": "$14DD2"
+          },
+          {
+            "tipo": 9,
+            "handler": "$14B8A",
+            "tabla_moves": "$14DB4"
+          },
+          {
+            "tipo": 16,
+            "handler": "$14BD2",
+            "tabla_moves": "$14DDC"
+          },
+          {
+            "tipo": 20,
+            "handler": "$14BF0",
+            "tabla_moves": "$14DE6"
+          },
+          {
+            "tipo": 21,
+            "handler": "$14C18",
+            "tabla_moves": "$14DF6"
+          }
+        ],
+        "ejemplo_handler_16": "0x14BD2: move.l #$14ddc,$50(a5) / move.l #$27f618,$1c(a5) / ori.w #$c0,$24(a5) / move.b #$1,$27(a5)"
+      }
+    }
+  },
+  "tablas_por_personaje": {
+    "confianza": "CODIGO",
+    "nota": "ctx = indice de personaje en las tablas del ROM. ctx3=HIEI, ctx6=ITSUKI (confirmados por el proyecto). ctx0..ctx2 y ctx4,5,7,8,9 sin nombre confirmado.",
+    "ctx": [
+      {
+        "ctx": 0,
+        "nombre": "?",
+        "stun_max": 40,
+        "init": "0x12792",
+        "tabla_moves": "$0BF75A",
+        "sub_lista": "$0C04CA",
+        "tabla_30": "$01251E"
+      },
+      {
+        "ctx": 1,
+        "nombre": "?",
+        "stun_max": 56,
+        "init": "0x127DC",
+        "tabla_moves": "$0C229A",
+        "sub_lista": "$0C31DA",
+        "tabla_30": "$01253C"
+      },
+      {
+        "ctx": 2,
+        "nombre": "?",
+        "stun_max": 48,
+        "init": "0x12826",
+        "tabla_moves": "$0C4EEA",
+        "sub_lista": "$0C5DAA",
+        "tabla_30": "$01255A"
+      },
+      {
+        "ctx": 3,
+        "nombre": "HIEI",
+        "stun_max": 44,
+        "init": "0x12870",
+        "tabla_moves": "$0C7C9A",
+        "sub_lista": "$0C8BEA",
+        "tabla_30": "$012578"
+      },
+      {
+        "ctx": 4,
+        "nombre": "?",
+        "stun_max": 54,
+        "init": "0x128BA",
+        "tabla_moves": "$0CA6DA",
+        "sub_lista": "$0CB38A",
+        "tabla_30": "$0125B4"
+      },
+      {
+        "ctx": 5,
+        "nombre": "?",
+        "stun_max": 46,
+        "init": "0x12904",
+        "tabla_moves": "$0CCC7A",
+        "sub_lista": "$0CDEFA",
+        "tabla_30": "$0125D2"
+      },
+      {
+        "ctx": 6,
+        "nombre": "ITSUKI",
+        "stun_max": 40,
+        "init": "0x1294E",
+        "tabla_moves": "$0CF99A",
+        "sub_lista": "$0D069A",
+        "tabla_30": "$0125F0"
+      },
+      {
+        "ctx": 7,
+        "nombre": "?",
+        "stun_max": 38,
+        "init": "0x12998",
+        "tabla_moves": "$0D1E5A",
+        "sub_lista": "$0D2C6A",
+        "tabla_30": "$01260E"
+      },
+      {
+        "ctx": 8,
+        "nombre": "?",
+        "stun_max": 48,
+        "init": "0x129E2",
+        "tabla_moves": "$0D4A9A",
+        "sub_lista": "$0D59FA",
+        "tabla_30": "$01262C"
+      },
+      {
+        "ctx": 9,
+        "nombre": "?",
+        "stun_max": 62,
+        "init": "0x12A2C",
+        "tabla_moves": "$0D777A",
+        "sub_lista": "$0D85AA",
+        "tabla_30": "$01264A"
+      }
+    ]
+  },
+  "hallazgos": [
+    {
+      "id": "checksum_validado_al_arrancar",
+      "titulo": "El juego verifica el checksum de la cabecera al arrancar",
+      "confianza": "CODIGO + MEDIDO",
+      "codigo": [
+        {
+          "addr": "0x004302",
+          "instr": "movea.l #$200, a0"
+        },
+        {
+          "addr": "0x004308",
+          "instr": "movea.l #$1a4, a1"
+        },
+        {
+          "addr": "0x004312",
+          "instr": "add.w  (a0)+, d1"
+        },
+        {
+          "addr": "0x004318",
+          "instr": "movea.l #$18e, a1"
+        },
+        {
+          "addr": "0x00431E",
+          "instr": "cmp.w  (a1), d1"
+        },
+        {
+          "addr": "0x004320",
+          "instr": "beq.b  $432e"
+        },
+        {
+          "addr": "0x004322",
+          "instr": "move.w  #$e, $e080.w"
+        },
+        {
+          "addr": "0x004328",
+          "instr": "move.b  #$1, $1a(a5)"
+        }
+      ],
+      "valor": "checksum = suma de todas las palabras de 16 bits desde 0x200 hasta el fin del ROM, mod 0x10000, en 0x18E-0x18F",
+      "consecuencia": "un ROM parcheado con el checksum viejo NO arranca: se queda en el logo SEGA",
+      "correccion": "los docs del proyecto dicen que el checksum esta obsoleto en todos los dumps y que 'no importa'. Eso es cierto de los DUMPS, pero NO de los parches: el juego lo valida igual."
+    },
+    {
+      "id": "5b_no_es_delay",
+      "titulo": "El $5B NO es un delay: es el contador de ticks del frame",
+      "confianza": "CODIGO + MEDIDO",
+      "explicacion": "Al arrancar un move, 0x19C26 pone $5B = $FF a proposito: el primer tick (0x19C96 addq.b #$1) lo desborda a 0, que es la condicion para que se lea el frame data (0x1EB7A tst.b $5b(a5) / bne.b $1eba4).",
+      "medido": "en el log del juego el $5B salta a FF al cambiar de frame y el ciclo de idle dura 32 ticks (8+6+4+4+4+6)",
+      "consecuencia": "parchar 0x19C29 (FF -> 01) NO cambia NADA. Ese parche fue retirado del parcheador."
+    },
+    {
+      "id": "duracion_de_frame_es_b0",
+      "titulo": "La duracion de un frame es el byte +0 del registro de 8 bytes ($5A)",
+      "confianza": "CODIGO + MEDIDO",
+      "explicacion": "0x1EB5A: move.b $0(a2), $5a(a5). 0x19C9C: move.b $5a(a5), d0. 0x19CA0: cmp.b $5b(a5), d0. 0x19CA4: bhi.b $19cc2. El frame dura exactamente $5A ticks.",
+      "medido": "$5A=08 -> 8 ticks (00..07); $5A=06 -> 6; $5A=04 -> 4"
+    },
+    {
+      "id": "cadena_de_frames",
+      "titulo": "Como se recorre la cadena de frames de un move",
+      "confianza": "CODIGO",
+      "explicacion": "ID ($5F) -> tabla indice en $50: destino = base + word[base + id*2]. Registro de 8 bytes: destino + frame*8. El byte +1 (b1) indexa la sub-lista en $8C: entrada = $8C + b1*4. Esa entrada tiene: byte+0 = flags (bit 6 = HITBOX), byte+1 = duracion, word+2 = offset al blob de cajas.",
+      "nota": "el limite de la cadena de frames de cada move NO esta verificado (pendiente abierto del proyecto). Por eso los parches de duracion se aplican a frames concretos, no a la cadena entera."
+    },
+    {
+      "id": "blob_de_cajas",
+      "titulo": "Formato del blob de cajas (donde viven dano, stun, empuje y los radios)",
+      "confianza": "CODIGO",
+      "cabecera": {
+        "+0": "$65 dano",
+        "+1": "$66 stun",
+        "+2": "$64 empuje (bits 0-1 nivel, 2-3 mascara, bit 4 = sin dano, bit 5 = sin freeze)",
+        "+3": "nibble bajo -> $68, nibble alto -> $67"
+      },
+      "caja": {
+        "+0": "radioX (bit 7 = hay mas cajas)",
+        "+1": "offsetX (sesgo $80)",
+        "+2": "radioY",
+        "+3": "offsetY (sesgo $A0)"
+      },
+      "lectura": "0x1EC0E: move.b (a2)+, $65(a5) / 0x1EC12: move.b (a2)+, $66(a5) / 0x1EC16: move.b (a2)+, $64(a3)"
+    },
+    {
+      "id": "itsuki_especial_166_167",
+      "titulo": "During el especial, Itsuki pasa por los IDs 166 y 167 (sin hitbox)",
+      "confianza": "MEDIDO",
+      "medido": "yuyu_seq.lua con Itsuki de P1: $5F=01 (ataque normal) -> $5F=A6 (166, frames b0=4,4,4) -> $5F=A7 (167, frames b0=2,2,6...)",
+      "deduccion": "los IDs 166 y 167 no tienen bit 6 en la sub-lista, o sea que el PERSONAJE no lleva la hitbox: las manos son un objeto",
+      "tablas": {
+        "166": {
+          "registro": "$0D053A",
+          "frames_b0": [
+            4,
+            4,
+            4,
+            2,
+            2,
+            6
+          ]
+        },
+        "167": {
+          "registro": "$0D0552",
+          "frames_b0": [
+            2,
+            2,
+            6,
+            6,
+            4,
+            0
+          ]
+        }
+      }
+    },
+    {
+      "id": "hits_de_64px_en_itsuki",
+      "titulo": "Los unicos hits anchos (64 px) del set de Itsuki",
+      "confianza": "CODIGO",
+      "datos": [
+        {
+          "move": 160,
+          "frame": 1,
+          "registro": "$0D0402",
+          "blob": "$0D0FEA",
+          "dano": 6,
+          "stun": 134,
+          "radioX": 14,
+          "radioY": 12
+        },
+        {
+          "move": 161,
+          "frame": 2,
+          "registro": "$0D042A",
+          "blob": "$0D11C6",
+          "dano": 52,
+          "stun": 44,
+          "radioX": 64,
+          "radioY": 7
+        },
+        {
+          "move": 171,
+          "frame": 5,
+          "registro": "$0D05C2",
+          "blob": "$0D11E6",
+          "dano": 64,
+          "stun": 40,
+          "radioX": 64,
+          "radioY": 6
+        },
+        {
+          "move": 172,
+          "frame": 4,
+          "registro": "$0D05C2",
+          "blob": "$0D11E6",
+          "dano": 64,
+          "stun": 40,
+          "radioX": 64,
+          "radioY": 6
+        },
+        {
+          "move": 173,
+          "frame": 3,
+          "registro": "$0D05C2",
+          "blob": "$0D11E6",
+          "dano": 64,
+          "stun": 40,
+          "radioX": 64,
+          "radioY": 6
+        },
+        {
+          "move": 174,
+          "frame": 2,
+          "registro": "$0D05C2",
+          "blob": "$0D11E6",
+          "dano": 64,
+          "stun": 40,
+          "radioX": 64,
+          "radioY": 6
+        },
+        {
+          "move": 175,
+          "frame": 2,
+          "registro": "$0D05DA",
+          "blob": "$0D11E6",
+          "dano": 64,
+          "stun": 40,
+          "radioX": 64,
+          "radioY": 6
+        }
+      ]
+    },
+    {
+      "id": "onda_de_itsuki_es_un_objeto",
+      "titulo": "La onda de Itsuki (64x6 px) es el objeto tipo $10, move ID 6",
+      "confianza": "CODIGO (el objeto y su blob) / SIN_CONFIRMAR (que sea 影手)",
+      "objeto": {
+        "tipo": "$10",
+        "handler": "$149AC",
+        "tabla_moves": "$14DDC",
+        "move_id": 6,
+        "registro": "$015AE8",
+        "frame_con_hitbox": 1,
+        "b0_del_frame": 103,
+        "blob": "$0D11E6",
+        "dano": 64,
+        "stun": 40,
+        "empuje": "$05",
+        "radioX": 64,
+        "radioY": 6,
+        "offX": 60,
+        "offY": 4
+      },
+      "velocidad": {
+        "confianza": "CODIGO",
+        "sentido_1": {
+          "addr": "0x01FD0A",
+          "instr": "move.l #$ffff0000, $10(a0)",
+          "px_por_frame": -1.0
+        },
+        "sentido_2": {
+          "addr": "0x01FD56",
+          "instr": "move.l #$10000, $10(a0)",
+          "px_por_frame": 1.0
+        }
+      }
+    },
+    {
+      "id": "dragón_de_hiei_es_un_objeto",
+      "titulo": "El dragon de Hiei es un objeto con setup propio",
+      "confianza": "CODIGO (el setup) / SIN_CONFIRMAR (que sea el dragon)",
+      "setup": {
+        "addr": "0x0140D4",
+        "instr": "move.l #$12578, $90(a0)",
+        "nota": "$012578 = tabla $90 de HIEI (ctx3)"
+      },
+      "move_id_del_objeto": {
+        "addr": "0x0140F4",
+        "instr": "move.b #$25, $5f(a0)",
+        "valor": 37
+      },
+      "velocidad_x": [
+        {
+          "addr": "0x014112",
+          "instr": "move.l #$fffe8000, $10(a0)",
+          "px_por_frame": -0.5,
+          "byte_a_cambiar": "0x014115",
+          "valor_actual": "FE",
+          "medio": "FC",
+          "px_por_frame_medio": -0.25
+        },
+        {
+          "addr": "0x01411C",
+          "instr": "move.l #$18000, $10(a0)",
+          "px_por_frame": 1.5,
+          "byte_a_cambiar": "0x014120",
+          "valor_actual": "80",
+          "medio": "C0",
+          "px_por_frame_medio": 0.75
+        }
+      ],
+      "velocidad_y": {
+        "addr": "0x014102",
+        "instr": "move.l #$fffa0000, $14(a0)",
+        "px_por_frame": -6.0
+      },
+      "hitbox_en_el_personaje": {
+        "nota": "moves 38 y 39 de ctx3, hitbox 9x9 con offX -36 y +92 (las dos manos). NO son 影手: son de otro personaje.",
+        "move_38": {
+          "registro": "$0CFE6A",
+          "sub_lista": "$0D08A6",
+          "blob": "$0D10FE",
+          "dano": 9,
+          "stun": 36,
+          "empuje": "$09",
+          "radioX": 9,
+          "radioY": 9,
+          "offX": -36,
+          "offY": -52
+        },
+        "move_39": {
+          "registro": "$0CFE72",
+          "sub_lista": "$0D08AA",
+          "blob": "$0D110A",
+          "dano": 9,
+          "stun": 172,
+          "empuje": "$09",
+          "radioX": 9,
+          "radioY": 9,
+          "offX": 92,
+          "offY": 68
+        }
+      }
+    },
+    {
+      "id": "velocidades_de_proyectil",
+      "titulo": "Literales 16.16 de velocidad de los proyectiles (rutinas de creacion)",
+      "confianza": "CODIGO",
+      "tabla": [
+        {
+          "addr": "0x01FB06",
+          "literal": "$FFFF0000",
+          "px_por_frame": -1.0
+        },
+        {
+          "addr": "0x01FB14",
+          "literal": "$00010000",
+          "px_por_frame": 1.0
+        },
+        {
+          "addr": "0x01FB64",
+          "literal": "$00010000",
+          "px_por_frame": 1.0
+        },
+        {
+          "addr": "0x01FB72",
+          "literal": "$FFFF0000",
+          "px_por_frame": -1.0
+        },
+        {
+          "addr": "0x01FBCC",
+          "literal": "$FFFE0000",
+          "px_por_frame": -0.5
+        },
+        {
+          "addr": "0x01FC1E",
+          "literal": "$FFFF0000",
+          "px_por_frame": -1.0
+        },
+        {
+          "addr": "0x01FC6A",
+          "literal": "$00010000",
+          "px_por_frame": 1.0
+        },
+        {
+          "addr": "0x01FCB6",
+          "literal": "$00020000",
+          "px_por_frame": 2.0
+        },
+        {
+          "addr": "0x01FD0A",
+          "literal": "$FFFF0000",
+          "px_por_frame": -1.0
+        },
+        {
+          "addr": "0x01FD56",
+          "literal": "$00010000",
+          "px_por_frame": 1.0
+        },
+        {
+          "addr": "0x01FE8E",
+          "literal": "$00010000",
+          "px_por_frame": 1.0
+        },
+        {
+          "addr": "0x01FED8",
+          "literal": "$00010000",
+          "px_por_frame": 1.0
+        },
+        {
+          "addr": "0x01FF22",
+          "literal": "$FFFF0000",
+          "px_por_frame": -1.0
+        },
+        {
+          "addr": "0x01FF6C",
+          "literal": "$FFFF0000",
+          "px_por_frame": -1.0
+        },
+        {
+          "addr": "0x020006",
+          "literal": "$00018000",
+          "px_por_frame": 1.5
+        },
+        {
+          "addr": "0x020056",
+          "literal": "$0001E000",
+          "px_por_frame": 1.875
+        },
+        {
+          "addr": "0x02009E",
+          "literal": "$00018000",
+          "px_por_frame": 1.5
+        },
+        {
+          "addr": "0x020136",
+          "literal": "$FFFE8000",
+          "px_por_frame": -0.5
+        }
+      ]
+    },
+    {
+      "id": "guajos_lua_fbneo",
+      "titulo": "Guajos de Lua en FBNeo (los tres que costaron una ronda)",
+      "confianza": "MEDIDO",
+      "puntos": [
+        "NO existe el operador & en Lua 5.1/LuaJIT: usar bit.band(x, 0xFF). Con & el script no compila y FBNeo lo rechaza.",
+        "memory.readbyte devuelve el byte CON SIGNO: enmascarar siempre con bit.band.",
+        "El 68000 es BIG ENDIAN: rd16 = b0*256 + b1 ; rd32 = b0*2^24 + ... . Leyendo little-endian el HP de 223 sale como 57088."
+      ]
+    }
+  ],
+  "correcciones": [
+    {
+      "afirmacion_incorrecta": "Los IDs 37/38/39 con hitbox 9x9 son 影手 (Itsuki)",
+      "realidad": "no: 影手 es un objeto (move ID 6, blob $0D11E6 con radioX 64). Los 37/38/39 son de otro personaje.",
+      "quien_lo_afirmo": "deduccion por firma, sin medir"
+    },
+    {
+      "afirmacion_incorrecta": "El startup arranca con 255 frames de delay por el $5B",
+      "realidad": "el $5B se desborda a 0 en el primer tick: no hay delay. El startup son las duraciones b0 y/o la maquina de estados.",
+      "quien_lo_afirmo": "deduccion, ya corregido en el parcheador"
+    },
+    {
+      "afirmacion_incorrecta": "El checksum de la cabecera no importa (esta obsoleto en los dumps)",
+      "realidad": "el juego lo VALIDA al arrancar (0x4318). Sin recalcularlo el ROM no arranca.",
+      "quien_lo_afirmo": "deduccion del doc, corregido por el usuario al probar"
+    },
+    {
+      "afirmacion_incorrecta": "El pool de objetos esta en $FF9400",
+      "realidad": "no verificado: la aritmetica del allocator da $009400 (24 bits, movea.w sign-extiende). En FBNeo puede ser otra cosa. yuyu_obj.lua la autodetecta por firma.",
+      "quien_lo_afirmo": "deduccion"
+    },
+    {
+      "afirmacion_incorrecta": "El cuelgue en el logo SEGA era por el Z80",
+      "realidad": "era por el checksum de la cabecera. El Z80 no hace falta tocarlo (el parche 'sinz80' queda como diagnostico).",
+      "quien_lo_afirmo": "deduccion, corregido"
+    }
+  ],
+  "patches": {
+    "fix": {
+      "desc": "Revertir los 2 parches que hizo el usuario (el dragon no salia y el goteo de mana se habia quitado)",
+      "confianza": "CODIGO + MEDIDO",
+      "bytes": [
+        {
+          "addr": "0x01A4EA",
+          "old": "4E",
+          "new": "53",
+          "nota": "subq.w #$1,$b8(a5) -> nop (se pierde el goteo de mana)"
+        },
+        {
+          "addr": "0x01A4EB",
+          "old": "71",
+          "new": "6D"
+        },
+        {
+          "addr": "0x01A4EC",
+          "old": "4E",
+          "new": "00"
+        },
+        {
+          "addr": "0x01A4ED",
+          "old": "71",
+          "new": "B8"
+        },
+        {
+          "addr": "0x01B1E6",
+          "old": "68",
+          "new": "F2",
+          "nota": "bra.w $1a430 -> bra.w $21a08: el parche saltaba la creacion del proyectil"
+        },
+        {
+          "addr": "0x01B1E7",
+          "old": "22",
+          "new": "4A"
+        }
+      ]
+    },
+    "blob": {
+      "desc": "Estrechar la hitbox de 68 px a 9 px (el 'BLOB B 68=9' del nombre del ROM)",
+      "confianza": "CODIGO (los bytes) / SIN_CONFIRMAR (que caja sea la que se queria)",
+      "bytes": [
+        {
+          "addr": "0x0C99AE",
+          "old": "44",
+          "new": "09",
+          "nota": "radioX de la caja con radioY 9"
+        },
+        {
+          "addr": "0x0C99B6",
+          "old": "44",
+          "new": "09",
+          "nota": "radioX de la caja del frame 0"
+        }
+      ]
+    },
+    "extras": {
+      "desc": "Parches de gameplay de 1 byte",
+      "confianza": "CODIGO",
+      "bytes": [
+        {
+          "addr": "0x01FA85",
+          "old": "A0",
+          "new": "FF",
+          "nota": "slow-mo de muerte 160 -> 255 frames"
+        },
+        {
+          "addr": "0x01FA01",
+          "old": "10",
+          "new": "FF",
+          "nota": "tope del combo 16 -> 255"
+        },
+        {
+          "addr": "0x01F2E3",
+          "old": "10",
+          "new": "18",
+          "nota": "hitstun del atacante 16 -> 24"
+        },
+        {
+          "addr": "0x01F2EF",
+          "old": "10",
+          "new": "18",
+          "nota": "hitstun del defensor 16 -> 24"
+        },
+        {
+          "addr": "0x01F161",
+          "old": "1C",
+          "new": "28",
+          "nota": "hitstun de clash 28 -> 40"
+        },
+        {
+          "addr": "0x01F4CD",
+          "old": "00",
+          "new": "20",
+          "nota": "muerte con HP < 32 en vez de HP < 0"
+        },
+        {
+          "addr": "0x01EE94",
+          "old": "EF",
+          "new": "E1",
+          "nota": "empuje fisico entre peleadores x2 (asl.l #$7 -> #$8)"
+        },
+        {
+          "addr": "0x01F445",
+          "old": "03",
+          "new": "06",
+          "nota": "empuje del golpe limpio nivel 0: 3.00 -> 6.00 px/frame"
+        }
+      ]
+    },
+    "kage_startup": {
+      "desc": "Acortar el wind-up del especial de Itsuki (los frames 0-3 de la cadena, duraciones 4+4+8+255 -> 1+1+1+1)",
+      "confianza": "CODIGO (los bytes) / SIN_CONFIRMAR (que estos frames sean los del wind-up: el log muestra que el personaje pasa por 166/167, no por 37)",
+      "bytes": [
+        {
+          "addr": "0x0CFE4A",
+          "old": "04",
+          "new": "01"
+        },
+        {
+          "addr": "0x0CFE52",
+          "old": "04",
+          "new": "01"
+        },
+        {
+          "addr": "0x0CFE5A",
+          "old": "08",
+          "new": "01"
+        },
+        {
+          "addr": "0x0CFE62",
+          "old": "FF",
+          "new": "01"
+        }
+      ]
+    },
+    "kage_hitdur": {
+      "desc": "Ventana de golpe del especial de Itsuki: 255 -> 20 ticks",
+      "confianza": "CODIGO (los bytes) / SIN_CONFIRMAR",
+      "bytes": [
+        {
+          "addr": "0x0CFE6A",
+          "old": "FF",
+          "new": "14"
+        },
+        {
+          "addr": "0x0CFE72",
+          "old": "FF",
+          "new": "14"
+        }
+      ]
+    },
+    "kage_vel": {
+      "desc": "El desplazamiento durante el especial de Itsuki pasa de 1/2 a 1/4 de la velocidad",
+      "confianza": "CODIGO",
+      "bytes": [
+        {
+          "addr": "0x018809",
+          "old": "80",
+          "new": "40",
+          "nota": "asl.l #$1,d0 -> asl.l #$2,d0"
+        }
+      ]
+    },
+    "onda_vel": {
+      "desc": "La onda de Itsuki (objeto, move 6) viaja a la mitad de velocidad: -1.0 -> -0.5 px/frame",
+      "confianza": "CODIGO",
+      "bytes": [
+        {
+          "addr": "0x01FD0D",
+          "old": "FF",
+          "new": "FE",
+          "nota": "$FFFF0000 -> $FFFE0000"
+        },
+        {
+          "addr": "0x01FD59",
+          "old": "01",
+          "new": "00",
+          "nota": "$00010000 -> $00008000"
+        }
+      ]
+    },
+    "dragon": {
+      "desc": "Ralentizar el dragon de Hiei: vX del frame con hitbox (move 38 de ctx3) 2 -> 1 px/frame",
+      "confianza": "CODIGO (el byte) / SIN_CONFIRMAR (que ese move sea el dragon)",
+      "bytes": [
+        {
+          "addr": "0x0C8168",
+          "old": "82",
+          "new": "81"
+        }
+      ]
+    },
+    "dragon_vel": {
+      "desc": "Velocidad 16.16 del proyectil del dragon de Hiei (tabla $90 de Hiei): 1.75 -> 0.875 px/frame",
+      "confianza": "CODIGO",
+      "bytes": [
+        {
+          "addr": "0x012585",
+          "old": "01",
+          "new": "00"
+        },
+        {
+          "addr": "0x012586",
+          "old": "C0",
+          "new": "E0"
+        }
+      ]
+    },
+    "sinz80": {
+      "desc": "DIAGNOSTICO: el juego deja de esperar al Z80 (0x38B80 es un bucle infinito si el Z80 no responde)",
+      "confianza": "CODIGO",
+      "bytes": [
+        {
+          "addr": "0x038B66",
+          "old": "66",
+          "new": "60",
+          "nota": "bne.b $38b5e -> bra.b $38b68 (no esperar el ack del reset)"
+        },
+        {
+          "addr": "0x038B67",
+          "old": "F6",
+          "new": "00"
+        },
+        {
+          "addr": "0x038B6E",
+          "old": "67",
+          "new": "60",
+          "nota": "beq.b $38b7e -> bra.b $38b7e (no mirar el flag $1F2A)"
+        },
+        {
+          "addr": "0x038B80",
+          "old": "6B",
+          "new": "60",
+          "nota": "bmi.b $38b7e -> bra.b $38b82 (no esperar a que se libere el buzon)"
+        },
+        {
+          "addr": "0x038B81",
+          "old": "FC",
+          "new": "00"
+        }
+      ]
+    },
+    "kage_dur": {
+      "desc": "DURACION de los frames del PERSONAJE en el especial de Itsuki (影手): los IDs 166 y 167 pasan a 0 ticks. Es la version MEDIDA: con yuyu_seq.lua se vio que el personaje recorre 166/167 durante el especial, NO el move 37 que parcheaba el grupo kage_startup (que queda marcado SIN_CONFIRMAR).",
+      "confianza": "MEDIDO (los IDs 166/167 con yuyu_seq.lua) + CODIGO (el byte +0 del registro es la duracion del frame)",
+      "bytes": [
+        {
+          "addr": "0x0D053A",
+          "old": "04",
+          "new": "00",
+          "nota": "ctx6 move 166 frame 0: duracion 4 -> 0 ticks"
+        },
+        {
+          "addr": "0x0D0542",
+          "old": "04",
+          "new": "00",
+          "nota": "ctx6 move 166 frame 1: duracion 4 -> 0 ticks"
+        },
+        {
+          "addr": "0x0D054A",
+          "old": "04",
+          "new": "00",
+          "nota": "ctx6 move 166 frame 2: duracion 4 -> 0 ticks"
+        },
+        {
+          "addr": "0x0D0552",
+          "old": "02",
+          "new": "00",
+          "nota": "ctx6 move 167 frame 0: duracion 2 -> 0 ticks"
+        }
+      ]
+    },
+    "doble_salto": {
+      "desc": "FIX DEL DOBLE SALTO. $87(a5) es el CONTADOR DE SALTOS: lo incrementa 0x1863A y 0x1B2C8 (al saltar) y 0x15E28 lo comprueba (cmpi.b #$0,$87(a5) / bne.w $15ed8) para NO dejar saltar otra vez. Si $87 no se limpia al resetear, el segundo salto se pierde. La rutina de reset de 0x18440 gana 2 bytes (el 'clr.b $87(a5)' + reordenar), asi que los dos 'jsr $18454.l' de 0x15CFE y 0x15D12 pasan a 'jsr $18456.l'.",
+      "confianza": "CODIGO (leido del desensamblado) + MEDIDO (ROM del usuario 'ROM A MODIFICAR.md')",
+      "bytes": [
+        {
+          "addr": "0x015D03",
+          "old": "54",
+          "new": "56",
+          "nota": "jsr $18454.l -> jsr $18456.l (move 0 -> idle)"
+        },
+        {
+          "addr": "0x015D17",
+          "old": "54",
+          "new": "56",
+          "nota": "jsr $18454.l -> jsr $18456.l (move 2 -> idle)"
+        },
+        {
+          "addr": "0x018443",
+          "old": "00",
+          "new": "0B",
+          "nota": "inicio de 'move.b #$b,$6c(a5)'"
+        },
+        {
+          "addr": "0x018445",
+          "old": "5D",
+          "new": "6C"
+        },
+        {
+          "addr": "0x018449",
+          "old": "5F",
+          "new": "5D",
+          "nota": "clr.b $5d(a5)"
+        },
+        {
+          "addr": "0x01844A",
+          "old": "1B",
+          "new": "42",
+          "nota": "clr.b $5f(a5)"
+        },
+        {
+          "addr": "0x01844B",
+          "old": "7C",
+          "new": "2D"
+        },
+        {
+          "addr": "0x01844D",
+          "old": "0B",
+          "new": "5F",
+          "nota": "clr.b $87(a5)  <-- EL FIX"
+        },
+        {
+          "addr": "0x01844E",
+          "old": "00",
+          "new": "42"
+        },
+        {
+          "addr": "0x01844F",
+          "old": "6C",
+          "new": "2D"
+        },
+        {
+          "addr": "0x018450",
+          "old": "60",
+          "new": "00",
+          "nota": "bra.w $19c1c (se desplaza 2 bytes)"
+        },
+        {
+          "addr": "0x018451",
+          "old": "00",
+          "new": "87"
+        },
+        {
+          "addr": "0x018452",
+          "old": "17",
+          "new": "60"
+        },
+        {
+          "addr": "0x018453",
+          "old": "CA",
+          "new": "00"
+        },
+        {
+          "addr": "0x018454",
+          "old": "1B",
+          "new": "17",
+          "nota": "desplazamiento del bra.w"
+        },
+        {
+          "addr": "0x018455",
+          "old": "7C",
+          "new": "C8"
+        },
+        {
+          "addr": "0x018456",
+          "old": "00",
+          "new": "42",
+          "nota": "clr.b $5d(a5) (sustituye a move.b #$0)"
+        },
+        {
+          "addr": "0x018457",
+          "old": "00",
+          "new": "2D"
+        }
+      ]
+    },
+    "kurama_planta": {
+      "desc": "PLANTA DE KURAMA, segundo golpe. El byte es el 4o de la cabecera del blob del golpe ($0D9C66), que se lee en $01EC0E-$01EC2C. Ese byte guarda DOS nibbles: el ALTO es $67 y el BAJO es $68, y $68 es el estado de derribo. Con $68=5 el golpe manda al derribo normal; con $68=4 manda al DERRIBO CIEGO. Solo se toca el nibble bajo: el nibble alto ($67) se queda en 2.",
+      "confianza": "MEDIDO (los valores $65 $66 $64 $67 $68 se leyeron de la RAM del objeto con la planta pegando) + DEDUCIDO (que el blob $0D9C66 es el 2do golpe: la firma de 3 bytes aparece una sola vez en 3 MB)",
+      "bytes": [
+        {
+          "addr": "0x0D9C69",
+          "old": "29",
+          "new": "24",
+          "nota": "estado del 2do golpe de la planta: $68 9 -> 4 (derribo ciego). OJO: en el ROM japones el byte es $29 ($68=9) y en el ROM ingles es $25 ($68=5); la transformacion a $68=4 ($24) es la misma en los dos. La version entregada por el autor (notas/HERRAMIENTAS/ENTREGAS) es sobre el ROM ingles: $25 -> $24."
+        }
+      ]
+    },
+    "kage_proj": {
+      "desc": "Camino de creacion del proyectil de 影手 (Itsuki). 0x1C3BA deja de hacer en linea el alta del objeto en el pool (movea.l a5,a1 / adda.l #$200,a1) y salta a $21A08, donde esa alta se hace de nuevo antes de terminar en 'jmp $1A430' (el generador de proyectiles). Viene del ROM del usuario 'ROM A MODIFICAR - HIEI v3 + ITSUKI KAGE 14f-7f.md'. EXPERIMENTAL: cambia QUE ruta crea el objeto (la de $1A430 con sus condiciones, en vez de la inline de $1C3CA).",
+      "confianza": "MEDIDO (ROM del usuario) / SIN_CONFIRMAR (que no rompa nada)",
+      "bytes": [
+        {
+          "addr": "0x01C3BA",
+          "old": "22",
+          "new": "60",
+          "nota": "bra.w $21a08"
+        },
+        {
+          "addr": "0x01C3BB",
+          "old": "4D",
+          "new": "00"
+        },
+        {
+          "addr": "0x01C3BC",
+          "old": "D3",
+          "new": "56"
+        },
+        {
+          "addr": "0x01C3BD",
+          "old": "FC",
+          "new": "4C"
+        },
+        {
+          "addr": "0x01C3BE",
+          "old": "00",
+          "new": "4E",
+          "nota": "nop"
+        },
+        {
+          "addr": "0x01C3BF",
+          "old": "00",
+          "new": "71",
+          "nota": "nop"
+        },
+        {
+          "addr": "0x01C3C0",
+          "old": "02",
+          "new": "4E",
+          "nota": "nop"
+        },
+        {
+          "addr": "0x01C3C1",
+          "old": "00",
+          "new": "71",
+          "nota": "nop"
+        },
+        {
+          "addr": "0x021A08",
+          "old": "10",
+          "new": "22",
+          "nota": "movea.l a5,a1"
+        },
+        {
+          "addr": "0x021A09",
+          "old": "2D",
+          "new": "4D"
+        },
+        {
+          "addr": "0x021A0A",
+          "old": "00",
+          "new": "D3",
+          "nota": "adda.l #$200,a1"
+        },
+        {
+          "addr": "0x021A0B",
+          "old": "62",
+          "new": "FC"
+        },
+        {
+          "addr": "0x021A0C",
+          "old": "0C",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A0D",
+          "old": "00",
+          "new": "00",
+          "nota": "sin cambio"
+        },
+        {
+          "addr": "0x021A0E",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x021A0F",
+          "old": "04",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A10",
+          "old": "62",
+          "new": "10",
+          "nota": "el resto de la rutina se desplaza 8 bytes"
+        },
+        {
+          "addr": "0x021A11",
+          "old": "14",
+          "new": "2D"
+        },
+        {
+          "addr": "0x021A12",
+          "old": "4A",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A13",
+          "old": "00",
+          "new": "62"
+        },
+        {
+          "addr": "0x021A14",
+          "old": "67",
+          "new": "0C"
+        },
+        {
+          "addr": "0x021A15",
+          "old": "10",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A16",
+          "old": "53",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A17",
+          "old": "2D",
+          "new": "04"
+        },
+        {
+          "addr": "0x021A18",
+          "old": "00",
+          "new": "62"
+        },
+        {
+          "addr": "0x021A19",
+          "old": "62",
+          "new": "14"
+        },
+        {
+          "addr": "0x021A1A",
+          "old": "66",
+          "new": "4A"
+        },
+        {
+          "addr": "0x021A1B",
+          "old": "10",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A1C",
+          "old": "4A",
+          "new": "67"
+        },
+        {
+          "addr": "0x021A1D",
+          "old": "6D",
+          "new": "10"
+        },
+        {
+          "addr": "0x021A1E",
+          "old": "00",
+          "new": "53"
+        },
+        {
+          "addr": "0x021A1F",
+          "old": "B8",
+          "new": "2D"
+        },
+        {
+          "addr": "0x021A20",
+          "old": "67",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A21",
+          "old": "04",
+          "new": "62"
+        },
+        {
+          "addr": "0x021A22",
+          "old": "53",
+          "new": "66"
+        },
+        {
+          "addr": "0x021A23",
+          "old": "6D",
+          "new": "10"
+        },
+        {
+          "addr": "0x021A24",
+          "old": "00",
+          "new": "4A"
+        },
+        {
+          "addr": "0x021A25",
+          "old": "B8",
+          "new": "6D"
+        },
+        {
+          "addr": "0x021A26",
+          "old": "1B",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A27",
+          "old": "7C",
+          "new": "B8"
+        },
+        {
+          "addr": "0x021A28",
+          "old": "00",
+          "new": "67"
+        },
+        {
+          "addr": "0x021A2A",
+          "old": "00",
+          "new": "53"
+        },
+        {
+          "addr": "0x021A2B",
+          "old": "62",
+          "new": "6D"
+        },
+        {
+          "addr": "0x021A2C",
+          "old": "4E",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A2D",
+          "old": "F9",
+          "new": "B8"
+        },
+        {
+          "addr": "0x021A2E",
+          "old": "00",
+          "new": "1B"
+        },
+        {
+          "addr": "0x021A2F",
+          "old": "01",
+          "new": "7C"
+        },
+        {
+          "addr": "0x021A30",
+          "old": "A4",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A31",
+          "old": "30",
+          "new": "04"
+        },
+        {
+          "addr": "0x021A32",
+          "old": "FF",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A33",
+          "old": "FF",
+          "new": "62"
+        },
+        {
+          "addr": "0x021A34",
+          "old": "FF",
+          "new": "4E"
+        },
+        {
+          "addr": "0x021A35",
+          "old": "FF",
+          "new": "F9"
+        },
+        {
+          "addr": "0x021A36",
+          "old": "FF",
+          "new": "00"
+        },
+        {
+          "addr": "0x021A37",
+          "old": "FF",
+          "new": "01"
+        },
+        {
+          "addr": "0x021A38",
+          "old": "FF",
+          "new": "C3"
+        },
+        {
+          "addr": "0x021A39",
+          "old": "FF",
+          "new": "C2"
+        }
+      ]
+    }
+  },
+  "instrumentacion": {
+    "nota": "scripts de medicion para FBNeo (Game > Lua Scripting > New Lua Script Window > Browse). Son pasivos: no escriben en la memoria del juego.",
+    "scripts": [
+      {
+        "fichero": "tools/fightcade/yuyu_seq.lua",
+        "que_hace": "la secuencia de move del personaje slot: $5F, $59, $5B, $5A, HP, y el ctx del personaje (por el puntero $50). JUGADOR = 1..4 arriba en el fichero."
+      },
+      {
+        "fichero": "tools/fightcade/yuyu_obj.lua",
+        "que_hace": "los 16 objetos del pool: tipo, move ID, posicion, velocidad, tick. Autodetecta la base del pool por firma."
+      },
+      {
+        "fichero": "tools/fightcade/ITSUKI SET MOVE.LUA",
+        "que_hace": "anuncia el id de move y la direccion de su registro cada vez que se gasta mana (para emparejar id con nombre)"
+      }
+    ],
+    "herramientas_python": {
+      "dir": "_disasm_tools/",
+      "scripts": [
+        {
+          "fichero": "patch_rom.py",
+          "que_hace": "parcheador verificado: aborta si un byte no es el esperado, y reescribe el checksum SIEMPRE"
+        },
+        {
+          "fichero": "ctx_hits.py",
+          "que_hace": "resuelve las cadenas de moves de un ctx y lista los frames CON hitbox"
+        },
+        {
+          "fichero": "blob_dump.py",
+          "que_hace": "volca los blobs de un personaje (dano, stun, empuje, radios)"
+        },
+        {
+          "fichero": "blob_chain.py",
+          "que_hace": "volca la cadena de cajas de un move frame a frame"
+        },
+        {
+          "fichero": "obj_chain.py",
+          "que_hace": "resuelve la tabla de moves de un objeto"
+        },
+        {
+          "fichero": "hueco.py",
+          "que_hace": "desensambla los huecos del .asm (donde estan los setups de objeto) y busca llamadores en todo el ROM"
+        },
+        {
+          "fichero": "ctx_hiei.py",
+          "que_hace": "grafo de llamadores de una direccion, con contexto"
+        },
+        {
+          "fichero": "check_boot.py",
+          "que_hace": "verifica vectores, cabecera, relleno y el driver Z80 contra la referencia"
+        },
+        {
+          "fichero": "check_z80.py",
+          "que_hace": "compara el driver Z80 del ROM contra el .asm de referencia"
+        },
+        {
+          "fichero": "check_checksum.py",
+          "que_hace": "informa del checksum almacenado vs calculado"
+        },
+        {
+          "fichero": "fix_checksum.py",
+          "que_hace": "reescribe el checksum de la cabecera"
+        }
+      ]
+    }
+  }
+}

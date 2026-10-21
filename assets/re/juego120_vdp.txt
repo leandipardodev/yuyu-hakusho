@@ -1,0 +1,7 @@
+# volcado del VDP (emulador propio): juego120
+registros: ['$8124', '$94FF', '$4000', '$0000', '$8F02', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000']
+dirCaracteres: $20000
+dirPantalla: $00000
+tablaSprites: $3F800
+spritesH: 0
+frame: 120

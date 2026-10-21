@@ -1,0 +1,21 @@
+=== S/A/R preciso (T2=estado de accion) ===
+en combate
+A parado             | accion inicia f-    | duraccion=-    | dmg=  0
+B parado             | accion inicia f51   | duraccion=10   | dmg= 16
+abajo+A              | accion inicia f1    | duraccion=60   | dmg=  0
+abajo+B              | accion inicia f-    | duraccion=-    | dmg=  0
+->+A agarre          | accion inicia f-    | duraccion=-    | dmg=  0
+Reimu QCF+A          | accion inicia f37   | duraccion=15   | dmg=  0
+Reimu QCF+B          | accion inicia f-    | duraccion=-    | dmg=  0
+DD+A                 | accion inicia f-    | duraccion=-    | dmg=  0
+
+move                 |  accion_init |  duraccion |   dmg
+--------------------------------------------------------
+A parado             |            - |          - |     0
+B parado             |           51 |         10 |    16
+Reimu QCF+A          |           37 |         15 |     0
+abajo+A              |            1 |         60 |     0
+DD+A                 |            - |          - |     0
+Reimu QCF+B          |            - |          - |     0
+>+A agarre           |            - |          - |     0
+abajo+B              |            - |          - |     0

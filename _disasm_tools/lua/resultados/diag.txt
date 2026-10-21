@@ -1,0 +1,15 @@
+=== diagnostico de combate ===
+  [shot al_entrar] frame=933 HP1=223 HP4=223 pos1=2124
+HP tras entrar: 223/223
+  [shot tras_start] frame=1001 HP1=223 HP4=223 pos1=196
+HP tras start: 223/223
+  [shot mas_frames] frame=1241 HP1=223 HP4=207 pos1=196
+HP tras 240f: 223/207
+
+=== probando golpes ===
+tras B: HP4=207 pos1=2124
+  [shot tras_B] frame=1279 HP1=223 HP4=207 pos1=2124
+tras A: HP4=207 pos1=2124
+  [shot tras_A] frame=1317 HP1=223 HP4=207 pos1=2124
+tras caminar derecha: pos1 2124 -> 196
+  [shot tras_caminar] frame=1397 HP1=223 HP4=207 pos1=196

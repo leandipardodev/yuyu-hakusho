@@ -1,0 +1,707 @@
+{
+  "_meta": {
+    "juego": "Yu Yu Hakusho: Makyou Toitsusen (Mega Drive)",
+    "nota": "DATOS MIXTOS: no todo esta verificado contra el ROM. Ver _confianza para la procedencia de cada campo. Lo unico verificado leyendo el ROM: hp_max 223, hp_debil 111, sub.w d0,$b8(a5) en 0x19C46, y las direcciones de cada personaje. Lo unico verificado con BizHawk: la distribucion de dano de 408 impactos.",
+    "fuentes_dmg": "408 impactos medidos en BizHawk (attract mode)",
+    "unidades": "HP en puntos (223=max). Frame data en frames a 60fps.",
+    "valores_no_verificados": "stun_max, stats (A/B/C), normales, especiales, super_dmg, super_maná, reimu_niveles, bola_niveles y dragon vienen de guias web.",
+    "nombres_moves": "Lista de moves de fuentes externas japonesas: forum.gamer.com.tw sn=138 (招式表完整版) y kakusi.jp/?p=54504. Ver COMANDOS_MOVES_FUENTE.md. Los nombres previos venian de guias no verificadas y varios eran incorrectos.",
+    "botones": {
+      "A": "ataque fuerte",
+      "B": "ataque debil",
+      "C": "defensa",
+      "dash": "doble direccion",
+      "linea": "arriba + C",
+      "backstep": "B + C",
+      "seis_botones": {
+        "X": "backstep",
+        "Y": "cambio de linea",
+        "Z": "dash"
+      },
+      "requisito_super": "vida <= 50% y barra de espiritu (霊力) llena"
+    }
+  },
+  "globales": {
+    "hp_max": 223,
+    "hp_debil": 111,
+    "mana_max": 223,
+    "stun_wakeup": 255,
+    "fps": 60,
+    "hitstop_habilitado": false
+  },
+  "sistema_maná": {
+    "_nota": "Recuperación automática por HIT de combo (medido/validado).",
+    "recup_por_hit": {
+      "2": 2,
+      "3": 4,
+      "4": 6,
+      "5": 8,
+      "6": 10,
+      "7": 12,
+      "8": 14,
+      "9": 16,
+      "10": 18,
+      "11": 20,
+      "12": 22,
+      "13": 24,
+      "14": 26,
+      "15": 28,
+      "16": 30
+    },
+    "acumulado": {
+      "2": 2,
+      "3": 6,
+      "4": 12,
+      "5": 20,
+      "6": 30,
+      "7": 42,
+      "8": 56,
+      "9": 72,
+      "10": 90,
+      "11": 110,
+      "12": 132,
+      "13": 156,
+      "14": 182,
+      "15": 210,
+      "16": 240
+    }
+  },
+  "personajes": [
+    {
+      "id": 1,
+      "nombre": "Sensui",
+      "jp": "仙水",
+      "chino": "仙水",
+      "stun_max": 54,
+      "vel_move": "D",
+      "regen_maná": "E",
+      "prov_stun": "S",
+      "prov_coste": 36,
+      "stats": {
+        "ataque": "A",
+        "defensa": "B",
+        "velocidad": "C",
+        "salto": "A",
+        "global": "B"
+      },
+      "super": "特大裂蹴紅球波",
+      "super_dmg": 64,
+      "super_maná": 50,
+      "normales": {
+        "A_parado": 14,
+        "A_agachado": 15,
+        "B_parado": 12,
+        "agarre": 16
+      },
+      "especiales": {
+        "裂蹴踢": 0,
+        "裂蹴紅球波": 12,
+        "空中裂蹴紅球波": 0,
+        "氣硬銃": 0
+      },
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "BIZHAWK"
+      }
+    },
+    {
+      "id": 2,
+      "nombre": "Jin",
+      "jp": "陣",
+      "chino": "阵",
+      "stun_max": 46,
+      "vel_move": "A",
+      "regen_maná": "C",
+      "prov_stun": "B",
+      "prov_coste": 30,
+      "stats": {
+        "ataque": "A",
+        "defensa": "B",
+        "velocidad": "S",
+        "salto": "S",
+        "global": "A"
+      },
+      "super": "修羅突風擊",
+      "super_dmg": 10,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 16,
+        "A_agachado": 16,
+        "B_parado": 8,
+        "agarre": 17
+      },
+      "especiales": {
+        "雙修羅旋風拳": 0,
+        "修羅旋風拳": 22,
+        "暴風障壁": 10
+      },
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "BIZHAWK"
+      },
+      "notas_moves": [
+        "飛行: doble dirección en el aire"
+      ]
+    },
+    {
+      "id": 3,
+      "nombre": "Itsuki",
+      "jp": "樹",
+      "chino": "树",
+      "stun_max": 40,
+      "vel_move": "C",
+      "regen_maná": "C",
+      "prov_stun": "B",
+      "prov_coste": 48,
+      "stats": {
+        "ataque": "C",
+        "defensa": "C",
+        "velocidad": "B",
+        "salto": "A",
+        "global": "C"
+      },
+      "super_dmg": 0,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 12,
+        "A_agachado": 8,
+        "B_parado": 5,
+        "agarre": 15
+      },
+      "especiales": {
+        "雙連踢": 10,
+        "瞬間移動": 0,
+        "影手": 8,
+        "時間暫停": 0
+      },
+      "nota": "Unico personaje con curacion (+16 HP) y control temporal (3s). Su super da 0 dmg pero congela.",
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "BIZHAWK"
+      },
+      "super_inexistente": true,
+      "nota_super": "Sin super en la fuente externa",
+      "notas_moves": [
+        "時間暫停 = ↓+A+B, pausa temporal",
+        "影手: A ataca, B cura, C cancela",
+        "ÚNICO personaje sin super en la fuente"
+      ]
+    },
+    {
+      "id": 4,
+      "nombre": "Genkai",
+      "jp": "幻海",
+      "chino": "幻海",
+      "stun_max": 34,
+      "vel_move": "A",
+      "regen_maná": "S",
+      "prov_stun": "D",
+      "prov_coste": 48,
+      "stats": {
+        "ataque": "A",
+        "defensa": "C",
+        "velocidad": "A",
+        "salto": "A",
+        "global": "B+"
+      },
+      "super": "終極連擊",
+      "super_dmg": 81,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 15,
+        "A_agachado": 15,
+        "B_parado": 5,
+        "agarre": 16
+      },
+      "reimu_niveles": {
+        "5-11": 6,
+        "12-19": 8,
+        "20-31": 12,
+        "32-41": 16,
+        "42-56": 24,
+        "57-72": 32,
+        "73-104": 48,
+        "105-136": 64
+      },
+      "nota": "Reimu 8 niveles. Stun mas bajo del juego (34). Super oculto en versiones modificadas.",
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "reimu_niveles": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "PENDIENTE"
+      },
+      "especiales": {
+        "靈丸": 0,
+        "特大靈丸": 0,
+        "收回靈丸": 0,
+        "靈光彈": 0,
+        "昇龍拳": 0,
+        "空中昇龍拳": 0
+      }
+    },
+    {
+      "id": 5,
+      "nombre": "Kuwabara",
+      "jp": "桑原一雄",
+      "chino": "桑原",
+      "stun_max": 56,
+      "vel_move": "C",
+      "regen_maná": "A",
+      "prov_stun": "C",
+      "prov_coste": 48,
+      "stats": {
+        "ataque": "A",
+        "defensa": "A",
+        "velocidad": "C",
+        "salto": "B",
+        "global": "B+"
+      },
+      "super": "靈劍連擊",
+      "super_dmg": 116,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 20,
+        "A_agachado": 18,
+        "B_parado": 7,
+        "agarre": 20
+      },
+      "especiales": {
+        "靈劍": 0,
+        "靈劍突刺": 20,
+        "次元刀": 8,
+        "靈手裡劍": 8
+      },
+      "nota": "Stun alto (56). 2do mas resistente del juego.",
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "BIZHAWK"
+      }
+    },
+    {
+      "id": 6,
+      "nombre": "Yusuke",
+      "jp": "浦飯幽助",
+      "chino": "浦饭",
+      "stun_max": 48,
+      "vel_move": "B",
+      "regen_maná": "B",
+      "prov_stun": "B",
+      "prov_coste": 36,
+      "stats": {
+        "ataque": "A",
+        "defensa": "A",
+        "velocidad": "A",
+        "salto": "A",
+        "global": "A+"
+      },
+      "super": "魔人擊殺",
+      "super_dmg": 120,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 18,
+        "A_agachado": 19,
+        "B_parado": 6,
+        "agarre": 19
+      },
+      "reimu_niveles": {
+        "5-11": 6,
+        "12-19": 8,
+        "20-31": 12,
+        "32-41": 16,
+        "42-56": 24,
+        "57-72": 32,
+        "73-104": 48,
+        "105-136": 64
+      },
+      "nota": "El mas balanced (todas sus stats son A). Unico con Reimu AEREO.",
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "reimu_niveles": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "PENDIENTE"
+      },
+      "especiales": {
+        "痛毆": 0,
+        "靈丸": 0,
+        "空中靈丸": 0,
+        "特大靈丸": 0,
+        "收回靈丸": 0,
+        "閃彈靈丸": 0
+      },
+      "notas_moves": [
+        "特大靈丸 es cargable; 收回靈丸 lo cancela"
+      ]
+    },
+    {
+      "id": 7,
+      "nombre": "Kurama",
+      "jp": "蔵馬",
+      "chino": "藏马",
+      "stun_max": 40,
+      "vel_move": "C",
+      "regen_maná": "C",
+      "prov_stun": "A",
+      "prov_coste": 30,
+      "stats": {
+        "ataque": "B",
+        "defensa": "C",
+        "velocidad": "B",
+        "salto": "B",
+        "global": "B"
+      },
+      "super": "樹靈妖斬拳",
+      "super_dmg": 128,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 15,
+        "A_agachado": 16,
+        "B_parado": 6,
+        "agarre": 17
+      },
+      "especiales": {
+        "薔薇棘鞭刃": 11,
+        "玫瑰爆彈": 0,
+        "風華圓舞陣": 0,
+        "魔界植物召換": 8
+      },
+      "nota": "Unico personaje SIN tecnicas aereas.",
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "BIZHAWK"
+      }
+    },
+    {
+      "id": 8,
+      "nombre": "Hiei",
+      "jp": "飛影",
+      "chino": "飞影",
+      "stun_max": 44,
+      "vel_move": "S",
+      "regen_maná": "SS",
+      "prov_stun": "A",
+      "prov_coste": 48,
+      "stats": {
+        "ataque": "B",
+        "defensa": "B",
+        "velocidad": "S",
+        "salto": "B",
+        "global": "B"
+      },
+      "super": "炎殺黑龍波",
+      "super_dmg": 88,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 12,
+        "A_agachado": 12,
+        "B_parado": 3,
+        "agarre": 15
+      },
+      "dragon": {
+        "dmg_mult": 2,
+        "vel_mult": 2,
+        "maná_drenaje": true,
+        "stun_al_agotar": 255,
+        "nota": "El unico con modo dragon. Self-hit en炎殺黒龍波 lo activa. x2 atk/vel."
+      },
+      "nota": "Regen de mana SS (la mejor). Velocidad S.",
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "dragon": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "PENDIENTE"
+      },
+      "especiales": {
+        "邪王炎殺煉獄焦": 0,
+        "空中邪王炎殺煉獄焦": 0,
+        "邪王炎殺劍": 0,
+        "空中斬擊": 0,
+        "殘像": 0
+      },
+      "notas_moves": [
+        "炎殺黑龍波: la dirección modifica el trayectoria",
+        "吸收黑龍波: usarlo contra uno mismo duplica la potencia"
+      ]
+    },
+    {
+      "id": 9,
+      "nombre": "Chui",
+      "jp": "酎",
+      "chino": "酎",
+      "stun_max": 48,
+      "vel_move": "B",
+      "regen_maná": "C",
+      "prov_stun": "E",
+      "prov_coste": 56,
+      "stats": {
+        "ataque": "A",
+        "defensa": "A",
+        "velocidad": "B",
+        "salto": "A",
+        "global": "A-"
+      },
+      "super": "鐵頭功",
+      "super_dmg": 68,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 18,
+        "A_agachado": 19,
+        "B_parado": 7,
+        "agarre": 22
+      },
+      "bola_niveles": {
+        "6-19": 8,
+        "20-31": 12,
+        "32-41": 16,
+        "42-56": 24,
+        "57-72": 32,
+        "73-104": 48,
+        "105-136": 64
+      },
+      "nota": "7 niveles de carga (como Reimu). Unico que puede esquivar DETRAS del rival.",
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "bola_niveles": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "PENDIENTE"
+      },
+      "especiales": {
+        "痛毆": 0,
+        "醉拳閃身": 0,
+        "妖氣玉": 0,
+        "特大妖氣玉": 0,
+        "收回妖氣玉": 0,
+        "衝撞": 0,
+        "飛踢": 0
+      }
+    },
+    {
+      "id": 10,
+      "nombre": "Toguro (hermano mayor)",
+      "jp": "戶愚呂兄",
+      "chino": "户愚吕兄",
+      "stun_max": 38,
+      "vel_move": "E",
+      "regen_maná": "A",
+      "prov_stun": "E",
+      "prov_coste": 36,
+      "stats": {
+        "ataque": "A",
+        "defensa": "C",
+        "velocidad": "B",
+        "salto": "B",
+        "global": "B"
+      },
+      "super": "連環刺擊",
+      "super_dmg": 10,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 16,
+        "A_agachado": 16,
+        "B_parado": 4,
+        "agarre": 11
+      },
+      "especiales": {
+        "觸手": 15,
+        "刺擊": 0,
+        "空中刺擊": 0,
+        "虛身移動": 0,
+        "地下觸手": 18
+      },
+      "nota": "Agarrable con un solo golpe (stun 64 en su Dedal). Moviles faciles de cancelar.",
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "BIZHAWK"
+      }
+    },
+    {
+      "id": 11,
+      "nombre": "Toguro (hermano menor)",
+      "jp": "戶愚呂弟",
+      "chino": "户愚吕弟",
+      "stun_max": 62,
+      "vel_move": "E",
+      "regen_maná": "C",
+      "prov_stun": "E",
+      "prov_coste": 52,
+      "stats": {
+        "ataque": "S",
+        "defensa": "S",
+        "velocidad": "C",
+        "salto": "B",
+        "global": "A"
+      },
+      "super": "100%中的100% 120%突擊",
+      "super_dmg": 20,
+      "super_maná": 200,
+      "normales": {
+        "A_parado": 24,
+        "A_agachado": 24,
+        "B_parado": 11,
+        "agarre": 20
+      },
+      "especiales": {
+        "爆肉鋼體": 24,
+        "空拳": 30,
+        "指彈": 30
+      },
+      "nota": "El mas fuerte. Stun mas alto (62). Ataque y Defensa S.",
+      "_confianza": {
+        "stun_max": "WEB",
+        "vel_move": "ESTIMADO",
+        "regen_maná": "WEB",
+        "prov_stun": "WEB",
+        "prov_coste": "ESTIMADO",
+        "stats": "WEB",
+        "super": "FUENTE_WEB(kakusi.jp / gamer.com.tw)",
+        "super_dmg": "WEB",
+        "super_maná": "ESTIMADO",
+        "normales": "WEB",
+        "especiales": "FUENTE_WEB(gamer.com.tw sn=138)",
+        "especiales.danio": "BIZHAWK"
+      }
+    }
+  ],
+  "frame_data_medidos": {
+    "_nota": "Solo 'cadena_rapida' y 'proyectil' se midieron en BizHawk. El resto son valores de guia. 'recov' = frames hasta poder actuar.",
+    "cadena_rapida": {
+      "dmg": 1,
+      "recov": 4,
+      "nota": "A/B連打 - el mas rapido"
+    },
+    "golpe_fuerte_parado": {
+      "dmg": 16,
+      "recov": 3
+    },
+    "ligero_parado": {
+      "dmg": 6,
+      "recov": 13
+    },
+    "proyectil": {
+      "recov": 88,
+      "nota": "Recovery larguisimo - punish"
+    },
+    "golpe_fuerte": {
+      "recov": 46
+    },
+    "_confianza": {
+      "cadena_rapida": "BIZHAWK",
+      "golpe_fuerte_parado": "WEB",
+      "ligero_parado": "WEB",
+      "proyectil": "BIZHAWK (rango 88-92 f, no valor unico)",
+      "golpe_fuerte": "WEB"
+    }
+  },
+  "_pendiente": {
+    "_nota": "startup/active/recovery NO requiere emulador. El registro de frame son 8 bytes en ROM (loc_01EB40, 0x1EB48): +0 es la duracion (-> $5A) y el bit 6 del byte de atributos marca los frames activos. Ver TABLAS_MOVES_Y_TIMING.md.",
+    "frame_data_completo": "Falta el parser y confirmar el limite de la lista de frames de cada move. Solo lectura de ROM.",
+    "hitstun": "RESUELTO. $7E es un presupuesto, no un timer. Se gasta en 0x1F42C (sub.w $66,$7E) y el knockdown es el test de 0x1F4D6. Golpes hasta knockdown = ceil($80/$66).",
+    "blockstun": "FALTA. No localizado: los tres resolvers (0x1EEE2, 0x1F090, 0x1F21E) van a dano. Candidatos: $63, $64 bit 5, $71 bit 1, $6C bits 0-5.",
+    "stun_max_real": "RESUELTO. Por personaje: 40, 56, 48, 44, 54, 46, 40, 38, 48, 62. En $80, copiado a $7E en 0x15A4A y 0x18694.",
+    "estados_esteticos": "FALTA. El usuario extraera los sprites con TileMolester."
+  },
+  "_confianza": {
+    "_leyenda": {
+      "ROM": "Verificado leyendo el codigo/desensamblado del ROM original",
+      "BIZHAWK": "Medido ejecutando el juego en BizHawk",
+      "WEB": "Sacado de guias/comUNITIES. No verificado contra el ROM",
+      "ESTIMADO": "Supuesto razonable para que la remake funcione. SIN respaldo"
+    },
+    "_aviso": "Un valor sin respaldo verificado NO debe tomarse como canonico. Para promover uno a ROM/BIZHAWK hace falta medirlo."
+  }
+}

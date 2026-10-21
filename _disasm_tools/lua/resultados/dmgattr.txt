@@ -1,0 +1,50 @@
+=== Damage por impacto en ATTRACT MODE (demo) ===
+La demo se juega sola. Cada golpe que la IA aplica = delta de HP exacto.
+combate del attract en frame 766
+
+=== DISTRIBUCION DE DANO (delta de HP exacto) ===
+dano  | veces
+---------------
+   1 | 86
+   4 | 40
+   8 | 24
+  12 | 1
+  16 | 88
+  18 | 8
+  20 | 9
+  24 | 26
+  32 | 24
+  48 | 2
+  52 | 1
+  75 | 1
+  93 | 1
+  95 | 2
+ 123 | 1
+ 127 | 1
+ 136 | 1
+ 137 | 1
+ 151 | 1
+ 155 | 1
+ 157 | 1
+ 161 | 1
+ 167 | 1
+ 183 | 2
+ 191 | 2
+ 197 | 1
+ 201 | 1
+ 215 | 1
+ 223 | 79
+
+total impactos: 408
+
+=== CONTRASTE con tabla web (newton.com.tw) ===
+Valores esperados: 1, 12, 16, 20, 24, 32, 48, 81
+Coincidencias medidas:
+    1 -> 86 veces
+   12 -> 1 veces
+   16 -> 88 veces
+   20 -> 9 veces
+   24 -> 26 veces
+   32 -> 24 veces
+   48 -> 2 veces
+   81 -> NO VISTO

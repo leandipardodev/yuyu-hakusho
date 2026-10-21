@@ -1,0 +1,7 @@
+# volcado del VDP (emulador propio): arranque
+registros: ['$8100', '$94FF', '$0000', '$0000', '$8100', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000', '$0000']
+dirCaracteres: $00000
+dirPantalla: $00000
+tablaSprites: $3F800
+spritesH: 0
+frame: 1

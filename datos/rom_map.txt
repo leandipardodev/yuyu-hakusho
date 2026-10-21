@@ -1,0 +1,623 @@
+====================================================================================
+  MAPA DEL ROM  --  Yu Yu Hakusho: Makyou Toitsusen (J)   [Sega Mega Drive]
+  Archivo : Yuu Yuu Hakusho - Makyou Toitsusen (J).bin   3145728 bytes (3.00 MB)
+  Titulo  : YUYU HAKUSYO    Serial: GM G-004122-00    Region: J (Japan)    1994.JUL
+====================================================================================
+
+  pagina     entropia  zeros%   ff%      clasificacion
+  --------------------------------------------------------------------------------
+  0x000000    6.16       15       2   vectores 68k + cab. Sega
+  0x001000    6.36       16       8   CODIGO 68k
+  0x002000    5.54       26       4   CODIGO 68k
+  0x003000    6.35       14       2   CODIGO 68k
+  0x004000    5.71       23       1   CODIGO 68k
+  0x005000    5.82       21       2   CODIGO 68k
+  0x006000    5.64       25       1   CODIGO 68k
+  0x007000    5.66       23       1   CODIGO 68k
+  0x008000    5.78       23       1   CODIGO 68k
+  0x009000    6.04       19       2   CODIGO 68k
+  0x00a000    5.76       20       1   CODIGO 68k
+  0x00b000    5.88       19       1   CODIGO 68k
+  0x00c000    5.83       22       2   CODIGO 68k
+  0x00d000    5.77       25       1   CODIGO 68k
+  0x00e000    5.97       20       2   CODIGO 68k
+  0x00f000    6.06       19       1   CODIGO 68k
+  0x010000    5.71       23       4   CODIGO 68k
+  0x011000    5.78       18       3   CODIGO 68k
+  0x012000    5.42       29       1   CODIGO 68k
+  0x013000    5.47       28       2   CODIGO 68k
+  0x014000    5.55       27       1   CODIGO 68k
+  0x015000    5.78       27       2   CODIGO 68k
+  0x016000    5.11       29       0   CODIGO 68k
+  0x017000    5.10       29       0   CODIGO 68k
+  0x018000    4.93       33       0   CODIGO 68k
+  0x019000    4.81       35       0   CODIGO 68k
+  0x01a000    5.23       31       1   CODIGO 68k
+  0x01b000    5.20       31       1   CODIGO 68k
+  0x01c000    5.50       28       1   CODIGO 68k
+  0x01d000    5.01       29       0   CODIGO 68k
+  0x01e000    5.51       26       1   CODIGO 68k
+  0x01f000    5.30       31       1   CODIGO 68k
+  0x020000    5.49       24       1   CODIGO 68k
+  0x021000    4.73       11      39   CODIGO 68k
+  0x024000    5.38       30      20   tiles / datos VDP
+  0x025000    5.31       27      23   tiles / datos VDP
+  0x026000    5.21       23      28   tiles / datos VDP
+  0x027000    5.03       17      34   tiles / datos VDP
+  0x028000    4.69        8      43   tiles / datos VDP
+  0x029000    4.23        0      50   tiles / datos VDP
+  0x02a000    3.90        0      50   mixto
+  0x02b000    3.24        0      50   mixto
+  0x02c000    3.22        0      50   mixto
+  0x02d000    3.89        0      50   mixto
+  0x02e000    4.22        0      50   tiles / datos VDP
+  0x02f000    4.45        0      50   tiles / datos VDP
+  0x030000    4.61        0      50   tiles / datos VDP
+  0x031000    4.91        0      46   tiles / datos VDP
+  0x032000    5.19        0      39   tiles / datos VDP
+  0x033000    5.34        0      34   tiles / datos VDP
+  0x034000    6.50        9       0   tiles / datos VDP
+  0x035000    2.47       13      42   datos dispersos
+  0x037000    4.69       15      36   CODIGO 68k
+  0x038000    5.89       19       2   CODIGO 68k
+  0x039000    6.10       22       4   CODIGO 68k
+  0x03a000    6.03       11       5   CODIGO 68k
+  0x03b000    5.66        2       1   tiles / datos VDP
+  0x03c000    6.00        3       0   tiles / datos VDP
+  0x03d000    6.06        2       1   tiles / datos VDP
+  0x03e000    6.15        3       1   tiles / datos VDP
+  0x03f000    6.19        3       2   tiles / datos VDP
+  0x040000    5.86        2       1   tiles / datos VDP
+  0x041000    5.53        3       1   tiles / datos VDP
+  0x042000    6.22        4       3   tiles / datos VDP
+  0x043000    6.28        5       1   tiles / datos VDP
+  0x044000    5.98        4       1   tiles / datos VDP
+  0x045000    6.03        4       1   tiles / datos VDP
+  0x046000    5.65        2       2   tiles / datos VDP
+  0x047000    5.46       16       1   tiles / datos VDP
+  0x048000    6.43       13       0   tiles / datos VDP
+  0x049000    6.84        3       0   mixto
+  0x04a000    6.14       14       0   CODIGO 68k
+  0x04b000    5.22       31       0   tiles / datos VDP
+  0x04c000    5.11       29       0   tiles / datos VDP
+  0x04d000    4.68       24       0   tiles / datos VDP
+  0x04e000    7.09       10       0   CODIGO 68k
+  0x04f000    0.93       92       0   datos dispersos
+  0x050000    6.70        0       3   CODIGO 68k
+  0x051000    7.19        5       1   CODIGO 68k
+  0x052000    7.22        1       3   mixto
+  0x053000    7.03        0       1   mixto
+  0x054000    7.11        0       1   CODIGO 68k
+  0x055000    7.27        0       2   CODIGO 68k
+  0x056000    7.02        0       2   CODIGO 68k
+  0x057000    7.01        6       3   CODIGO 68k
+  0x058000    6.92        0       3   mixto
+  0x059000    7.13        0       2   CODIGO 68k
+  0x05a000    7.00        0       3   CODIGO 68k
+  0x05b000    7.26        0       1   CODIGO 68k
+  0x05c000    6.99        0       4   mixto
+  0x05d000    7.32        0       2   mixto
+  0x05e000    7.15        0       2   CODIGO 68k
+  0x05f000    7.09       12       1   CODIGO 68k
+  0x060000    7.48        2       1   mixto
+  0x061000    7.40        1       2   CODIGO 68k
+  0x062000    7.35        0       1   mixto
+  0x063000    7.48        2       1   CODIGO 68k
+  0x064000    7.32        0       2   CODIGO 68k
+  0x065000    7.36        1       2   CODIGO 68k
+  0x066000    6.59        0       5   CODIGO 68k
+  0x067000    7.42        1       2   mixto
+  0x068000    6.93        1       3   CODIGO 68k
+  0x069000    7.28        0       2   CODIGO 68k
+  0x06a000    7.28        0       2   CODIGO 68k
+  0x06b000    7.14        0       3   CODIGO 68k
+  0x06c000    7.47        0       2   mixto
+  0x06d000    7.41        1       1   CODIGO 68k
+  0x06e000    7.22        5       0   mixto
+  0x06f000    6.48       21       1   tiles / datos VDP
+  0x070000    7.40        1       1   CODIGO 68k
+  0x071000    7.25        3       1   CODIGO 68k
+  0x072000    7.03        8       2   CODIGO 68k
+  0x073000    6.88        0       1   CODIGO 68k
+  0x074000    7.01        0       0   mixto
+  0x075000    7.08        0       2   mixto
+  0x076000    7.01        0       0   CODIGO 68k
+  0x077000    6.84        4       2   CODIGO 68k
+  0x078000    7.44        1       2   CODIGO 68k
+  0x079000    7.15        5       1   CODIGO 68k
+  0x07a000    7.40        2       1   CODIGO 68k
+  0x07b000    6.90        0       2   CODIGO 68k
+  0x07c000    7.28        6       1   mixto
+  0x07d000    7.12        8       1   mixto
+  0x07e000    7.23        0       2   mixto
+  0x07f000    6.35       24       0   CODIGO 68k
+  0x080000    7.33        0       1   CODIGO 68k
+  0x081000    7.15        0       2   mixto
+  0x082000    7.25        0       1   CODIGO 68k
+  0x083000    7.43        0       1   CODIGO 68k
+  0x084000    7.03        0       3   mixto
+  0x085000    7.12        2       5   CODIGO 68k
+  0x086000    7.26        2       2   CODIGO 68k
+  0x087000    6.56       22       2   mixto
+  0x088000    7.21        0       3   mixto
+  0x089000    7.47        0       2   mixto
+  0x08a000    7.28        4       2   mixto
+  0x08b000    7.33        1       2   mixto
+  0x08c000    7.33        1       2   mixto
+  0x08d000    7.28        0       1   CODIGO 68k
+  0x08e000    7.10        0       0   mixto
+  0x08f000    6.90        6       3   CODIGO 68k
+  0x090000    7.09        0       1   mixto
+  0x091000    7.30        1       1   CODIGO 68k
+  0x092000    7.44        0       1   CODIGO 68k
+  0x093000    7.46        2       1   CODIGO 68k
+  0x094000    7.01        0       2   CODIGO 68k
+  0x095000    7.38        1       1   mixto
+  0x096000    7.35        1       1   CODIGO 68k
+  0x097000    5.98       32       0   CODIGO 68k
+  0x098000    6.86        0       3   CODIGO 68k
+  0x099000    7.05        0       2   CODIGO 68k
+  0x09a000    7.09        0       3   mixto
+  0x09b000    7.45        0       3   mixto
+  0x09c000    7.52        0       1   graficos/comprimido (VDP)
+  0x09d000    7.50        2       1   CODIGO 68k
+  0x09e000    7.35        0       3   mixto
+  0x09f000    5.57       38       1   CODIGO 68k
+  0x0a0000    7.47        0       1   CODIGO 68k
+  0x0a1000    7.39        0       3   mixto
+  0x0a2000    7.40        1       2   mixto
+  0x0a3000    7.47        1       2   CODIGO 68k
+  0x0a4000    7.17        0       4   CODIGO 68k
+  0x0a5000    7.14        0       2   CODIGO 68k
+  0x0a6000    7.38        2       0   CODIGO 68k
+  0x0a7000    5.33       37       1   tiles / datos VDP
+  0x0a8000    7.15        5       1   CODIGO 68k
+  0x0a9000    7.28        4       1   CODIGO 68k
+  0x0aa000    7.19        0       1   CODIGO 68k
+  0x0ab000    7.18        0       4   CODIGO 68k
+  0x0ac000    7.40        1       1   mixto
+  0x0ad000    7.31        1       2   CODIGO 68k
+  0x0ae000    6.95        0       4   mixto
+  0x0af000    7.20        1       3   mixto
+  0x0b0000    7.12        1       4   mixto
+  0x0b1000    7.19        1       1   mixto
+  0x0b2000    7.27        2       1   CODIGO 68k
+  0x0b3000    7.28        2       3   mixto
+  0x0b4000    7.13        0       3   mixto
+  0x0b5000    7.10        2       3   CODIGO 68k
+  0x0b6000    6.49       19       0   tiles / datos VDP
+  0x0b8000    6.75        0       3   CODIGO 68k
+  0x0b9000    7.38        4       0   mixto
+  0x0ba000    6.50       12       1   mixto
+  0x0bb000    6.90        7       2   mixto
+  0x0bc000    5.65       17       0   tiles / datos VDP
+  0x0bd000    4.69       38       0   tiles / datos VDP
+  0x0be000    6.43        4       0   tiles / datos VDP
+  0x0bf000    5.57       28       0   tiles / datos VDP
+  0x0c0000    6.12       18       0   tiles / datos VDP
+  0x0c1000    5.80       13       0   tiles / datos VDP
+  0x0c2000    4.79       39       1   tiles / datos VDP
+  0x0c3000    6.53        9       0   mixto
+  0x0c4000    5.74       16       0   tiles / datos VDP
+  0x0c5000    4.38       45       1   tiles / datos VDP
+  0x0c6000    6.50        7       0   mixto
+  0x0c7000    5.85       14       0   tiles / datos VDP
+  0x0c8000    4.52       40       0   tiles / datos VDP
+  0x0c9000    6.34        9       0   tiles / datos VDP
+  0x0ca000    5.31       30       1   tiles / datos VDP
+  0x0cb000    6.33       14       0   tiles / datos VDP
+  0x0cc000    6.00       13       0   tiles / datos VDP
+  0x0cd000    4.29       41       1   tiles / datos VDP
+  0x0ce000    6.54        6       0   mixto
+  0x0cf000    5.79       20       1   tiles / datos VDP
+  0x0d0000    5.59       26       0   tiles / datos VDP
+  0x0d1000    5.81       12       0   tiles / datos VDP
+  0x0d2000    4.54       42       1   tiles / datos VDP
+  0x0d3000    6.41        7       0   tiles / datos VDP
+  0x0d4000    5.85       17       0   tiles / datos VDP
+  0x0d5000    5.10       34       0   tiles / datos VDP
+  0x0d6000    6.53        8       0   mixto
+  0x0d7000    5.41       30       0   tiles / datos VDP
+  0x0d8000    6.09       20       0   tiles / datos VDP
+  0x0d9000    5.40       28       0   tiles / datos VDP
+  0x0da000    4.91       22       0   tiles / datos VDP
+  0x0db000    1.62        3      81   datos dispersos
+  0x0e0000    4.22       40       1   tiles / datos VDP
+  0x0e1000    4.36       39       1   tiles / datos VDP
+  0x0e2000    4.51       34       1   tiles / datos VDP
+  0x0e3000    3.87       45       1   mixto
+  0x0e4000    4.16       42       1   tiles / datos VDP
+  0x0e5000    4.26       39       1   tiles / datos VDP
+  0x0e6000    4.27       38       1   tiles / datos VDP
+  0x0e7000    4.47       36       1   tiles / datos VDP
+  0x0e8000    4.62       33       1   tiles / datos VDP
+  0x0e9000    4.30       37       1   tiles / datos VDP
+  0x0ea000    4.37       36       1   tiles / datos VDP
+  0x0eb000    4.47       35       1   tiles / datos VDP
+  0x0ec000    4.29       38       1   tiles / datos VDP
+  0x0ed000    4.43       36       1   tiles / datos VDP
+  0x0ee000    4.11       40       1   tiles / datos VDP
+  0x0ef000    4.52       34       1   tiles / datos VDP
+  0x0f0000    4.22       39       1   tiles / datos VDP
+  0x0f1000    4.15       40       1   tiles / datos VDP
+  0x0f2000    4.00       45       2   mixto
+  0x0f3000    3.98       45       1   mixto
+  0x0f4000    4.34       37       1   tiles / datos VDP
+  0x0f5000    4.21       38       1   tiles / datos VDP
+  0x0f6000    4.34       34       1   tiles / datos VDP
+  0x0f7000    3.16       20      46   mixto
+  0x100000    4.44       34       1   tiles / datos VDP
+  0x101000    4.31       39       1   tiles / datos VDP
+  0x102000    4.54       35       0   tiles / datos VDP
+  0x103000    4.47       34       1   tiles / datos VDP
+  0x104000    4.30       37       1   tiles / datos VDP
+  0x105000    4.42       36       1   tiles / datos VDP
+  0x106000    4.17       40       0   tiles / datos VDP
+  0x107000    4.41       34       0   tiles / datos VDP
+  0x108000    4.42       35       1   tiles / datos VDP
+  0x109000    4.44       35       1   tiles / datos VDP
+  0x10a000    4.34       36       1   tiles / datos VDP
+  0x10b000    4.50       29       1   tiles / datos VDP
+  0x10c000    4.02       39       0   tiles / datos VDP
+  0x10d000    3.98       46       1   mixto
+  0x10e000    4.42       34       1   tiles / datos VDP
+  0x10f000    4.45       32       1   tiles / datos VDP
+  0x110000    4.44       32       1   tiles / datos VDP
+  0x111000    4.69       30       1   tiles / datos VDP
+  0x112000    4.31       38       0   tiles / datos VDP
+  0x113000    2.80       65       0   datos dispersos
+  0x114000    3.30       59       0   mixto
+  0x115000    4.07       39       1   tiles / datos VDP
+  0x116000    4.16       38       1   tiles / datos VDP
+  0x117000    4.28       35       0   tiles / datos VDP
+  0x118000    4.33       32       1   tiles / datos VDP
+  0x119000    4.07       36       2   tiles / datos VDP
+  0x11a000    3.68       41       3   mixto
+  0x11b000    3.97       35       2   mixto
+  0x11c000    3.27       56       0   mixto
+  0x11d000    1.07        6      86   datos dispersos
+  0x120000    3.89       39       1   mixto
+  0x121000    3.89       37       1   mixto
+  0x122000    4.00       36       2   mixto
+  0x123000    3.89       39       2   mixto
+  0x124000    3.96       37       3   mixto
+  0x125000    3.78       41       2   mixto
+  0x126000    3.98       35       2   mixto
+  0x127000    3.47       45       1   mixto
+  0x128000    3.69       42       1   mixto
+  0x129000    3.50       46       2   mixto
+  0x12a000    4.00       36       2   tiles / datos VDP
+  0x12b000    3.67       43       1   mixto
+  0x12c000    3.85       40       2   mixto
+  0x12d000    3.74       42       2   mixto
+  0x12e000    3.78       40       2   mixto
+  0x12f000    3.81       40       2   mixto
+  0x130000    4.01       35       3   tiles / datos VDP
+  0x131000    3.77       40       2   mixto
+  0x132000    3.68       40       2   mixto
+  0x133000    3.86       39       2   mixto
+  0x134000    3.86       40       2   mixto
+  0x135000    3.89       39       2   mixto
+  0x136000    3.82       40       2   mixto
+  0x137000    3.89       39       3   mixto
+  0x138000    3.66       41       1   mixto
+  0x139000    3.72       42       2   mixto
+  0x13a000    4.10       34       2   tiles / datos VDP
+  0x13b000    3.84       38       2   mixto
+  0x13c000    2.57       68       0   datos dispersos
+  0x13d000    2.51       53       1   CODIGO 68k
+  0x13e000    2.60       41      27   CODIGO 68k
+  0x140000    3.86       42       5   mixto
+  0x141000    4.07       39       6   tiles / datos VDP
+  0x142000    3.87       41       5   mixto
+  0x143000    3.92       42       4   mixto
+  0x144000    3.78       44       5   mixto
+  0x145000    3.69       46       4   mixto
+  0x146000    3.47       49       5   mixto
+  0x147000    3.70       45       5   mixto
+  0x148000    3.97       41       6   mixto
+  0x149000    3.90       40       6   mixto
+  0x14a000    3.82       43       6   mixto
+  0x14b000    3.82       42       5   mixto
+  0x14c000    3.77       45       4   mixto
+  0x14d000    3.67       45       6   mixto
+  0x14e000    4.18       35       7   tiles / datos VDP
+  0x14f000    3.68       45       5   mixto
+  0x150000    3.79       43       6   mixto
+  0x151000    3.30       53       6   mixto
+  0x152000    3.58       52       3   mixto
+  0x153000    4.11       39       6   tiles / datos VDP
+  0x154000    3.13       43      28   mixto
+  0x160000    3.81       46       4   mixto
+  0x161000    3.83       46       5   mixto
+  0x162000    4.02       42       5   tiles / datos VDP
+  0x163000    3.57       49       3   mixto
+  0x164000    4.06       41       5   tiles / datos VDP
+  0x165000    3.87       45       4   mixto
+  0x166000    3.78       45       4   mixto
+  0x167000    3.62       50       4   mixto
+  0x168000    4.10       40       4   tiles / datos VDP
+  0x169000    4.21       40       5   tiles / datos VDP
+  0x16a000    4.15       42       5   tiles / datos VDP
+  0x16b000    4.01       45       6   tiles / datos VDP
+  0x16c000    3.69       51       4   mixto
+  0x16d000    3.91       43       5   mixto
+  0x16e000    3.93       41       6   mixto
+  0x16f000    4.05       42       5   tiles / datos VDP
+  0x170000    3.80       48       5   mixto
+  0x171000    3.43       55       3   mixto
+  0x172000    3.87       45       4   mixto
+  0x173000    3.93       47       4   mixto
+  0x174000    3.02       42      28   mixto
+  0x180000    3.60       43       2   mixto
+  0x181000    3.48       45       1   mixto
+  0x182000    3.57       46       2   mixto
+  0x183000    3.68       41       2   mixto
+  0x184000    3.72       42       2   mixto
+  0x185000    3.91       39       2   mixto
+  0x186000    3.70       41       1   mixto
+  0x187000    3.43       48       1   mixto
+  0x188000    3.75       41       1   mixto
+  0x189000    3.65       44       2   mixto
+  0x18a000    3.75       45       1   mixto
+  0x18b000    3.63       43       1   mixto
+  0x18c000    3.58       51       1   mixto
+  0x18d000    3.86       39       2   mixto
+  0x18e000    3.72       44       2   mixto
+  0x18f000    3.37       49       1   mixto
+  0x190000    3.84       39       1   mixto
+  0x191000    3.79       44       2   mixto
+  0x192000    3.54       46       1   mixto
+  0x193000    3.81       41       1   mixto
+  0x194000    3.69       45       2   mixto
+  0x195000    3.65       46       1   mixto
+  0x196000    3.58       45       3   mixto
+  0x197000    3.80       41       2   mixto
+  0x198000    2.21       25      58   datos dispersos
+  0x1a0000    3.87       45       4   mixto
+  0x1a1000    3.82       46       5   mixto
+  0x1a2000    4.23       38       4   tiles / datos VDP
+  0x1a3000    3.96       41       3   mixto
+  0x1a4000    3.99       41       4   mixto
+  0x1a5000    4.23       37       5   tiles / datos VDP
+  0x1a6000    3.98       42       4   mixto
+  0x1a7000    4.04       40       3   tiles / datos VDP
+  0x1a8000    3.87       42       3   mixto
+  0x1a9000    3.95       43       3   mixto
+  0x1aa000    3.99       41       4   mixto
+  0x1ab000    4.01       40       5   tiles / datos VDP
+  0x1ac000    4.07       36       4   tiles / datos VDP
+  0x1ad000    4.07       38       4   tiles / datos VDP
+  0x1ae000    4.10       42       5   tiles / datos VDP
+  0x1af000    4.05       43       5   tiles / datos VDP
+  0x1b0000    3.78       51       4   mixto
+  0x1b1000    3.69       48       3   mixto
+  0x1b2000    3.88       46       2   mixto
+  0x1b3000    3.55       54       2   mixto
+  0x1b4000    3.55       45       0   mixto
+  0x1b5000    3.08       26       0   mixto
+  0x1b6000    3.04       29       0   mixto
+  0x1b7000    4.10       35       3   tiles / datos VDP
+  0x1b8000    4.11       41       5   tiles / datos VDP
+  0x1b9000    4.18       40       6   tiles / datos VDP
+  0x1ba000    3.06       60       1   mixto
+  0x1bb000    3.39       56       1   mixto
+  0x1bc000    0.86        7      88   datos dispersos
+  0x1c0000    3.93       41       3   mixto
+  0x1c1000    3.84       43       4   mixto
+  0x1c2000    4.11       39       3   tiles / datos VDP
+  0x1c3000    4.22       35       4   tiles / datos VDP
+  0x1c4000    4.04       36       4   tiles / datos VDP
+  0x1c5000    4.12       35       4   tiles / datos VDP
+  0x1c6000    4.01       38       4   tiles / datos VDP
+  0x1c7000    4.06       37       3   tiles / datos VDP
+  0x1c8000    3.77       43       3   mixto
+  0x1c9000    3.93       41       4   mixto
+  0x1ca000    3.86       40       4   mixto
+  0x1cb000    3.82       43       4   mixto
+  0x1cc000    3.85       39       3   mixto
+  0x1cd000    4.08       36       3   tiles / datos VDP
+  0x1ce000    3.82       42       4   mixto
+  0x1cf000    4.07       39       4   tiles / datos VDP
+  0x1d0000    4.03       37       4   tiles / datos VDP
+  0x1d1000    4.20       34       4   tiles / datos VDP
+  0x1d2000    3.83       41       3   mixto
+  0x1d3000    3.97       36       5   mixto
+  0x1d4000    4.21       31       5   tiles / datos VDP
+  0x1d5000    4.21       35       3   tiles / datos VDP
+  0x1d6000    3.83       41       2   mixto
+  0x1d7000    4.03       40       4   tiles / datos VDP
+  0x1d8000    4.13       38       5   tiles / datos VDP
+  0x1d9000    2.95       63       2   datos dispersos
+  0x1da000    2.18       28      57   datos dispersos
+  0x1e0000    3.63       41       0   mixto
+  0x1e1000    3.30       47       0   mixto
+  0x1e2000    3.80       40       1   mixto
+  0x1e3000    3.92       40       1   mixto
+  0x1e4000    3.83       41       1   mixto
+  0x1e5000    3.55       47       1   mixto
+  0x1e6000    3.40       51       4   mixto
+  0x1e7000    3.68       47       3   mixto
+  0x1e8000    3.79       46       1   mixto
+  0x1e9000    3.54       49       0   mixto
+  0x1ea000    3.66       43       0   mixto
+  0x1eb000    3.88       41       1   mixto
+  0x1ec000    3.84       40       1   mixto
+  0x1ed000    3.33       52       4   mixto
+  0x1ee000    3.37       51       7   mixto
+  0x1ef000    3.78       45       3   mixto
+  0x1f0000    3.71       48       5   mixto
+  0x1f1000    3.57       54       2   mixto
+  0x1f2000    3.72       50       1   mixto
+  0x1f3000    0.15        1      98   datos dispersos
+  0x200000    4.01       42       3   tiles / datos VDP
+  0x201000    4.14       41       3   tiles / datos VDP
+  0x202000    4.15       42       3   tiles / datos VDP
+  0x203000    4.27       38       3   tiles / datos VDP
+  0x204000    4.14       41       3   tiles / datos VDP
+  0x205000    4.20       38       4   tiles / datos VDP
+  0x206000    4.21       41       4   tiles / datos VDP
+  0x207000    4.14       39       3   tiles / datos VDP
+  0x208000    3.83       44       3   mixto
+  0x209000    3.96       43       3   mixto
+  0x20a000    4.32       37       4   tiles / datos VDP
+  0x20b000    4.02       40       3   tiles / datos VDP
+  0x20c000    4.13       40       4   tiles / datos VDP
+  0x20d000    4.11       40       3   tiles / datos VDP
+  0x20e000    4.21       38       3   tiles / datos VDP
+  0x20f000    4.18       37       2   tiles / datos VDP
+  0x210000    4.21       36       4   tiles / datos VDP
+  0x211000    3.79       44       3   mixto
+  0x212000    4.19       39       4   tiles / datos VDP
+  0x213000    4.42       34       4   tiles / datos VDP
+  0x214000    3.83       43       4   mixto
+  0x215000    3.84       46       4   mixto
+  0x216000    4.24       39       3   tiles / datos VDP
+  0x217000    3.75       47       3   mixto
+  0x218000    3.07       58       4   mixto
+  0x219000    3.89       45       4   mixto
+  0x21a000    4.13       40       3   tiles / datos VDP
+  0x21b000    3.98       43       4   mixto
+  0x21c000    3.94       30      27   mixto
+  0x220000    3.74       35       0   mixto
+  0x221000    3.82       33       0   mixto
+  0x222000    3.77       35       0   mixto
+  0x223000    3.63       38       0   mixto
+  0x224000    3.81       35       0   mixto
+  0x225000    3.82       35       0   mixto
+  0x226000    3.73       37       0   mixto
+  0x227000    3.65       37       0   mixto
+  0x228000    3.71       38       0   mixto
+  0x229000    3.62       38       0   mixto
+  0x22a000    3.67       37       0   mixto
+  0x22b000    3.48       41       0   mixto
+  0x22c000    3.58       38       0   mixto
+  0x22d000    3.67       37       0   mixto
+  0x22e000    3.54       40       0   mixto
+  0x22f000    3.80       34       0   mixto
+  0x230000    3.60       38       0   mixto
+  0x231000    3.56       38       0   mixto
+  0x232000    3.78       36       0   mixto
+  0x233000    3.69       34       0   mixto
+  0x234000    3.78       34       0   mixto
+  0x235000    3.67       37       0   mixto
+  0x236000    3.62       36       0   mixto
+  0x237000    3.69       35       0   mixto
+  0x238000    3.73       36       0   mixto
+  0x239000    3.71       34       0   mixto
+  0x23a000    3.72       38       0   mixto
+  0x23b000    3.62       38       0   mixto
+  0x23c000    3.86       35       0   mixto
+  0x23d000    3.95       26       0   mixto
+  0x23e000    3.73       29       0   mixto
+  0x23f000    3.98       30       0   mixto
+  0x240000    2.85       29       0   datos dispersos
+  0x241000    3.22       32       0   mixto
+  0x242000    3.34       51       0   mixto
+  0x243000    2.41       56       0   datos dispersos
+  0x244000    3.11       52       0   mixto
+  0x245000    1.95       69       0   datos dispersos
+  0x246000    2.60       62       0   datos dispersos
+  0x247000    2.27       68       0   datos dispersos
+  0x248000    1.79       73       0   datos dispersos
+  0x249000    2.78       60       0   datos dispersos
+  0x24a000    4.76        8      10   tiles / datos VDP
+  0x24b000    2.93       52       0   datos dispersos
+  0x24c000    2.04       61       0   datos dispersos
+  0x24d000    2.04       59       0   datos dispersos
+  0x24e000    2.19       54       0   datos dispersos
+  0x24f000    1.30       79       0   datos dispersos
+  0x250000    0.53       93       0   datos dispersos
+  0x251000    1.83       67       0   datos dispersos
+  0x252000    1.62       72       0   datos dispersos
+  0x253000    1.96       63       0   datos dispersos
+  0x254000    2.09       60       0   datos dispersos
+  0x255000    2.13       59       0   datos dispersos
+  0x256000    2.81       31       0   datos dispersos
+  0x257000    2.83       23       0   datos dispersos
+  0x258000    2.79       28       0   datos dispersos
+  0x259000    2.79       27       0   datos dispersos
+  0x25a000    2.79       27       0   datos dispersos
+  0x25b000    2.83       25       0   datos dispersos
+  0x25c000    2.53       43       0   datos dispersos
+  0x25d000    2.41       35       0   datos dispersos
+  0x25e000    2.55       47       0   datos dispersos
+  0x25f000    2.45       29      45   datos dispersos
+  0x260000    4.67        6       9   tiles / datos VDP
+  0x261000    4.03       32       3   tiles / datos VDP
+  0x262000    3.57       43       5   mixto
+  0x263000    3.98       27       4   mixto
+  0x264000    1.86       71       1   datos dispersos
+  0x265000    2.68       53      10   datos dispersos
+  0x266000    3.45       38       8   mixto
+  0x267000    2.49       54       1   datos dispersos
+  0x268000    2.58       59       7   datos dispersos
+  0x269000    2.69       46      23   datos dispersos
+  0x26a000    2.37       61       0   datos dispersos
+  0x26b000    3.38       43      12   mixto
+  0x26c000    3.87       35       8   mixto
+  0x26d000    2.40       64       3   datos dispersos
+  0x26e000    3.26       45       7   mixto
+  0x26f000    3.27       42      13   mixto
+  0x270000    2.72       62       0   datos dispersos
+  0x271000    3.91       15       0   mixto
+  0x272000    4.01       20       3   tiles / datos VDP
+  0x273000    3.67       26       2   mixto
+  0x274000    4.21       22       3   tiles / datos VDP
+  0x275000    3.76       25       3   mixto
+  0x276000    2.15       57       0   datos dispersos
+  0x277000    2.02       61       0   datos dispersos
+  0x278000    2.02       61       0   datos dispersos
+  0x279000    2.09       59       0   datos dispersos
+  0x27a000    2.39       47       0   datos dispersos
+  0x27b000    2.35       50       0   datos dispersos
+  0x27c000    2.27       54       0   datos dispersos
+  0x27d000    3.97       40       0   mixto
+  0x27e000    6.53        8       0   mixto
+  0x27f000    6.06       15       0   tiles / datos VDP
+  0x280000    6.95       12       2   mixto
+  0x281000    6.88       12       2   mixto
+  0x282000    6.63        8       1   mixto
+  0x283000    6.43       12       1   tiles / datos VDP
+  0x284000    6.98       11       1   mixto
+  0x285000    6.93       14       1   mixto
+  0x286000    7.06       10       1   CODIGO 68k
+  0x287000    7.12        9       0   mixto
+  0x288000    7.03        8       1   CODIGO 68k
+  0x289000    6.87        6       1   mixto
+  0x28a000    7.07        8       1   mixto
+  0x28b000    6.91        6       1   mixto
+  0x28c000    6.71        7       1   mixto
+  0x28d000    7.42        6       1   mixto
+  0x28e000    7.03        8       1   mixto
+  0x28f000    6.91        6       0   mixto
+  0x290000    6.66        6       1   mixto
+  0x291000    7.29        5       0   CODIGO 68k
+  0x292000    6.66        5       0   mixto
+  0x293000    6.70        6       0   mixto
+  0x294000    7.29        6       0   mixto
+  0x295000    6.88        6       1   mixto
+  0x296000    6.71        5       0   mixto
+  0x297000    7.13        6       1   mixto
+  0x298000    6.43        9       0   tiles / datos VDP
+  0x299000    6.75        9       1   mixto
+  0x29a000    7.07        8       0   mixto
+  0x29b000    6.82        5       1   mixto
+  0x29c000    7.05        6       1   mixto
+  0x29d000    4.80       32       0   tiles / datos VDP
+  0x29e000    2.60       51       0   datos dispersos
+  0x29f000    2.46       54       0   datos dispersos
+  0x2a0000    2.54       51       0   datos dispersos
+  0x2a1000    1.81       63       0   datos dispersos
+  0x2a2000    1.54       77       0   datos dispersos
+  0x2a3000    1.73       69       0   datos dispersos
+  0x2a4000    1.26       79       0   datos dispersos
+  0x2a5000    0.84       86       0   datos dispersos
+  0x2a6000    1.34       78       0   datos dispersos
+  0x2a7000    0.46       94       0   datos dispersos
+  0x2a8000    1.75       70       0   datos dispersos
+  0x2a9000    0.68       91       0   datos dispersos
+  0x2aa000    0.68       90       0   datos dispersos
+  0x2ab000    0.34       96       0   datos dispersos
+  0x2ac000    1.34       57      38   datos dispersos
+

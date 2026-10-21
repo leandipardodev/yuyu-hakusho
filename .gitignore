@@ -1,0 +1,54 @@
+# ---------------------------------------------------------------------------
+# ROMs del juego original -- NO distribuir.
+#
+# Yu Yu Hakusho: Makyou Toitsusen (1994) es de Treasure, con licencia de
+# Toei Animation y Shueisha. Los dumps completos son la obra completa con
+# derechos de autor: subirlos expone la cuenta a un takedown por DMCA.
+#
+# Hace falta CUBRIR LAS DOS GRAFÍAS ("Yuu Yuu" y "Yu Yu") y también las dos
+# que trae la carpeta rom/fuentes. Ya se coló una vez, con la extensión
+# cambiada a .md para que pareciera un documento.
+#
+# Y NO hay que ignorar *.bin a lo bruto: los assets/re/*.bin SÍ son binarios
+# legítimos del proyecto (volcados de VRAM de 64 KB y CRAM de 128 B) y están
+# versionados a propósito. Lo que protege este fichero es el NOMBRE.
+# ---------------------------------------------------------------------------
+/rom/*.bin
+/rom/fuentes/*.bin
+/rom/fuentes/*.md
+/Yuu Yuu Hakusho*
+/Yu Yu Hakusho*
+*.md.bin
+
+# ---------------------------------------------------------------------------
+# El repo de notas es un repo git PROPIO (github.com/Akara1996/yuyu-rom-notas)
+# con su historial de 126 commits. No se mete en este repo: se usa como
+# sub-repo dentro de notas/.
+# ---------------------------------------------------------------------------
+/notas/
+
+# ---------------------------------------------------------------------------
+# Ruta local a la ROM. Cada máquina tiene la suya; no se comparte.
+# Se escribe una sola línea con la ruta. Ver _disasm_tools/rompath.py
+# ---------------------------------------------------------------------------
+/.rom_path
+
+# Cach autogenerada por Godot (se regenera al abrir el proyecto)
+.godot/
+*.import
+
+# Logs de captura y salida de herramientas: ruido de debug
+*.err
+*.out
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Sistema operativo / editores
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+.vscode/
+.idea/
