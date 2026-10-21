@@ -3229,22 +3229,36 @@ Ver tambien `COLISIONES_Y_HITBOXES.md` §8 para los errores concretos del
 material externo de Discord / BizHawk.
 
 
-## EL TELEPORT DE ITSUKI: LA CADENA DE ESTADOS
+## EL TELEPORT DE ITSUKI: LA CADENA DE ESTADOS (MEDIDO)
 
-**Fuente: desensamblado** (`datos/desensamblado_68000.asm`).
+**Fuente: sonda `herramientas/lua/sonda_teleport.lua`, 2024-10.**
+**[MEDIDO]**, no deducido.
 
-| Dato | Valor | Donde |
-|---|---|---|
-| Estado del teleport en curso | **`$A4`** | tabla ctx6 (base `$0CF99A`) |
-| Bloque de frames | **`$0D044A`** | 14 frames, 37 ticks |
-| Transicion `$A4` -> `$A5` | **`$01926A`** | unica llamada desde `$01B6E8` |
-| Handler de `$A4` | **`$01B6E0`** | `cmpi.b #$a4, $5f(a5)` |
-| Estado "aterrizaje" | **`$A5`** | ctx6, 16 frames, 45 ticks |
-| Estado "en el suelo" | **`$A9`** | ctx6, 1 frame, dur 0 |
-| Y en mundo | **`$44`** | 16.16, entero en la palabra baja |
-| Suelo del plano | **`$9c`** | 320 el delantero, 304 el de atras |
-| "Ponerse en el suelo" | **`move.l $9c(a5), $44(a5)`** | copiada en **14 sitios** del ROM |
+| frame | `$5F` | mundo X | mundo Y | suelo `$9C` | pantalla |
+|---|---|---|---|---|---|
+| 58761-58797 | `$A4` | 895 | 320 | 320 | 279,315 |
+| 58798 | `$A5` | 896 | 320 | 320 | 279,315 |
+| 58799 | `$A5` | **1048** | 320 | 320 | **432**,315 |
+| 58836-58905 | **`$25`** | 1048 → 1127 | **320 → 240 → 320** | 320 | 315 → 242 → 316 |
+| 58906-58931 | `$28` | 1129 | 320 → 311 → 320 | 320 | |
+| 58932-58956 | `$29` | 1142,50 | 320 | 320 | |
+| 58957-... | `$2A` | 1142,50 | 320 | 320 | |
 
-**El cambio:** en `$01927A` se sustituyen 6 bytes
-(`move.b #$0, $6c(a5)`) por otros 6 (`move.l $9c(a5), $44(a5)`). Mismo tamano.
-Receta `14_itsuki_teleport_pisa_el_suelo`, grupo `itsuki_teleport_suelo`.
+**Hechos medidos:**
+
+| Dato | Valor |
+|---|---|
+| La Y del ancla durante TODO el teleport | **320 = el suelo**, nunca se va |
+| El teleport coloca X | 895 → **1048** (zona C: pantalla 432) |
+| El "aire" | **NO es la Y**: es el estado **`$25`**, un salto de 80 px (vy = −6 px/frame) |
+| Cuando empieza | **1 frame** despues de acabar la colocacion |
+| El unico escritor de `$5D = $25` en todo el ROM | **`$01905E`** (el dash de 8 de mana de Itsuki) |
+| El handler de `$03` | `$019F90` -> `$18440` = estado `$00` (reposo, en el suelo) |
+| Limite izquierdo del escenario | `$a010` = **880** |
+| Limite derecho del escenario | `$a012` = **1168** |
+| Base de las 3 zonas del teleport | `$a010` = 880 -> 912 / 1040 / 1168 |
+| El estado `$25` de ctx6 | frames en `$0CFE4A`, durs 4,4,8,**255** |
+
+**El parche** `itsuki_teleport_suelo` cambia `$019061` de `25` a `03`
+(1 byte): el dash/teleport deja de terminar con el salto y vuelve al reposo
+en el suelo.

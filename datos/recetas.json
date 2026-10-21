@@ -172,11 +172,11 @@
     },
     {
       "id": "14_itsuki_teleport_pisa_el_suelo",
-      "titulo": "El teleport de Itsuki termina pisando el suelo",
+      "titulo": "El teleport de Itsuki termina en el suelo (sin el salto)",
       "grupos": [
         "itsuki_teleport_suelo"
       ],
-      "que_hace": "Al acabar el teleport, Itsuki queda en el suelo en vez de quedarse flotando unos frames. Es un solo byte: le pone la Y en el suelo del plano.",
+      "que_hace": "Al acabar el teleport Itsuki se queda plantado en el suelo. Antes saltaba 80 px al aire (el dash que dispara el 'ARRIBA' del comando) y tardaba 70 frames en volver. Es 1 byte.",
       "bytes": 1
     }
   ],

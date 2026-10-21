@@ -242,14 +242,15 @@ El byte +0 de cada registro es la duracion del frame (la copia a `$5A` esta en
 `$01EB5A`). El parche `itsuki_teleport` lleva el total de 37 a 22 ticks (un 40,5% menos).
 
 
-
 ### 1.9.bis EL FINAL DEL TELEPORT: QUE PISE EL SUELO
 
-Al acabar el teleport el personaje **quedaba en el aire** unos frames (notas
-del usuario: *"61 a 65: Itsuki esta en el aire: es lo que tarda en pisar el
-suelo"*). La causa: al entrar en `$A5` (aterrizaje) la **Y (`$44`) conservaba
-la altura del arco**.
+**Medido** (sonda `herramientas/lua/sonda_teleport.lua`): el teleport **sí**
+coloca al personaje en el suelo (Y = 320 = `$9C`) y en la zona correcta
+(X 895 → 1048, la zona C). Lo que lo manda al aire es **el dash de "arriba"**
+(8 de maná, `$01904E`), que dispara el "ARRIBA" del comando
+(abajo+arriba+A/B/C) al terminar: pone `$5D = $25` y el personaje sale
+volando 80 px (Y 320 → 240), tardando 70 frames en volver.
 
-El parche `itsuki_teleport_suelo` (6 bytes en `$01927A`) sustituye
-`move.b #$0, $6c(a5)` por `move.l $9c(a5), $44(a5)`: le pone la Y en el suelo
-del plano. Ver **PARCHES.md seccion 12**.
+El parche `itsuki_teleport_suelo` (**1 byte** en `$019061`) cambia
+`$5D = $25` por `$5D = $03`, y el teleport acaba en el reposo (estado `$00`)
+plantado en el suelo. Ver **PARCHES.md seccion 12**.

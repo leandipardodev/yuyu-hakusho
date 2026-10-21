@@ -810,73 +810,75 @@ de Itsuki**. Los demas personajes tienen su propio `$A4` con otro contenido
 solo sobre los bytes de `$0D044A`, que son los de ctx6.
 
 
-## 12. EL TELEPORT DE ITSUKI: QUE TERMINE PISANDO EL SUELO
+## 12. EL TELEPORT DE ITSUKI: QUE TERMINE EN EL SUELO
 
 **Receta:** `14_itsuki_teleport_pisa_el_suelo`. **Grupo:** `itsuki_teleport_suelo`.
-**6 bytes** en `$01927A`. **Aceptado** en la unificada.
+**1 byte** en `$019061`. **Aceptado** en la unificada.
 
-### Que se ve
+### Lo que se ve
 
-Al terminar el teleport, Itsuki **queda flotando en el aire** unos frames
-(las notas del usuario: *"61 a 65: Itsuki esta en el aire: es lo que tarda en
-pisar el suelo"*) en vez de quedarse plantado en el piso.
+Al terminar el teleport, Itsuki **sale disparado al aire**: la Y sube de 320
+a 240 (**80 px**) y tarda **70 frames** en volver al suelo.
 
-### Por que
+### Lo medido (sonda `herramientas/lua/sonda_teleport.lua`)
 
-El teleport de Itsuki es el estado **`$A4`** de su tabla (ctx6 = Itsuki, base
-`$0CF99A`; bloque de frames en `$0D044A`, 14 frames, 37 ticks). La cadena es:
+| frame | estado | mundo X | mundo Y | suelo `$9C` | pantalla |
+|---|---|---|---|---|---|
+| 58761-58797 | `$A4` (blink) | 895 | **320** | 320 | 279,315 |
+| 58798 | `$A5` (colocación) | 896 | **320** | 320 | 279,315 |
+| 58799 | `$A5` | **1048** (zona) | **320** | 320 | 432,315 |
+| 58836-58905 | **`$25`** | 1048 → 1127 | **320 → 240 → 320** | 320 | 315 → 242 → 316 |
+
+**La Y del ancla SIEMPRE es 320 = el suelo.** El teleport **sí** coloca al
+personaje en el suelo (Y = `$9C`) y en la zona correcta (X 895 → 1048, que
+es la zona C: pantalla 432, una de las tres medidas).
+
+Lo que lo manda al aire es **otro estado**: `$25`, un **salto de 80 px** con
+vy = −6 px/frame que empieza **1 frame después** de acabar la colocación.
+
+### De donde sale ese salto
+
+`$5D` es el **estado siguiente** (lo lee el dispatcher en `$015A5A`). El
+**único** sitio de todo el ROM que pone `$5D = $25` (el salto) es:
 
 ```
-$A4 (teleport)  ->  $A5 (aterrizaje)  ->  $A9 (en el suelo)  ->  $00
+01904e:  30 3c 00 08        move.w    #$8, d0      ; 8 de mana
+019052:  61 00 0b f2        bsr.w     $19c46
+019056:  0c 00 00 00        cmpi.b    #$0, d0
+01905a:  67 00 0b e8        beq.w     $19c44
+01905e:  1b 7c 00 25 00 5d  move.b    #$25, $5d(a5)   <-- EL SALTO
+019064:  1b 7c 00 a0 00 5f  move.b    #$a0, $5f(a5)   ; estado $A0
 ```
 
-La transicion `$A4 -> $A5` esta en **`$01926A`**, y es la **unica llamada** a
-esa rutina (la hace el handler de `$A4` en `$01B6E8`):
+Es el **DASH** de Itsuki (8 de maná, "arriba"). El comando del teleport es
+**abajo+arriba+A/B/C**, así que el "arriba" del comando dispara el dash al
+terminar el teleport, y el dash se lleva al personaje 80 px por los aires.
 
-```
-01926a:  1b 7c 00 a5 00 5f   move.b    #$a5, $5f(a5)
-019270:  1b 7c 00 03 00 5d   move.b    #$3,  $5d(a5)
-019276:  42 2d 00 6b         clr.b     $6b(a5)
-01927a:  1b 7c 00 00 00 6c   move.b    #$0,  $6c(a5)      <-- SE CAMBIA
-019280:  60 00 99 9a         bra.w     $19c1c
-```
-
-Al entrar en `$A5` la **Y del personaje (`$44`) conservaba la altura del arco**,
-asi que aparecia en el aire y luego tardaba en caer.
+Y el estado `$25` de ctx6 es un salto de verdad: su bloque de frames está en
+`$0CFE4A` (4 frames, durs 4, 4, 8, **255** = espera en el aire).
 
 ### El cambio
 
-Se sustituyen **6 bytes** por otros **6 bytes**: `move.b #$0, $6c(a5)` ->
-`move.l $9c(a5), $44(a5)`.
-
-`$44` es la **posicion Y en mundo** (16.16 con el entero en la palabra baja) y
-`$9c` es el **suelo del plano** (320 el delantero, 304 el de atras). La
-instruccion `move.l $9c(a5), $44(a5)` es **la rutina que el propio juego usa
-para ponerse en el suelo**: esta copiada en **14 sitios** del ROM (por ejemplo
-`$01B656`, `$019CEE`, `$019DBC`, `$019DF6`, `$019EBE`, `$019F82`, `$019FD6`,
-`$01A0A2`, `$01A144`, `$01A288`, `$01A2F2`, `$01BDC4`, `$01BE26`).
-
-Como el cambio es del **mismo tamano**, no se desplaza ningun byte y no hay
-que recalcular ningun salto.
+**1 byte**, en `$019061`:
 
 | Byte | De | A |
 |---|---|---|
-| `$01927A` | `1B` | `2B` |
-| `$01927B` | `7C` | `6D` |
-| `$01927C` | `00` | `00` |
-| `$01927D` | `00` | `9C` |
-| `$01927E` | `00` | `00` |
-| `$01927F` | `6C` | `44` |
+| `$019061` | `25` | `03` |
 
-### Nota
+`$5D = $25` (salto) -> `$5D = $03`. El handler de `$03` es `$019F90`, que
+acaba en `$18440` = **estado `$00`, el reposo, con el personaje en el suelo**.
 
-`$6c` son los **flags de subsistema** (bits 0-4: handlers `$15CB0` `$15DE6`
-`$15E28` `$15EFE` `$15F24`). Ponerlo a 0 ahi era limpiar el frame en curso; el
-siguiente frame los vuelve a escribir en `$01EB76`, asi que la perdida es
-nula.
+Mismo tamaño, no se desplaza ningún byte, no hay que recalcular saltos.
+
+### Nota importante (por qué el primer intento no funcionó)
+
+Un parche anterior (commit `fc5e776`) ponía `move.l $9c(a5), $44(a5)` en
+`$01926A`. **Esa no es la ruta del teleport de Itsuki**: `$01926A` es la
+routine "pasa a `$A5` sin colocar nada" y **no cambia nada visible** (el
+teleport ya ponía la Y en el suelo en `$01BE26`). El parche se ha sustituido
+por el de `$019061`, que es el que va al nudo.
 
 ### Comprobacion
 
-El verificador de desensamblado (`verificar_desensamblado.py`) da **OK**: la
-instruccion nueva desensambla y ocupa los mismos 6 bytes. La ROM unificada
-queda en **61 bytes**, checksum **`$023A`**.
+Verificador de desensamblado: **OK**. La unificada queda en **58 bytes**,
+checksum **`$F1B3`**.
