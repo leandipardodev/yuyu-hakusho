@@ -1511,6 +1511,30 @@
           "nota": "escala: el rival, init 4"
         }
       ]
+    },
+    "kuwabara_hoja_2hits": {
+      "desc": "LA HOJA DIMENSIONAL DE KUWABARA, DE 3 GOLPES A 2. La hoja es el move $A6 de Kuwabara (DOWN,UP + A/B/C, 20 de mana). Los 3 golpes salen de un objeto, y ese objeto tiene UN blob con TRES cajas ($0D9CAA: radioX 12, 14 y 8). La ficha dice 8x3 y stun 6x3: 3 golpes. Para que solo haya 2, se corta la cadena de cajas poniendo a 0 el bit 7 del radioX de la 2a caja, que es el que dice 'hay mas cajas'. Asi el motor deja de leer la 3a caja. El shuriken tiene su propio blob ($0D9CD6, con 3 cajas) y NO se toca.",
+      "confianza": "CODIGO (el blob, sus 3 cajas y el bit 7 de 'hay mas cajas' estan en el desensamblado) + MEDIDO (la ficha dice 8x3) / SIN_CONFIRMAR (que los 3 golpes sean las 3 cajas y no 3 frames)",
+      "bytes": [
+        {
+          "addr": "0x0D9CB2",
+          "old": "8E",
+          "new": "0E",
+          "nota": "radioX de la 2a caja de la hoja dimensional: de 0x8E (radioX 14, bit 7 = 'hay mas cajas') a 0x0E. Al quitar el bit 7 la cadena termina aqui y la 3a caja (radioX 8, la del alcance) no se lee: la hoja pega 2 veces en vez de 3."
+        }
+      ]
+    },
+    "kuwabara_hoja_2hits_alt": {
+      "desc": "ALTERNATIVA para dejar la hoja dimensional en 2 golpes: quitarle el bit de hitbox al frame que usa la 3a caja. La entrada de sub-lista b1=19 ($0D9A86) es la que apunta al blob $0D9CC6 (una sola caja, radioX 9). Conviene probarla si la de las cajas no funciona.",
+      "confianza": "CODIGO / SIN_CONFIRMAR (misma duda que el grupo principal)",
+      "bytes": [
+        {
+          "addr": "0x0D9A86",
+          "old": "60",
+          "new": "20",
+          "nota": "flags de la entrada de sub-lista b1=19: se quita el bit 6 (hitbox)"
+        }
+      ]
     }
   },
   "instrumentacion": {

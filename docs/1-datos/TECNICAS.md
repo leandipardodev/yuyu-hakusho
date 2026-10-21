@@ -87,6 +87,47 @@ Hoja dim. 1E   08   06   02   01     -> FISICA (con clash)
 | 10 | `$0D9442` | hoja + shuriken |
 | 11 | `$0D9452` | solo shuriken |
 
+
+### 1.5 Parche: que la hoja dimensional pegue 2 veces en vez de 3
+
+**Grupo `kuwabara_hoja_2hits` — 1 byte: `$0D9CB2` `$8E` → `$0E`.**
+
+La hoja dimensional tiene **un solo blob con TRES cajas** (`$0D9CAA`):
+
+| Caja | Dirección | radioX | offsetX | radioY | offsetY |
+|---|---|---|---|---|---|
+| 0 | `$0D9CAE` | 12 | 2 | 7 | −29 |
+| 1 | `$0D9CB2` | 14 | 2 | 10 | −29 |
+| 2 | `$0D9CB6` | 8 | −122 | 30 | −127 |
+
+Y la ficha dice **8×3** (daño 8, tres veces) y **stun 6×3**. El shuriken tiene
+su propio blob (`$0D9CD6`) con también 3 cajas (radioX 6, 8, 8) y su ficha
+también dice 8×3. **Los 3 golpes son las 3 cajas.**
+
+**El bit 7 del radioX dice "hay más cajas"**. La caja 1 tiene `radioX = $8E`
+(el bit 7 puesto = sigue leyendo) y la caja 2 tiene `radioX = $08` (bit 7
+limpio = es la última).
+
+Poner a 0 el bit 7 de la caja 1 → el motor deja de leer la caja 2 → **la hoja
+pega 2 veces en vez de 3**, y el daño total baja de 24 a 16.
+
+```
+$0D9CB2   8E -> 0E      radioX 14 con "hay mas cajas" -> radioX 14 sin
+```
+
+> **El shuriken NO se toca**: su blob es `$0D9CD6`, 16 bytes más allá.
+
+**Alternativa por si esta no funciona:** el grupo `kuwabara_hoja_2hits_alt`
+(1 byte, `$0D9A86` `$60` → `$20`) le quita el bit de hitbox al frame que usa
+la 3ª caja. Si los 3 golpes fuesen **3 frames** y no 3 cajas, esta sería la
+buena.
+
+**Lo que NO se sabe todavía:** si los 3 golpes son las 3 cajas de un frame o
+3 frames distintos con hitbox. La diferencia se nota solo jugando: con 3 cajas
+la hoja pega al pasar el objeto (el objeto se mueve hacia el rival), y con 3
+frames en 12 ticks de actividad. Las notas medidos 12 frames de caja activa,
+que encaja con las 3 cajas.
+
 ### 1.4 Lo que NO se sabe
 
 - **Las distancias del spawn de Kuwabara.** Solo se midió una (176 px). En

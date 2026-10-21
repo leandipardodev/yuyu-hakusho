@@ -7,12 +7,10 @@
     "grupos": "los grupos son los de datos/parches.json (direccion -> valor)",
     "flujo": "1. Se hace un cambio -> se anade su grupo a datos/parches.json. 2. Se anade su id a 'aceptados' de este fichero. 3. Se reconstruye: python herramientas/desensamblado/construir_roms.py. Con eso el cambio aparece (a) en su propia ROM de rom/cambios/ y (b) summedo a la version unificada de rom/combinaciones/."
   },
-
   "_flujo": {
     "que_es_aceptados": "Los cambios que lleva la version UNIFICADA. Cada vez que acepte un cambio, su id entra aqui, y al reconstruir se suma a la unificada Y se guarda suelto en rom/cambios/.",
     "alternativas": "Los cambios con id 06b y 06c son ALTERNATIVAS entre si (la misma planta con otro estado de derribo), no acumulables: solo uno puede entrar en 'aceptados'."
   },
-
   "aceptados": [
     "01_hiei_dragon_lento",
     "02_hiei_dragon_hitbox",
@@ -21,130 +19,212 @@
     "05_fijo_doble_salto",
     "06_kurama_planta_elevacion",
     "08_un_solo_plano",
-    "09_rival_nace_delante"
+    "09_rival_nace_delante",
+    "11_kuwabara_hoja_2_hits"
   ],
-
   "cambios": [
     {
       "id": "01_hiei_dragon_lento",
       "titulo": "El dragon de Hiei va a media velocidad",
-      "grupos": ["dragon", "dragon_vel"],
+      "grupos": [
+        "dragon",
+        "dragon_vel"
+      ],
       "que_hace": "El dragon (炎殺黑龍波) de Hiei se desplaza a 1 px/frame en vez de 2, y el proyectil a 0,875 px/frame en vez de 1,75.",
       "bytes": 3
     },
     {
       "id": "02_hiei_dragon_hitbox",
       "titulo": "La hitbox del dragon de Hiei se estrecha de 68 a 9 px",
-      "grupos": ["blob"],
+      "grupos": [
+        "blob"
+      ],
       "que_hace": "El unico move del juego con una hitbox de 68 px de ancho pasa a tener 9 px.",
       "bytes": 2
     },
     {
       "id": "03_itsuki_kage_instantaneo",
       "titulo": "Las manos de Itsuki (影手) salen instantaneas y se desplazan 1/4",
-      "grupos": ["kage_dur", "kage_vel"],
+      "grupos": [
+        "kage_dur",
+        "kage_vel"
+      ],
       "que_hace": "Los frames del personaje en el especial (ids 166 y 167, los MEDIDOS) duran 0 ticks, y el desplazamiento durante el especial pasa de /2 a /4.",
       "bytes": 5
     },
     {
       "id": "04_itsuki_onda_lenta",
       "titulo": "La onda de Itsuki viaja a media velocidad",
-      "grupos": ["onda_vel"],
+      "grupos": [
+        "onda_vel"
+      ],
       "que_hace": "La onda de fuego (el objeto tipo $10, move 6) pasa de -1,0 a -0,5 px/frame.",
       "bytes": 2
     },
     {
       "id": "05_fijo_doble_salto",
       "titulo": "Fix del doble salto",
-      "grupos": ["doble_salto"],
+      "grupos": [
+        "doble_salto"
+      ],
       "que_hace": "$87(a5) es el contador de saltos. La rutina de reset (0x18440) no lo limpiaba, asi que con $87 != 0 el test de 0x15E28 impedia el segundo salto. Este grupo la reescribe para que tambien lo limpie.",
       "bytes": 18
     },
     {
       "id": "06_kurama_planta_elevacion",
       "titulo": "La planta de Kurama: el 2º golpe cae en elevacion recta",
-      "grupos": ["kurama_planta"],
+      "grupos": [
+        "kurama_planta"
+      ],
       "que_hace": "El byte $0D9C69 (nibble $68 = estado de derribo) pasa de $29 ($68=9, estado $2F, 334 frames) a $28 ($68=8, estado $30 = ELEVACION RECTA, 430 frames, con ventana de frames). El rival cae de otra forma y queda mas tiempo para conectar.",
       "bytes": 1
     },
     {
       "id": "06b_kurama_planta_ventana",
       "titulo": "ALTERNATIVA: la planta con derribo con ventana",
-      "grupos": ["kurama_ventana"],
+      "grupos": [
+        "kurama_ventana"
+      ],
       "que_hace": "$0D9C69 pasa a $25 ($68=5, estado $25 = derribo con ventana, 290 frames), que es lo que tiene el ROM ingles.",
       "bytes": 1
     },
     {
       "id": "06c_kurama_planta_ciego",
       "titulo": "ALTERNATIVA: la planta con derribo ciego",
-      "grupos": ["kurama_ciego"],
+      "grupos": [
+        "kurama_ciego"
+      ],
       "que_hace": "$0D9C69 pasa a $24 ($68=4, estado $23 = derribo ciego, 164 frames). Es el parche que se habia entregado, y el que daba MENOS frames.",
       "bytes": 1
     },
     {
       "id": "07_gameplay_extras",
       "titulo": "8 ajustes de gameplay",
-      "grupos": ["extras"],
+      "grupos": [
+        "extras"
+      ],
       "que_hace": "Hitstun del atacante y del defensor 16 -> 24 frames, hitstun de clash 28 -> 40, empuje del golpe limpio 3 -> 6 px/frame, empuje entre peleadores x2, muerte con HP < 32 en vez de 0, tope de combo 16 -> 255, slow-mo de muerte 160 -> 255 frames.",
       "bytes": 8
     },
     {
       "id": "08_un_solo_plano",
       "titulo": "Un solo plano: no se puede cruzar y el rival se puede golpear",
-      "grupos": ["un_plano"],
+      "grupos": [
+        "un_plano"
+      ],
       "que_hace": "El juego tiene dos arenas en dos planos (Y=320 el delantero, Y=304 el de atras) y el rival de la CPU arranca en el de atras. Este grupo anula los dos cruces y los cuatro filtros de plano de los resolvers.",
       "bytes": 7
     },
     {
       "id": "09_rival_nace_delante",
       "titulo": "El rival nace en el plano delantero y a su tamano normal",
-      "grupos": ["rival_delante"],
+      "grupos": [
+        "rival_delante"
+      ],
       "que_hace": "Las cuatro inicializaciones del rival en el plano de atras ($9c = 304) pasan a $9c = 320, y su escala de $D8 (216, mas pequeno) a $100 (256). Con esto el rival esta en la misma arena y con el mismo tamano que el jugador.",
       "bytes": 8
     },
     {
       "id": "10_diagnostico_sinz80",
       "titulo": "DIAGNOSTICO: el juego arranca sin depender del Z80",
-      "grupos": ["sinz80"],
+      "grupos": [
+        "sinz80"
+      ],
       "que_hace": "El 68000 espera al driver de sonido antes de seguir. Con esto deja de esperar. Es para diagnostico, no un cambio de juego.",
       "bytes": 5
+    },
+    {
+      "id": "11_kuwabara_hoja_2_hits",
+      "titulo": "La hoja dimensional de Kuwabara pega 2 veces en vez de 3",
+      "grupos": [
+        "kuwabara_hoja_2hits"
+      ],
+      "que_hace": "La hoja dimensional (el move $A6 de Kuwabara, DOWN,UP + A/B/C) deja de tener 3 cajas en su blob y se queda con 2: pega 2 veces en vez de 3, y el daño total baja de 8x3=24 a 8x2=16. El shuriken de Kuwabara, que tiene su propio blob, no se toca.",
+      "bytes": 1
     }
   ],
-
   "combinaciones": [
     {
       "id": "yuyu_makyou_TODO_sinplanos",
       "titulo": "Los 4 cambios, sin tocar los planos",
-      "grupos": ["dragon", "dragon_vel", "blob", "kage_dur", "kage_vel", "onda_vel",
-                 "doble_salto", "kurama_planta"],
+      "grupos": [
+        "dragon",
+        "dragon_vel",
+        "blob",
+        "kage_dur",
+        "kage_vel",
+        "onda_vel",
+        "doble_salto",
+        "kurama_planta"
+      ],
       "que_hace": "Lo mismo pero dejando el juego con los dos planos como estaban."
     },
     {
       "id": "yuyu_makyou_TODO_sincruce",
       "titulo": "Los 4 cambios + el cruce bloqueado (pero el filtro de plano intacto)",
-      "grupos": ["dragon", "dragon_vel", "blob", "kage_dur", "kage_vel", "onda_vel",
-                 "doble_salto", "kurama_planta", "sin_cruce"],
+      "grupos": [
+        "dragon",
+        "dragon_vel",
+        "blob",
+        "kage_dur",
+        "kage_vel",
+        "onda_vel",
+        "doble_salto",
+        "kurama_planta",
+        "sin_cruce"
+      ],
       "que_hace": "Variante minima del plano: el jugador no puede cruzar, pero el rival que este en el plano de atras sigue siendo intocable."
     },
     {
       "id": "yuyu_makyou_TODO_plantaventana",
       "titulo": "Los 4 cambios + un solo plano, con la planta en derribo con ventana",
-      "grupos": ["dragon", "dragon_vel", "blob", "kage_dur", "kage_vel", "onda_vel",
-                 "doble_salto", "kurama_ventana", "un_plano", "rival_delante"],
+      "grupos": [
+        "dragon",
+        "dragon_vel",
+        "blob",
+        "kage_dur",
+        "kage_vel",
+        "onda_vel",
+        "doble_salto",
+        "kurama_ventana",
+        "un_plano",
+        "rival_delante"
+      ],
       "que_hace": "Igual que yuyu_makyou_TODO pero la planta usa el derribo con ventana (290 frames) en vez de la elevacion recta (430)."
     },
     {
       "id": "yuyu_makyou_TODO_plantaciego",
       "titulo": "Los 4 cambios + un solo plano, con la planta en derribo ciego",
-      "grupos": ["dragon", "dragon_vel", "blob", "kage_dur", "kage_vel", "onda_vel",
-                 "doble_salto", "kurama_ciego", "un_plano", "rival_delante"],
+      "grupos": [
+        "dragon",
+        "dragon_vel",
+        "blob",
+        "kage_dur",
+        "kage_vel",
+        "onda_vel",
+        "doble_salto",
+        "kurama_ciego",
+        "un_plano",
+        "rival_delante"
+      ],
       "que_hace": "Igual que yuyu_makyou_TODO pero la planta usa el derribo ciego (164 frames)."
     },
     {
       "id": "yuyu_makyou_TODO_EXPERIMENTAL",
       "titulo": "Lo mismo + el refactor del camino del proyectil (EXPERIMENTAL)",
-      "grupos": ["dragon", "dragon_vel", "blob", "kage_dur", "kage_vel", "onda_vel",
-                 "doble_salto", "kurama_planta", "un_plano", "rival_delante", "kage_proj"],
+      "grupos": [
+        "dragon",
+        "dragon_vel",
+        "blob",
+        "kage_dur",
+        "kage_vel",
+        "onda_vel",
+        "doble_salto",
+        "kurama_planta",
+        "un_plano",
+        "rival_delante",
+        "kage_proj"
+      ],
       "que_hace": "Anade el refactor de 0x1C3BA/0x21A08, que cambia QUE ruta crea el proyectil de 影手. No esta medido: puede romper algo."
     }
   ]
