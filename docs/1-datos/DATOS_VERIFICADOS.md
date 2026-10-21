@@ -3283,3 +3283,29 @@ byte+0 = duracion):
 | | | | | | | | | | | | | | | | **aterrizaje** |
 
 Anim 59 = visible, anim 0 = invisible (el parpadeo del teleport).
+
+
+## EL MASH DEL ATURDIMIENTO (el estado $0C)
+
+**Fuente: desensamblado** (verificado con Capstone, que es la verdad).
+
+| Dato | Valor | Donde |
+|---|---|---|
+| Estado del "aturdido" tras el knockdown | **`$0C`** | handler en `$01A282` |
+| La barra de aturdimiento al entrar | **255** (`#$ff`) | `$01A282` |
+| El contador real | **`$84`** (word) | |
+| Cuanto baja por frame | **1** | `$01A28E` |
+| Cuanto baja **por pulsacion de boton** | **2** | `$01A29A` |
+| Ticks extra al frame por pulsacion | **2** | `$01A2A6` |
+| Cuando se levanta | `$84 <= 1` | `$01A2AA` |
+| Al levantarse | `$18440` = estado `$00` | `$01A2BA` |
+| Botones que cuentan | los de **`$72`** (flags de boton) | `$01A292` |
+| El boton debe estar a menos de `$C8` (200) ticks | | `$01A29E` |
+
+**El mash:** hay que machar para bajar `$84` de 255 a 1. Con -2 por
+pulsacion hacen falta **~128 pulsaciones** (por eso es casi imposible);
+con el parche (x2, o sea -4) hacen falta **~64**.
+
+**Parche:** `mash_aturdimiento_x2`, 2 bytes: `$01A29A` (`$55`->`$59`) y
+`$01A2A6` (`$54`->`$58`). Ojo: el dato de SUBQ/ADDQ va en los bits 11-9
+del opcode, no en un byte aparte.

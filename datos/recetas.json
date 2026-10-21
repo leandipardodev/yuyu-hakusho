@@ -23,7 +23,8 @@
     "03_itsuki_kage_instantaneo",
     "14_itsuki_teleport_pisa_el_suelo",
     "13_itsuki_teleport_40mas_rapido",
-    "15_itsuki_teleport_colocacion_rapida"
+    "15_itsuki_teleport_colocacion_rapida",
+    "16_mash_aturdimiento_x2"
   ],
   "cambios": [
     {
@@ -188,6 +189,15 @@
       ],
       "que_hace": "La fase 2 del teleport (la colocacion en la zona) pasa de 45 ticks a 25. El parpadeo final baja de 25 a 15 ticks y la animacion de aterrizaje de 20 a 10. 9 bytes.",
       "bytes": 9
+    },
+    {
+      "id": "16_mash_aturdimiento_x2",
+      "titulo": "El mash para salir del aturdimiento cuenta x2",
+      "grupos": [
+        "mash_aturdimiento_x2"
+      ],
+      "que_hace": "Cada tecla mashada baja 4 frames el contador de aturdimiento en vez de 2 (y alarga el frame el doble). Salir del aturdimiento post-knockdown es la mitad de pulsaciones. 2 bytes.",
+      "bytes": 2
     }
   ],
   "combinaciones": [

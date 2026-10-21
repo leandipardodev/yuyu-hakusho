@@ -961,3 +961,65 @@ fase 2: la colocacion   $0D04BA  16 frames  total= 25 ticks
 ```
 
 Unificada: **67 bytes**, checksum **`$DDB3`**.
+
+
+## 14. EL MASH PARA SACAR EL ATURDIMIENTO CUENTA x2
+
+**Receta:** `16_mash_aturdimiento_x2`. **Grupo:** `mash_aturdimiento_x2`.
+**2 bytes** en `$01A29A` y `$01A2A6`. **Aceptado** en la unificada.
+
+### Que es
+
+Cuando la barra de aturdimiento se agota el personaje **cae** (knockdown), se
+levanta y queda **aturdido** unos 4 segundos. Si presionas muchas teclas
+(mash) ese tiempo baja, pero hay que hacerlo Muchisimas veces: con 255
+frames de aturdimiento y -2 por pulsacion hacen falta **~128 pulsaciones**.
+
+### Donde esta
+
+El estado `$0C` (el "aturdido" que queda tras el knockdown) tiene su
+handler en **`$01A282`**:
+
+```
+$01A282  3B 7C 00 FF 00 7E   move.w   #$ff, $7e(a5)   ; aturdimiento = 255 frames
+$01A288  2B 6D 00 9C 00 44   move.l   $9c(a5), $44(a5)  ; al suelo
+$01A28E  53 6D 00 84         subq.w   #$1, $84(a5)    ; -1 por frame
+$01A292  0C 2D 00 00 00 72   cmpi.b   #$0, $72(a5)    ; ?hay boton pulsado?
+$01A298  67 10               beq.b    $1a2aa
+$01A29A  55 6D 00 84         subq.w   #$2, $84(a5)    ; <-- EL MASH: -2 mas
+$01A29E  0C 2D 00 C8 00 5B   cmpi.b   #$c8, $5b(a5)
+$01A2A4  62 04               bhi.b    $1a2aa
+$01A2A6  54 2D 00 5B         addq.b   #$2, $5b(a5)   ; <-- +2 ticks al frame
+$01A2AA  0C 6D 00 01 00 84   cmpi.w   #$1, $84(a5)   ; ?llegó a <=1?
+$01A2B0  6D 04               blt.b    $1a2b6          ; si -> se levanta
+$01A2B6  42 6D 00 84         clr.w    $84(a5)
+$01A2BA  61 00 E1 84         bsr.w    $18440          ; -> estado $00 (reposo)
+```
+
+`$84` es el contador real de aturdimiento. `$7E` (la barra) se pone a 255 al
+entrar y la baja el daño de los golpes (`$01F42C`).
+
+### El cambio
+
+**2 bytes.** OJO: el dato de `SUBQ`/`ADDQ` va **en los bits 11-9 del opcode**,
+no en un byte aparte (`$53` = 1, `$55` = 2, `$59` = 4), asi que lo que
+cambia es el primer byte de cada instruccion.
+
+| Byte | De | A | |
+|---|---|---|---|
+| `$01A29A` | `55` | `59` | `subq.w #$2` -> `subq.w #$4`: cada tecla mashada baja **4** frames el contador en vez de 2 |
+| `$01A2A6` | `54` | `58` | `addq.b #$2` -> `addq.b #$4`: cada tecla mashada alarga **4** ticks el frame en vez de 2 |
+
+**=> el mash cuenta x2.** Con 255 frames hacen falta ~64 pulsaciones en vez de
+~128: la mitad.
+
+### Alcance
+
+El estado `$0C` es **generico** (es el mismo para los 11 personajes) y el
+mash es **UNO solo en todo el ROM** (el grep del EA `6D 00 84` solo devuelve
+los tres sitios de esta rutina). As que el cambio afecta a todos.
+
+### Comprobacion
+
+Verificador de desensamblado: **OK** (solo cambian los operandos). La
+unificada queda en **69 bytes**, checksum **`$E5B3`**.
