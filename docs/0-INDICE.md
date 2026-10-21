@@ -44,6 +44,7 @@ En todo el proyecto, un dato lleva siempre su procedencia:
 | Fichero | Qué es | Tamaño |
 |---|---|---|
 | `docs/1-datos/DIRECCIONES.md` | **la tabla maestra de direcciones** (aquí y en las notas, fundidas) | 11 secciones |
+| `docs/1-datos/TECNICAS.md` | **las técnicas** de cada personaje (ids, comandos, objetos) | empieza por Kuwabara |
 | `docs/1-datos/DATOS_VERIFICADOS.md` | **la fuente de verdad**: todo verificado, con su dirección | largo |
 | `docs/1-datos/PARCHES.md` | los 14 grupos de parche, con el porqué de cada byte | 8 secciones |
 | `docs/1-datos/COLISIONES_Y_HITBOXES.md` | las 5 listas de cajas, el dispatcher, los resolvers | |

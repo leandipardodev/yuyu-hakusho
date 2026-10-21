@@ -15,6 +15,11 @@ lleva **de dónde sale**:
 
 ---
 
+## 0. Las técnicas
+
+Las técnicas de cada personaje (ids, comandos, objetos) están en
+**`docs/1-datos/TECNICAS.md`**.
+
 ## 1. El jugador
 
 ### 1.1 Dónde vive
