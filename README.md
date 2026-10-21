@@ -70,7 +70,7 @@ yuyu-hakusho/
 │   │   ├── 09_rival_nace_delante.bin
 │   │   └── 10_diagnostico_sinz80.bin
 │   ├── combinaciones/            <- ROMs con varios cambios a la vez
-│   │   └── yuyu_makyou_TODO.bin   ★ los 4 cambios + un solo plano
+│   │   └── yuyu_makyou_UNIFICADA.bin   ★ la version unificada (la lista "aceptados")
 │   └── fuentes/                  <- los dumps de referencia (del autor y otros)
 │
 ├── herramientas/
@@ -118,8 +118,8 @@ yuyu-hakusho/
 ## 3. Los cambios, uno a uno
 
 Cada cambio que hemos ido haciendo está **por separado en su propia ROM**, hecho
-solo sobre la base original. La idea es elegir cuáles quieres y aplicar solo
-esos.
+solo sobre la base original. Y además **se suma a la versión unificada**. Las dos
+cosas salen del mismo sitio, así que nunca se desincronizan.
 
 | Fichero en `rom/cambios/` | Qué hace |
 |---|---|
@@ -135,25 +135,33 @@ esos.
 | `10_diagnostico_sinz80.bin` | diagnóstico: el juego arranca sin depender del Z80 |
 
 En `rom/combinaciones/` están las ROMs con varios cambios a la vez. La
-principal es **`yuyu_makyou_TODO.bin`** (los 4 cambios + un solo plano).
+principal es **`yuyu_makyou_UNIFICADA.bin`**: lleva todos los cambios de la
+lista `aceptados` de `datos/recetas.json`.
 
 **El índice completo, con los bytes de cada uno: `rom/LEEME.md`.**
 
-### Reconstruirlas todas
+### El flujo: un cambio nuevo se suma a las dos cosas
 
-```powershell
-python herramientas\desensamblado\construir_roms.py
+```
+1.  su grupo se añade a  datos/parches.json     (los bytes: dirección → valor)
+2.  su id se añade a    datos/recetas.json     (la lista "aceptados")
+3.  python herramientas\desensamblado\construir_roms.py
 ```
 
-Lee `datos/recetas.json` (qué ROMs hay) y `datos/parches.json` (los bytes de
-cada grupo), y las construye y verifica una a una: relee cada ROM y comprueba
-byte a byte que están los valores correctos y que el checksum cuadra.
+Con eso el cambio aparece **(a)** en su propia ROM de `rom/cambios/` y **(b)**
+sumado a la versión unificada de `rom/combinaciones/`. El constructor verifica
+cada ROM: la relee y comprueba byte a byte los valores del manifiesto, que la
+base tenía el valor esperado, y que el checksum cuadra.
+
+> Los cambios `06b_kurama_planta_ventana` y `06c_kurama_planta_ciego` son
+> **alternativas** entre sí (la misma planta con otro estado de derribo): solo
+> uno puede entrar en `aceptados`.
 
 ### Aplicar una combinación que tú elijas
 
 ```powershell
 python herramientas\desensamblado\patch_rom.py `
-    "romase\yuyu_makyou_base.bin" `
+    "rom\base\yuyu_makyou_base.bin" `
     "rom\combinaciones\mi_combinacion.bin" `
     dragon dragon_vel blob kage_dur kage_vel onda_vel doble_salto kurama_planta un_plano rival_delante
 ```

@@ -121,23 +121,70 @@ def main():
                 print(msg2)
         print()
 
+    # ---------------------------------------------------- LA VERSION UNIFICADA
+    # Se construye con la union de los cambios de la lista 'aceptados'. Cada
+    # cambio nuevo que acepte entra en esa lista, y con esto se suma a la
+    # unificada (que ademas se guarda suelto en rom/cambios/).
+    print("--- rom/combinaciones/  (la version UNIFICADA)")
+    print("    se construye con la union de los cambios de 'aceptados'")
+    por_id = {c["id"]: c for c in rec["cambios"]}
+    grupos_uni = []
+    falta = []
+    for cid in rec.get("aceptados", []):
+        c = por_id.get(cid)
+        if c is None:
+            falta.append(cid)
+            continue
+        for g in c["grupos"]:
+            if g not in grupos_uni:
+                grupos_uni.append(g)
+    if falta:
+        print("  [FALLO] ids de 'aceptados' que no existen en 'cambios': %s" % ", ".join(falta))
+    salida = os.path.join(ROM, "combinaciones", "yuyu_makyou_UNIFICADA.bin")
+    ok, msg = parchea(grupos_uni, salida)
+    if not ok:
+        print("  [FALLO] yuyu_makyou_UNIFICADA.bin")
+        print(msg)
+    else:
+        ok2, msg2 = verifica(salida, grupos_uni, parches)
+        print("  [%s] %-32s %s" % ("OK  " if ok2 else "MAL",
+                                   "yuyu_makyou_UNIFICADA.bin", msg2.strip()))
+        print("      grupos: %s" % ", ".join(grupos_uni))
+        print("      cambios: %s" % ", ".join(rec.get("aceptados", [])))
+    print()
+
     # un indice legible de lo que se ha construido
     with io.open(os.path.join(RAIZ, "rom", "LEEME.md"), "w", encoding="utf-8", newline="") as f:
         f.write("# Las ROMs\n\n")
-        f.write("`base/` la ROM original reparada (con el checksum al dia).\n")
+        f.write("`base/` la ROM original reparada (con el checksum al dia).\n\n")
         f.write("`cambios/` **una ROM por cambio**, cada una con SOLO ese cambio\n")
-        f.write("sobre la base. Son las piezas: eliges cuales quieres.\n")
-        f.write("`combinaciones/` ROMs con varios cambios a la vez.\n")
+        f.write("sobre la base. Son las piezas.\n\n")
+        f.write("`combinaciones/` ROMs con varios cambios a la vez. La principal es\n")
+        f.write("**`yuyu_makyou_UNIFICADA.bin`**: lleva todos los cambios de la lista\n")
+        f.write("`aceptados` de `datos/recetas.json`.\n\n")
         f.write("`fuentes/` los dumps de referencia.\n\n")
         f.write("Todo se reconstruye con:\n\n```powershell\n")
         f.write("python herramientas\\desensamblado\\construir_roms.py\n```\n\n")
-        f.write("## Los cambios, uno a uno\n\n")
+        f.write("## El flujo\n\n")
+        f.write("1. Se hace un cambio: su grupo se anade a `datos/parches.json`.\n")
+        f.write("2. Su id se anade a la lista `aceptados` de `datos/recetas.json`.\n")
+        f.write("3. `python herramientas\\desensamblado\\construir_roms.py`\n\n")
+        f.write("Con eso el cambio aparece **(a)** en su propia ROM de `cambios/` y\n")
+        f.write("**(b)** sumado a la version unificada de `combinaciones/`.\n\n")
+        f.write("## La version unificada ahora\n\n")
+        f.write("Lleva estos cambios:\n\n")
+        for cid in rec.get("aceptados", []):
+            c = por_id.get(cid)
+            if c:
+                f.write("- **%s**: %s\n" % (c["titulo"], c["que_hace"]))
+        f.write("\n## Los cambios, uno a uno\n\n")
         f.write("| Fichero | Qué hace | Grupos |\n|---|---|---|\n")
         for r in rec["cambios"]:
             f.write("| `cambios/%s.bin` | %s | `%s` |\n"
                     % (r["id"], r["que_hace"], "`, `".join(r["grupos"])))
         f.write("\n## Las combinaciones\n\n")
         f.write("| Fichero | Qué hace | Grupos |\n|---|---|---|\n")
+        f.write("| `combinaciones/yuyu_makyou_UNIFICADA.bin` | **la version unificada**: la union de `aceptados` | (automatico) |\n")
         for r in rec["combinaciones"]:
             f.write("| `combinaciones/%s.bin` | %s | `%s` |\n"
                     % (r["id"], r["que_hace"], "`, `".join(r["grupos"])))

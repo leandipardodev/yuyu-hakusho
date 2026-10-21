@@ -1,11 +1,28 @@
 {
   "_meta": {
-    "que_es": "Recetas de parche. Cada 'cambio' es una ROM aparte con SOLO ese cambio aplicado sobre la base, para poder elegir cuales quieres. Las 'combinaciones' son ROMs con varios cambios a la vez.",
+    "que_es": "Recetas de parche. Cada 'cambio' es una ROM aparte con SOLO ese cambio aplicado sobre la base. La lista 'aceptados' dice cuales estan EN la version unificada.",
     "base": "rom/base/yuyu_makyou_base.bin",
     "como_se_construye": "python herramientas/desensamblado/construir_roms.py",
     "para_aplicar_una_combinacion": "python herramientas/desensamblado/patch_rom.py rom/base/yuyu_makyou_base.bin <salida.bin> <grupos...>",
-    "grupos": "los grupos son los de datos/parches.json (direccion -> valor)"
+    "grupos": "los grupos son los de datos/parches.json (direccion -> valor)",
+    "flujo": "1. Se hace un cambio -> se anade su grupo a datos/parches.json. 2. Se anade su id a 'aceptados' de este fichero. 3. Se reconstruye: python herramientas/desensamblado/construir_roms.py. Con eso el cambio aparece (a) en su propia ROM de rom/cambios/ y (b) summedo a la version unificada de rom/combinaciones/."
   },
+
+  "_flujo": {
+    "que_es_aceptados": "Los cambios que lleva la version UNIFICADA. Cada vez que acepte un cambio, su id entra aqui, y al reconstruir se suma a la unificada Y se guarda suelto en rom/cambios/.",
+    "alternativas": "Los cambios con id 06b y 06c son ALTERNATIVAS entre si (la misma planta con otro estado de derribo), no acumulables: solo uno puede entrar en 'aceptados'."
+  },
+
+  "aceptados": [
+    "01_hiei_dragon_lento",
+    "02_hiei_dragon_hitbox",
+    "03_itsuki_kage_instantaneo",
+    "04_itsuki_onda_lenta",
+    "05_fijo_doble_salto",
+    "06_kurama_planta_elevacion",
+    "08_un_solo_plano",
+    "09_rival_nace_delante"
+  ],
 
   "cambios": [
     {
@@ -95,13 +112,6 @@
   ],
 
   "combinaciones": [
-    {
-      "id": "yuyu_makyou_TODO",
-      "titulo": "Los 4 cambios + un solo plano",
-      "grupos": ["dragon", "dragon_vel", "blob", "kage_dur", "kage_vel", "onda_vel",
-                 "doble_salto", "kurama_planta", "un_plano", "rival_delante"],
-      "que_hace": "El dragon de Hiei lento y con hitbox estrecha, las manos de Itsuki instantaneas y con la onda lenta, el fix del doble salto, la planta de Kurama en elevacion recta, y el juego con un solo plano donde el rival nace en tu arena."
-    },
     {
       "id": "yuyu_makyou_TODO_sinplanos",
       "titulo": "Los 4 cambios, sin tocar los planos",
