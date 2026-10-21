@@ -963,9 +963,9 @@ fase 2: la colocacion   $0D04BA  16 frames  total= 25 ticks
 Unificada: **67 bytes**, checksum **`$DDB3`**.
 
 
-## 14. EL MASH PARA SACAR EL ATURDIMIENTO CUENTA x2
+## 14. EL MASH PARA SACAR EL ATURDIMIENTO CUENTA x1,5
 
-**Receta:** `16_mash_aturdimiento_x2`. **Grupo:** `mash_aturdimiento_x2`.
+**Receta:** `16_mash_aturdimiento_x15`. **Grupo:** `mash_aturdimiento_x15`.
 **2 bytes** en `$01A29A` y `$01A2A6`. **Aceptado** en la unificada.
 
 ### Que es
@@ -997,21 +997,21 @@ $01A2BA  61 00 E1 84         bsr.w    $18440          ; -> estado $00 (reposo)
 ```
 
 `$84` es el contador real de aturdimiento. `$7E` (la barra) se pone a 255 al
-entrar y la baja el daño de los golpes (`$01F42C`).
+entrar y la baja el dano de los golpes (`$01F42C`).
 
 ### El cambio
 
 **2 bytes.** OJO: el dato de `SUBQ`/`ADDQ` va **en los bits 11-9 del opcode**,
-no en un byte aparte (`$53` = 1, `$55` = 2, `$59` = 4), asi que lo que
-cambia es el primer byte de cada instruccion.
+no en un byte aparte (`$53` = 1, `$55` = 2, `$57` = 3, `$59` = 4), asi que lo
+que cambia es el primer byte de cada instruccion.
 
 | Byte | De | A | |
 |---|---|---|---|
-| `$01A29A` | `55` | `59` | `subq.w #$2` -> `subq.w #$4`: cada tecla mashada baja **4** frames el contador en vez de 2 |
-| `$01A2A6` | `54` | `58` | `addq.b #$2` -> `addq.b #$4`: cada tecla mashada alarga **4** ticks el frame en vez de 2 |
+| `$01A29A` | `55` | `57` | `subq.w #$2` -> `subq.w #$3`: cada tecla mashada baja **3** frames el contador en vez de 2 |
+| `$01A2A6` | `54` | `56` | `addq.b #$2` -> `addq.b #$3`: cada tecla mashada alarga **3** ticks el frame en vez de 2 |
 
-**=> el mash cuenta x2.** Con 255 frames hacen falta ~64 pulsaciones en vez de
-~128: la mitad.
+**=> el mash cuenta x1,5.** Con 255 frames hacen falta **~85 pulsaciones**
+en vez de ~128.
 
 ### Alcance
 
@@ -1022,4 +1022,4 @@ los tres sitios de esta rutina). As que el cambio afecta a todos.
 ### Comprobacion
 
 Verificador de desensamblado: **OK** (solo cambian los operandos). La
-unificada queda en **69 bytes**, checksum **`$E5B3`**.
+unificada queda en **69 bytes**, checksum **`$E1B3`**.

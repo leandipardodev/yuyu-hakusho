@@ -1668,21 +1668,21 @@
         }
       ]
     },
-    "mash_aturdimiento_x2": {
-      "desc": "EL MASH PARA SACAR EL ATURDIMIENTO CUENTA x2. Cuando la barra de aturdimiento se agota el personaje cae (knockdown), se levanta y queda aturdido: eso es el estado $0C, cuyo handler esta en $01A282. Ahi se pone 'move.w #$ff, $7e(a5)' (255 frames = 4,25 s) y el contador real es $84. Cada frame $84 baja 1, y cada pulsacion de boton lo baja 2 MAS ($01A29A: 'subq.w #$2, $84(a5)'), ademas de anadir 2 ticks al frame ($01A2A6: 'addq.b #$2, $5b(a5)'). Con 255 frames y -2 por pulsacion hacen falta ~128 pulsaciones: por eso es casi imposible sacarlo. El cambio pone los dos $2 en $4: cada tecla mashada cuenta x2 (y el mash alarga el frame el doble). OJO: el dato de SUBQ/ADDQ va en los bits 11-9 del opcode ($53 = 1, $55 = 2, $59 = 4), no en un byte aparte. El estado $0C es generico y el mash es UNO solo en todo el ROM, asi que el cambio afecta a los 11 personajes. 2 bytes.",
+    "mash_aturdimiento_x15": {
+      "desc": "EL MASH PARA SACAR EL ATURDIMIENTO CUENTA x1,5. Cuando la barra de aturdimiento se agota el personaje cae (knockdown), se levanta y queda aturdido: eso es el estado $0C, cuyo handler esta en $01A282. Ahi se pone 'move.w #$ff, $7e(a5)' (255 frames = 4,25 s) y el contador real es $84. Cada frame $84 baja 1, y cada pulsacion de boton lo baja 2 MAS ($01A29A: 'subq.w #$2, $84(a5)'), ademas de anadir 2 ticks al frame ($01A2A6: 'addq.b #$2, $5b(a5)'). Con 255 frames y -2 por pulsacion hacen falta ~128 pulsaciones: por eso es casi imposible sacarlo. El cambio pone los dos $2 en $3: cada tecla mashada cuenta x1,5 (y el mash alarga el frame proporcionalmente). OJO: el dato de SUBQ/ADDQ va en los bits 11-9 del opcode ($53 = 1, $55 = 2, $57 = 3, $59 = 4), no en un byte aparte. El estado $0C es generico y el mash es UNO solo en todo el ROM, asi que el cambio afecta a los 11 personajes. 2 bytes.",
       "confianca": "CODIGO (el estado $0C = el aturdido post-knockdown: 255 frames, $84 = el contador, y la pulsacion de boton lo baja 2) + MEDIDO (los 4 segundos de aturdimiento que describes) + CAPSTONE (los opcodes y el dato de SUBQ/ADDQ)",
       "bytes": [
         {
           "addr": "0x01A29A",
           "old": "55",
-          "new": "59",
-          "nota": "$01A29A: 'subq.w #$2, $84(a5)' -> 'subq.w #$4, $84(a5)'. El dato va en los bits 11-9 del opcode ($55 = 2, $59 = 4), asi que cambia el primer byte. Cada tecla mashada baja 4 frames el contador de aturdimiento en vez de 2: el mash cuenta x2."
+          "new": "57",
+          "nota": "$01A29A: 'subq.w #$2, $84(a5)' -> 'subq.w #$3, $84(a5)'. El dato va en los bits 11-9 del opcode ($55 = 2, $57 = 3), asi que cambia el primer byte. Cada tecla mashada baja 3 frames el contador de aturdimiento en vez de 2: el mash cuenta x1,5."
         },
         {
           "addr": "0x01A2A6",
           "old": "54",
-          "new": "58",
-          "nota": "$01A2A6: 'addq.b #$2, $5b(a5)' -> 'addq.b #$4, $5b(a5)'. Cada tecla mashada alarga 4 ticks el frame actual en vez de 2, para que el mash se note el doble."
+          "new": "56",
+          "nota": "$01A2A6: 'addq.b #$2, $5b(a5)' -> 'addq.b #$3, $5b(a5)'. Cada tecla mashada alarga 3 ticks el frame actual en vez de 2, para que el mash se note proporcionalmente."
         }
       ]
     }

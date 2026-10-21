@@ -24,7 +24,7 @@
     "14_itsuki_teleport_pisa_el_suelo",
     "13_itsuki_teleport_40mas_rapido",
     "15_itsuki_teleport_colocacion_rapida",
-    "16_mash_aturdimiento_x2"
+    "16_mash_aturdimiento_x15"
   ],
   "cambios": [
     {
@@ -191,12 +191,12 @@
       "bytes": 9
     },
     {
-      "id": "16_mash_aturdimiento_x2",
-      "titulo": "El mash para salir del aturdimiento cuenta x2",
+      "id": "16_mash_aturdimiento_x15",
+      "titulo": "El mash para salir del aturdimiento cuenta x1,5",
       "grupos": [
-        "mash_aturdimiento_x2"
+        "mash_aturdimiento_x15"
       ],
-      "que_hace": "Cada tecla mashada baja 4 frames el contador de aturdimiento en vez de 2 (y alarga el frame el doble). Salir del aturdimiento post-knockdown es la mitad de pulsaciones. 2 bytes.",
+      "que_hace": "Cada tecla mashada baja 3 frames el contador de aturdimiento en vez de 2 (y alarga el frame proporcionalmente). Salir del aturdimiento post-knockdown es 1,5 veces mas facil. 2 bytes.",
       "bytes": 2
     }
   ],
