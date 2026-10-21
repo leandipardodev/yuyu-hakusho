@@ -65,8 +65,13 @@ print()
 for nombre, base, n, ini, fin in filas:
     print("  %-4s  %3d moves   datos $%06X-$%06X" % (nombre, n, ini, fin))
 
-with open("limites_tablas.txt", "w", encoding="utf-8") as f:
+# La salida va a la carpeta de la herramienta, NO al directorio de
+# trabajo: siDepends del CWD, el fichero aparece en la raiz del repo
+# y la herramienta que lo lee (que lo busca en su propia carpeta) no lo
+# encuentra. Este fue el bug.
+AQUI = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(AQUI, "limites_tablas.txt"), "w", encoding="utf-8") as f:
     for nombre, base, n, ini, fin in filas:
         f.write("%s base=$%06X moves=%d datos=$%06X-$%06X\n" % (nombre, base, n, ini, fin))
 print()
-print("guardado en limites_tablas.txt")
+print("guardado en " + os.path.join(AQUI, "limites_tablas.txt"))

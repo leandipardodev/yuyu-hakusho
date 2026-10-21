@@ -65,7 +65,12 @@ for nombre, base in CTX:
                       % (nombre, f[0], f[1], f[2], f[3], f[4], f[5], f[6], f[7], f[8], f[9]))
     totales.append((nombre, filas))
 
-with open("volcado_moves.txt", "w", encoding="utf-8") as f:
+# La salida va a la carpeta de la herramienta, NO al directorio de
+# trabajo: siDepends del CWD, el fichero aparece en la raiz del repo
+# y la herramienta que lo lee (que lo busca en su propia carpeta) no lo
+# encuentra. Este fue el bug.
+AQUI = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(AQUI, "volcado_moves.txt"), "w", encoding="utf-8") as f:
     f.write("# Lista de moves del ROM - Yu Yu Hakusho Makyou Toitsusen\n")
     f.write("# %d entradas por contexto, registro de 8 bytes\n" % N_MOVES)
     f.write("# ctx idx destino   b0    b1  flg  b3  b4  b5    vX    vY\n")
@@ -83,7 +88,7 @@ for nombre, filas in totales:
              max(subs), " ".join("$%02X" % x for x in fl)))
 print()
 print("total de moves extraidos: %d" % len(lineas))
-print("guardado en volcado_moves.txt")
+print("guardado en " + os.path.join(AQUI, "volcado_moves.txt"))
 
 # ejemplo imprimible de un personaje
 print()
