@@ -1544,3 +1544,24 @@ Las trampas de esta sesion:
 3. El EA `(d8,An)` son **3 bytes** (registro + desplazamiento), no 2.
 4. `bne.b` = 0x66 y `ble.b` = 0x6F, pero mejor copiarlos del ROM: Capstone
    puede desensamblar `66 00` como `bne.w` si el destino no cuadra.
+
+### EL HP A 0 EN UN ESTADO QUE NO SEA EL DEL KO CUELA LA RONDA
+El KO lo detectan **tres** sitios y **ninguno** mira el estado del cruce
+(`$0A`):
+- `$019CFC` (handler del estado `$00`): `btst.b #$7, $78(a5)` -> el KO si
+  el HP es **NEGATIVO**.
+- `$015BCC` (al final de cada handler): `cmpi.w #$0, $78(a5)` /
+  `bge.w $1877e` -> "levantarse" si el HP es **> 0**.
+- `$01F3F0` (el **resolver** de golpes): `move.b #$4, $5d(a4)` -> **el
+  unico que pone el estado del KO**.
+
+**=> si el HP llega a 0 sin pasar por el resolver, el personaje se queda
+VIVO con 0 de vida, la ronda no acaba y el juego se cuelga.** Cualquier
+parche que baje el HP tiene que **impedir que llegue a 0** (o poner el
+estado del KO a mano, como el resolver).
+
+### Codificar 68000: `cmpi.w` es 0x0C y el EA va antes del inmediato
+`cmpi.w #$1, $78(a5)` = **`0C 6D 00 01 00 78`**: opcode (0x0C, el mismo
+que `cmpi.b`), **byte de modo/reg** (6D = a5), **inmediato de 16 bits** y
+despues el desplazamiento. Y **`subi.w #$1, <ea>` no existe** con el EA
+`(d8,An)`: hay que hacer `move.w #$1, d0` + `sub.w d0, <ea>`.

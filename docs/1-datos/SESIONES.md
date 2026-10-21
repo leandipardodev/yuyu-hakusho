@@ -255,3 +255,61 @@ Grupo `cruce_dano` (42 bytes), receta `17_cruzar_hace_perder_vida`:
 **Estado:** implementado, reconstruido y verificado con Capstone. La
 unificada queda en **103 bytes, checksum `$A92C`**. Falta que lo pruebes en
 el emulador.
+
+
+<a name="s-2024-10-21d"></a>
+
+## S-2024-10-21d: el cruce ROMPIA EL JUEGO (el HP a 0 cuelga la ronda)
+
+**Sintoma:** con la v2 del parche, *"al cruzar enfrente el rom se rompe"*.
+
+**La causa (buscada en el codigo del KO):** el KO lo detectan tres sitios y
+**ninguno** vigila el estado del cruce (`$0A`):
+
+| Donde | Instruccion | Cuando salta |
+|---|---|---|
+| `$019CFC` (handler del estado `$00`) | `btst.b #$7, $78(a5)` | el HP es **NEGATIVO** |
+| `$015BCC` (al final de cada handler) | `cmpi.w #$0, $78(a5)` / `bge.w $1877e` | el HP es **> 0** |
+| `$01F3F0` (el resolver de golpes) | `move.b #$4, $5d(a4)` | al recibir un golpe |
+
+El unico que **pone el estado del KO** es el resolver, y el dano del cruce
+no pasa por ahi. **=> con el HP a 0 en pleno cruce, el personaje se queda
+vivo con 0 de vida, la ronda no acaba y el juego se cuelga.**
+
+**El arreglo (v3):** el HP **nunca baja de 1** (`cmpi.w #$2, $78(a5)` +
+`blt.b`). El cruce te deja al borde de la muerte pero no te mata, y el
+juego no puede colgarse.
+
+**Lo que habria que hacer para que el cruce mate:** replicar al resolver
+cuando el HP llegue a 0: `move.b #$4, $5d(a5)` + `move.b #$2c, $5f(a5)` y
+llamar a `$1f786` (el efecto del KO). Pendiente de probar.
+
+**La rutina (v3, 40 bytes):**
+
+```
+$021B67  move.l  $10(a5), d1     ; la velocidad (como antes)
+$021B6B  cmpi.b  #$f, $5f(a5)    ; ¿es el cruce?
+$021B71  bne.b   $021B8D
+$021B73  move.b  $5b(a5), d0     ; el tick
+$021B77  andi.b  #$3, d0         ; ¿multiplo de 3?
+$021B7B  bne.b   $021B8D
+$021B7D  cmpi.w  #$2, $78(a5)    ; ¿el HP es > 1?
+$021B83  blt.b   $021B8D          ; si HP <= 1 -> fuera
+$021B85  move.w  #$1, d0
+$021B89  sub.w   d0, $78(a5)      ; -1 DE VIDA
+$021B8D  rts
+```
+
+**Aprendido:**
+
+- El opcode de `cmpi.w` es **`0C`** (igual que `cmpi.b`) y el formato es
+  `opcode + modo/reg + inmediato(16) + d16`: `cmpi.w #$1, $78(a5)` =
+  `0C 6D 00 01 00 78`.
+- **`subi.w #$1, <ea>` NO EXISTE** con el EA `(d8,An)`: hay que hacer
+  `move.w #$1, d0` + `sub.w d0, <ea>`.
+- **`movem.l d0,-(sp)`** lo decodifica Capstone como `movem.l a7, -(a7)`:
+  mejor no usarlo (por si acaso).
+- El dispatcher de estados (`$015A18`) llama al handler **despues** de
+  `$19c96` (el `++tick`), asi que el tick va 0,1,2... durante el cruce.
+- El dispatcher se llama desde **un solo sitio** (`$01269A`), o sea que los
+  handlers de estado son solo de los personajes (no de los proyectiles).

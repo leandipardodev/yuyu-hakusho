@@ -1079,8 +1079,12 @@ cada 3 frames"*.
 Mientras un personaje esta **cruzando de planos** pierde **1 de vida cada
 3 frames**. Afecta a los **11 personajes**, jugador y rival.
 
-El HP es `$78` (word), con un maximo de 223; a 0 es la muerte. Con un cruce
-tipico de 30-60 frames se pierden 10-20 puntos de vida.
+El HP es `$78` (word), con un maximo de 223. Con un cruce tipico de 30-60
+frames se pierden 10-20 puntos de vida.
+
+**OJO: el cruce NO mata (el HP nunca baja de 1).** Y no es capricho: si el
+HP llega a 0 en mitad de un cruce, **el juego se queda colgado**. Ver
+"POR QUE EL HP NO PUEDE LLEGAR A 0" mas abajo.
 
 ### DONDE ESTA EL CRUCE (esto es lo que costara encontrar)
 
@@ -1138,15 +1142,15 @@ La rutina nueva:
 ```
 $021B67  move.l  $10(a5), d1     ; la velocidad (SIEMPRE, como antes)
 $021B6B  cmpi.b  #$f, $5f(a5)    ; ¿es el cruce?
-$021B71  bne.b   $021B8B          ; no -> fuera
+$021B71  bne.b   $021B8D          ; no -> fuera
 $021B73  move.b  $5b(a5), d0     ; el tick
 $021B77  andi.b  #$3, d0         ; ¿multiplo de 3?
-$021B7B  bne.b   $021B8B          ; no -> fuera
-$021B7D  tst.w   $78(a5)          ; el HP
-$021B81  ble.b   $021B8B          ; si HP <= 0 -> fuera (no baja de 0)
-$021B83  move.w  #$1, d0
-$021B87  sub.w   d0, $78(a5)      ; -1 DE VIDA
-$021B8B  rts
+$021B7B  bne.b   $021B8D          ; no -> fuera
+$021B7D  cmpi.w  #$2, $78(a5)    ; ¿el HP es > 1?
+$021B83  blt.b   $021B8D          ; si HP <= 1 -> fuera (NUNCA baja de 1)
+$021B85  move.w  #$1, d0
+$021B89  sub.w   d0, $78(a5)      ; -1 DE VIDA
+$021B8D  rts
 ```
 
 El `move.l $10(a5), d1` (la velocidad) se movede dentro de la rutina, asi
@@ -1184,3 +1188,33 @@ El `bsr` es de 16 bits con signo y el desplazamiento son 32015 bytes
 moviera mas lejos, habria que usar otra forma.
 
 **42 bytes** en total (4 del handler y 38 de la rutina).
+
+### POR QUE EL HP NO PUEDE LLEGAR A 0
+
+**Esto costo una iteracion entera: con el HP a 0 el ROM se rompia.**
+
+El KO del juego lo detectan **tres** sitios, y **ninguno** vigila el estado
+del cruce (`$0A`):
+
+| Donde | Que mira | Cuando salta |
+|---|---|---|
+| `$019CFC` (handler del estado `$00`) | `btst.b #$7, $78(a5)` | el HP es **NEGATIVO** |
+| `$015BCC` (al final de cada handler) | `cmpi.w #$0, $78(a5)` / `bge.w $1877e` | el HP es **> 0** -> "levantarse" |
+| `$01F3F0` (el **resolver** de golpes) | `sub.w d0, $78(a4)` y luego `move.b #$4, $5d(a4)` | al recibir un golpe: pone el estado del KO |
+
+El unico que **pone el estado del KO** (el `$04`) es el resolver, y este
+parche **no pasa por el resolver**. Asi que si el HP llega a 0 en mitad del
+cruce:
+
+- el KO de `$019CFC` no salta (el HP es 0, no negativo),
+- el "levantarse" de `$015BCC` no salta (el HP no es > 0),
+- y nadie pone el estado del KO.
+
+**=> el personaje se queda VIVO con 0 de vida, la ronda no acaba y el juego
+se queda colgado.** Por eso el HP **nunca baja de 1**: cruzar deja al
+personaje al borde de la muerte, pero no lo mata.
+
+Para que el cruce **mate** de verdad habria que replicar al resolver:
+cuando el HP llegue a 0, poner `move.b #$4, $5d(a5)` y
+`move.b #$2c, $5f(a5)` (el frame del golpe) y ademas `$1f786` (el efecto).
+Eso esta pendiente de hacer y probar.

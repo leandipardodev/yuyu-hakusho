@@ -3376,6 +3376,34 @@ frame nunca avanza y **el tick es el contador de frames**.
 | El KO es cuando llega a 0 | `cmpi.w #$0, $78(a5)` | `$015BCC` |
 | Se cura hasta 223 | `addi.w #$10` / `cmpi.w #$df` | `$013B72`-`$013B80` |
 
+### El KO (MUY IMPORTANTE)
+
+El KO lo detectan **tres** sitios, y **ninguno** vigila el estado del
+cruce (`$0A`):
+
+| Donde | Instruccion | Que hace |
+|---|---|---|
+| `$019CFC` (handler del estado `$00`) | `btst.b #$7, $78(a5)` | el KO si el HP es **NEGATIVO** |
+| `$015BD8` (el dispatcher, cada frame) | `tst.w $78(a5)` / `bmi.b $15bfc` | si el HP es negativo, no hace el check del plano |
+| `$015BCC` (al final de cada handler) | `cmpi.w #$0, $78(a5)` / `bge.w $1877e` | si el HP es **> 0** -> "levantarse" (`$1877e`: estado `$00`, frame `$11`) |
+| `$01F3E0`/`$01F3F0` (el **resolver**) | `sub.w d0, $78(a4)` ... `move.b #$4, $5d(a4)` | **el unico que pone el estado del KO** (`$04`), con el frame `$2c`/`$2d` |
+
+**=> si el HP llega a 0 en un estado que no sea el del KO, el personaje se
+queda vivo con 0 de vida y la ronda no acaba.** Por eso el dano del cruce
+no puede dejar el HP en 0.
+
+### El final del handler del cruce
+
+```
+$019EBE  move.l $9c(a5), $44(a5)
+$019EC4  bsr.w $18564
+$019EC8  bra.w $15afc
+```
+
+`$18564` es el fin del cruce: `jsr $1fce8` + `move.b #$0, $5d(a5)` (el
+estado = 0) + `move.b #$e, $5f(a5)` (el frame `$0E`) + `bra.w $19c1c`.
+**=> el cruce NO se queda atrapado en el estado `$0A`.**
+
 ### Codificacion de las instrucciones del parche (verificada con Capstone)
 
 | Instruccion | Bytes |
