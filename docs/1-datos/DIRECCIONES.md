@@ -455,3 +455,28 @@ Estas no son direcciones: son **reglas**. Están desarrolladas en
 **El archivo que se lee entero:** `notas/GENERAL/SISTEMAS.txt`.
 **El que se busca con grep:** `notas/GENERAL/CONTEXTO.txt` (el diario, por
 rondas) y `notas/GENERAL/HIT STATE.txt` (la tabla de reacciones).
+
+## 10. Las tablas de estados de cada personaje
+
+Cada personaje tiene **su propia tabla de estados** (la que cuelga de `$50(a5)`),
+y **el MISMO número de estado significa cosas distintas en cada personaje**.
+
+| Contexto | Personaje | Base de la tabla | `$A4` (el estado) | Frames | Duracion |
+|---|---|---|---|---|---|
+| ctx0 | Kurama | `$0BF75A` | `$0C021A` | 7 | 40 |
+| ctx1 | Kuwabara | `$0C229A` | `$0C2DD2` | 8 | 32 |
+| ctx2 | Yusuke | `$0C4EEA` | `$0C5A1A` | 9 | 302 |
+| ctx3 | Hiei | `$0C7C9A` | `$0C87CA` | 6 | 42 |
+| ctx4 | Sensui | `$0CA6DA` | `$0CB19A` | 2 | 64 |
+| ctx5 | Jin | `$0CCC7A` | `$0CDABA` | 23 | 77 |
+| **ctx6** | **Itsuki** | **`$0CF99A`** | **`$0D044A`** | **14** | **37** |
+| ctx7 | Toguro grande | `$0D1E5A` | `$0D29D2` | 16 | 79 |
+| ctx8 | Chui | `$0D4A9A` | `$0D55CA` | 5 | 40 |
+| ctx9 | Toguro chico | `$0D777A` | `$0D829A` | 1 | 0 |
+
+**El `$A4` de Itsuki es el teleport**; en los demas es otra cosa. Por eso un
+parche sobre `$0D044A` solo afecta a Itsuki.
+
+**El byte +0 de cada registro de 8 bytes = la duracion del frame** (la copia a
+`$5A` esta en `$01EB5A`). Y el byte +1 = el indice de animacion.
+

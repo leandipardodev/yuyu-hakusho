@@ -763,3 +763,43 @@ intocable.
 delantero** (y con su tamaño normal), hay que tocar las 4 inicializaciones a
 304 (`$00AA8C`, `$00AB0C`, `$00FB1A`, `$00FBA0`) y sus escalas `$D8` → `$100`.
 Eso no se ha hecho: es un cambio de diseño del escenario, no una desactivación.
+
+---
+
+# 11. EL TELEPORT DE ITSUKI, UN 30% MAS RAPIDO
+
+**La tecnica es el estado `$A4` de la tabla de Itsuki**, y su duracion se
+controla frame a frame en el propio bloque de la tabla.
+
+| Dato | Valor |
+|---|---|
+| Personaje | Itsuki = **ctx6**, tabla base `$0CF99A` |
+| Estado | **`$A4`** (el "teleport en curso", MEDIDO) |
+| Bloque de frames | **`$0D044A`** |
+| Frames | 14 |
+| Duracion total | **37 ticks** |
+| Patron | anims 57, 58, 59 y luego visible/invisible alternando (el parpadeo) |
+
+El byte **+0** de cada registro de 8 bytes es la **duracion del frame**: la
+copia a `$5A` esta en `$01EB5A`. Es el mismo byte que ya usa el grupo
+`kage_dur`.
+
+| Byte | De | A | Frame |
+|---|---|---|---|
+| `$0D044A` | `06` | `04` | 0 |
+| `$0D0452` | `06` | `04` | 1 |
+| `$0D045A` | `04` | `03` | 2 |
+| `$0D046A` | `04` | `03` | 4 |
+| `$0D047A` | `02` | `01` | 6 |
+| `$0D0492` | `02` | `01` | 9 |
+| `$0D04A2` | `03` | `02` | 11 |
+| `$0D04B2` | `04` | `03` | 13 |
+
+**37 ticks -> 27 ticks: un 27% menos de tiempo** (cada duracion escalada por
+0,70 con minimo de 1 tick). Los frames de 1 tick ya no se tocan.
+
+**Ojo:** el teleport es la unica tecnica que usa el estado `$A4` **en la tabla
+de Itsuki**. Los demas personajes tienen su propio `$A4` con otro contenido
+(Hiei 6 frames, Kurama 7, Yusuke 9, Chui 5, ...), y NO se tocan: el parche es
+solo sobre los bytes de `$0D044A`, que son los de ctx6.
+

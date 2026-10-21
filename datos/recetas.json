@@ -20,7 +20,8 @@
     "08_un_solo_plano",
     "09_rival_nace_delante",
     "11_kuwabara_hoja_2hits_doble",
-    "03_itsuki_kage_instantaneo"
+    "03_itsuki_kage_instantaneo",
+    "13_itsuki_teleport_30mas_rapido"
   ],
   "cambios": [
     {
@@ -158,6 +159,15 @@
       ],
       "que_hace": "La velocidad 16.16 del proyectil del dragon (la tabla $90 de Hiei) pasa de 1,75 a 0,875 px/frame. OJO: esa tabla es COMPARTIDA con otros especiales de Hiei, entre ellos el salto normal diagonal, que va a la mitad de velocidad. Sirve para hacer el A/B.",
       "bytes": 2
+    },
+    {
+      "id": "13_itsuki_teleport_30mas_rapido",
+      "titulo": "La teletransportacion de Itsuki es un 30% mas rapida",
+      "grupos": [
+        "itsuki_teleport"
+      ],
+      "que_hace": "El teleport (abajo+arriba + A/B/C) dura 37 ticks y pasa a 26: un 29,7% menos. El personaje se coloca antes en la zona de destino y recupera el control antes.",
+      "bytes": 8
     }
   ],
   "combinaciones": [

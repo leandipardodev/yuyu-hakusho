@@ -221,3 +221,21 @@ culpable.** El daño sale de `$65` y no hay otro sitio.
 
 La fuente de las distancias, los frames y el maná es
 `notas/GENERAL/CONTEXTO.txt` (se busca con `grep`, no se lee entero).
+
+### 1.9 EL TELEPORT DE ITSUKI
+
+**Abajo+arriba + A/B/C.** 16 de maná en las tres. Es **una sola tecnica con un
+parámetro**: el botón elige la zona (A = izquierda, B = centro, C = derecha), y
+las tres comparten el mismo estado.
+
+| Dato | Valor |
+|---|---|
+| Estado | **`$A4`** (el teleport en curso) |
+| Contexto | **ctx6** = Itsuki, tabla base `$0CF99A` |
+| Bloque de frames | **`$0D044A`** |
+| Frames | 14 (anims 57, 58, 59 y luego el parpadeo visible/invisible) |
+| Duracion | **37 ticks** (original) / **27 ticks** (con el parche `itsuki_teleport`) |
+
+El byte +0 de cada registro es la duracion del frame (la copia a `$5A` esta en
+`$01EB5A`). El parche `itsuki_teleport` escala esas duraciones por 0,70.
+

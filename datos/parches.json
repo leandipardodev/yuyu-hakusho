@@ -1541,6 +1541,60 @@
           "nota": "duracion del f10 del personaje (el ultimo frame de su cadena, donde espera a que el objeto termine): de 12 a 20 ticks. El recovery se alarga 8 ticks (0,13 s) y el personaje queda bloqueado 61 ticks en vez de 53."
         }
       ]
+    },
+    "itsuki_teleport": {
+      "desc": "El TELEPORT de Itsuki (abajo+arriba + A/B/C) un 30%% mas rapido. Es el estado $A4 de su tabla (ctx6 = Itsuki, base $0CF99A), cuyo bloque de frames esta en $0D044A: 14 frames que duran 37 ticks en total. El byte +0 de cada registro de 8 bytes es la duracion del frame (la copia a $5A en $01EB5A). Aqui se escala cada duracion por 0,70, con un minimo de 1 tick: 37 -> 26 ticks, un 29,7%% menos de tiempo. El parpadeo (el patron visible/invisible) se mantiene: solo se acorta.",
+      "confianza": "CODIGO (el byte +0 del registro es la duracion, igual que el grupo kage_dur yapatcheado) + MEDIDO (el estado $A4 como teleport en curso, y sus 14 frames)",
+      "bytes": [
+        {
+          "addr": "0x0D044A",
+          "old": "06",
+          "new": "04",
+          "nota": "ctx6 (Itsuki) estado $A4 frame 0: duracion 6 -> 4 ticks"
+        },
+        {
+          "addr": "0x0D0452",
+          "old": "06",
+          "new": "04",
+          "nota": "ctx6 (Itsuki) estado $A4 frame 1: duracion 6 -> 4 ticks"
+        },
+        {
+          "addr": "0x0D045A",
+          "old": "04",
+          "new": "03",
+          "nota": "ctx6 (Itsuki) estado $A4 frame 2: duracion 4 -> 3 ticks"
+        },
+        {
+          "addr": "0x0D046A",
+          "old": "04",
+          "new": "03",
+          "nota": "ctx6 (Itsuki) estado $A4 frame 4: duracion 4 -> 3 ticks"
+        },
+        {
+          "addr": "0x0D047A",
+          "old": "02",
+          "new": "01",
+          "nota": "ctx6 (Itsuki) estado $A4 frame 6: duracion 2 -> 1 ticks"
+        },
+        {
+          "addr": "0x0D0492",
+          "old": "02",
+          "new": "01",
+          "nota": "ctx6 (Itsuki) estado $A4 frame 9: duracion 2 -> 1 ticks"
+        },
+        {
+          "addr": "0x0D04A2",
+          "old": "03",
+          "new": "02",
+          "nota": "ctx6 (Itsuki) estado $A4 frame 11: duracion 3 -> 2 ticks"
+        },
+        {
+          "addr": "0x0D04B2",
+          "old": "04",
+          "new": "03",
+          "nota": "ctx6 (Itsuki) estado $A4 frame 13: duracion 4 -> 3 ticks"
+        }
+      ]
     }
   },
   "instrumentacion": {
