@@ -521,30 +521,41 @@ parche sobre `$0D044A` solo afecta a Itsuki.
 | Los botones que cuentan | los de **`$72`** |
 | La tabla de handlers por estado | **`$15a68`** (256 entradas), leida por el dispatcher de `$015A5A` (que usa `$5D` = estado siguiente) |
 
-## 13. El cruce de planos (el estado `$0F`)
+## 13. El cruce de planos (estado `$0A` + frame id `$0F`)
 
 **Fuente: desensamblado con Capstone.** Verificado.
 
+**OJO: el cruce NO es el estado `$0F`.** El estado `$0F` es el del impulso.
+
 | Direccion | Instruccion | Que es |
 |---|---|---|
-| `$018748` | `move.b #$f, $5f(a5)` | **se entra al cruce** (unico en todo el ROM) |
-| `$01CA9C` | `cmpi.b #$1, $60(a5)` | **el handler del cruce** (unico en todo el ROM) |
-| `$01CABA` | `move.l $10(a5), d1` | la velocidad |
-| `$01CAC8` | `add.l d1, $40(a5)` | avanza hacia el otro plano |
-| `$01CACC` | `bsr $021B67` | **(con el parche `cruce_dano`)** la rutina del dano |
-| `$01CAD8` | `move.l $10(a5), d0` | la frenada final (ahora dentro de la rutina) |
-| `$01CAE2` | `bra.w $15afc` | el final del handler |
-| `$01CAE6` | `clr.b $60(a5)` | el handler del estado `$10` (la vuelta) |
-| `$021B67` | `move.b $5b(a5), d0` | **(con el parche `cruce_dano`)** la rutina nueva en el hueco |
+| `$01873A` | `move.b #$a, $5d(a5)` | **se entra al cruce**: el estado `$0A` |
+| `$018748` | `move.b #$f, $5f(a5)` | el frame id `$0F` (el cruce) |
+| `$01874E` | `move.l #$13f0000, $9c(a5)` | el plano pasa a 319 |
+| **`$019E08`** | `cmpi.b #$f, $5f(a5)` | **el handler del cruce** (estado `$0A`) |
+| `$019E10` | `bset.b #$1, $a042.w` | el bloque del plano (lo desactiva `un_plano`) |
+| `$019E16` | `subi.l #$a800, $9c(a5)` | el plano baja |
+| `$019E1E` | `addi.b #$3, $26(a5)` | |
+| `$019E24` | `subq.w #$3, $3e(a5)` | la escala baja |
+| `$019E28` | `cmpi.b #$10, $5f(a5)` | ¿la vuelta? |
+| `$019E56` | `bsr $021B67` | **(con el parche `cruce_dano`)** la rutina del dano |
+| `$019E86` | `cmpi.b #$f, $5f(a5)` | al aterrizar en el otro plano |
+| `$019E8E` | `move.l #$1300000, $9c(a5)` | el plano de atras (304) |
+| `$019E96` | `move.w #$d8, $3e(a5)` | la escala 216 |
+| `$019E9C` | `move.b #$c0, $26(a5)` | |
+| `$019EA2` | `cmpi.b #$10, $5f(a5)` | la vuelta al plano delantero |
+| `$019EAA` | `move.l #$1400000, -$5556(a5)` | el plano vuelve a 320 |
+| `$019ECC` | `cmpi.b #$f, $5f(a5)` | el handler del estado `$0B` |
+| `$021B67` | `move.l $10(a5), d1` | **(con el parche `cruce_dano`)** la rutina nueva |
 
 **El frame del cruce es UNO solo, de duracion 255**, asi que el tick `$5B`
 va de 0 a 254 y **es el contador de frames del cruce**.
 
 **El HP** es `$78` (word con signo, maximo 223). El resolver lo resta en
-`$01F424` (`sub.w d0, $78(a4)`).
+`$01F424` (`sub.w d0, $78(a4)`) y el KO es cuando llega a 0 (`$015BCC`).
 
-**Los 4 sitios donde se compara con `$0F`** (todos en el bloque de Itsuki,
-que es donde esta el codigo del cruce): `$019E08`, `$019E86`, `$019ECC`,
-`$019F4A`. Al aterrizar en el otro plano: Y = 304, escala `$D8`, `$26` =
-`$C0` (`$019E8E` / `$019F52`). La vuelta al plano delantero:
-`move.b #$10, $5f(a5)` (`$019EAA` / `$019F6E`).
+**Los 4 sitios donde se compara con `$0F`** (el frame id del cruce):
+`$019E08`, `$019E86`, `$019ECC`, `$019F4A`.
+
+**La tabla de handlers es GLOBAL** (`$15a68`, 256 entradas) y las entradas
+son offsets relativos: `handler(N) = ($15a68 + 2*N) + word_en_esa_direccion`.

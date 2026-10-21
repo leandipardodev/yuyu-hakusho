@@ -3311,55 +3311,100 @@ el parche (x1,5, o sea -3) hacen falta **~85**.
 del opcode, no en un byte aparte.
 
 
-## EL CRUCE DE PLANOS (el estado $0F)
+## EL CRUCE DE PLANOS (estado $0A + frame id $0F)
 
 **Fuente: desensamblado** (verificado con Capstone, que es la verdad).
 
+### La tabla de handlers es GLOBAL
+
+El dispatcher (`$015A5A`) lee `$5D` (el estado) y salta a la tabla
+`$15a68`, cuyas entradas son **offsets relativos**:
+
+```
+$015A5A  move.b $5d(a5), d0
+$015A5E  add.w d0, d0
+$015A60  lea.l $15a68(pc, d0.w), a0
+$015A64  adda.w (a0), a0
+$015A66  jmp (a0)
+```
+
+**handler(estado N) = ($15a68 + 2*N) + word_en($15a68 + 2*N)**. No hay un
+handler por personaje: el del cruce sirve para los 11.
+
+| Estado | Handler | Que es |
+|---|---|---|
+| `$09` | `$01A22C` | |
+| **`$0A`** | **`$019E08`** | **EL CRUCE** |
+| `$0B` | `$019ECC` | la vuelta al plano delantero |
+| `$0C` | `$01A282` | el aturdimiento (el mash) |
+| `$0E` | `$01CA46` | |
+| `$0F` | `$01CA9C` | **el impulso** (velocidad 4.0, frame id `$0B`, `$016434`) |
+| `$10` | `$01CA9C` | el mismo handler que `$0F` |
+
+### El cruce
+
 | Dato | Valor | Donde |
 |---|---|---|
-| Como se entra al cruce | `move.b #$f, $5f(a5)` | `$018748` (**unico en todo el ROM**) |
-| El handler del cruce | `$01CA9C` | (**unico en todo el ROM**: 1 sola copia del bloque de 18 bytes) |
-| El frame del cruce | **UNO solo, duracion 255** | el frame data de cada ctx |
-| El tick `$5B` | de 0 a 254 | **es el contador de frames del cruce** (porque hay un solo frame) |
-| Que hace en el cruce | avanza en X hacia el otro plano | `$01CABA`-`$01CAC8` |
-| La frenada final | velocidad a la mitad, en el tick 0 | `$01CAD8`-`$01CAE0` |
-| Al aterrizar en el otro plano | Y = 304, escala `$D8`, `$26` = `$C0` | `$019E8E` / `$019F52` |
-| La vuelta al plano delantero | `move.b #$10, $5f(a5)` | `$019EAA` / `$019F6E` |
-| Donde se compara con `$0F` | 4 sitios | `$019E08`, `$019E86`, `$019ECC`, `$019F4A` |
+| Se pone el estado | `$0A` | `$01873A` (`move.b #$a, $5d(a5)`) |
+| Se pone el frame id | `$0F` | `$018748` (`move.b #$f, $5f(a5)`) |
+| El plano pasa a 319 | | `$01874E` (`move.l #$13f0000, $9c(a5)`) |
+| El handler | `$019E08` | |
+| Al aterrizar en el otro plano | Y = 304, escala `$D8`, `$26` = `$C0` | `$019E8E` |
+| La vuelta al plano delantero | `move.l #$1400000, -$5556(a5)` | `$019EAA` |
+| Los 4 sitios que comparan con `$0F` | | `$019E08`, `$019E86`, `$019ECC`, `$019F4A` |
 
-**El cruce lo usan los 11 personajes** (el handler es unico), asi que
-cualquier parche ahi afecta a todos, jugador y rival.
+### El TICK (`$5B`) y el frame (`$59`)
 
-**El HP** es `$78` (word con signo), maximo **223**; a 0 es la muerte. El
-resolver lo resta crudo en `$01F424` (`sub.w d0, $78(a4)`).
+| Dato | Valor | Donde |
+|---|---|---|
+| Al empezar el move | tick = 255 (overflow a 0), duracion = 8, frame = 0 | `$019C1C`-`$019C26` |
+| El tick se incrementa | `addq.b #$1, $5b(a5)` | `$019C96` |
+| Si el tick llega a la duracion | tick = 0 y ++frame | `$019CA0`-`$019CAA` |
+| La duracion del frame | byte+0 del frame data | `$01EB5A` lo copia a `$5A` |
+
+**El frame data de `$0F`**: 1 solo frame de duracion **255** para ctx1,2,3,
+4,6,7,8,9; ctx0 = 72; ctx5 = 16 frames (6,6,...,255). Con duracion 255 el
+frame nunca avanza y **el tick es el contador de frames**.
+
+### El HP
+
+| Dato | Valor | Donde |
+|---|---|---|
+| El HP actual | `$78` (word) | |
+| El HP maximo | **223** (`#$df`) | `$012708` (`move.w #$df, $78(a5)`) |
+| El daño se resta | `sub.w d0, $78(a4)` | `$01F424` (y `$01F3E0`) |
+| El KO es cuando llega a 0 | `cmpi.w #$0, $78(a5)` | `$015BCC` |
+| Se cura hasta 223 | `addi.w #$10` / `cmpi.w #$df` | `$013B72`-`$013B80` |
 
 ### Codificacion de las instrucciones del parche (verificada con Capstone)
 
 | Instruccion | Bytes |
 |---|---|
+| `move.l $10(a5), d1` | `22 2D 00 10` |
+| `cmpi.b #$f, $5f(a5)` | `0C 2D 00 0F 00 5F` |
 | `move.b $5b(a5), d0` | `10 2D 00 5B` |
 | `andi.b #$3, d0` | `02 00 00 03` |
+| `tst.w $78(a5)` | `4A 6D 00 78` |
 | `move.w #$1, d0` | `30 3C 00 01` |
 | `sub.w d0, $78(a5)` | `91 6D 00 78` |
-| `cmpi.b #$0, $5b(a5)` | `0C 2D 00 00 00 5B` |
-| `move.l $10(a5), d0` | `20 2D 00 10` |
-| `asr.l #$1, d0` | `E2 80` |
-| `move.l d0, $10(a5)` | `2B 40 00 10` |
 | `rts` | `4E 75` |
-| `bsr $021B67` | `61 00 50 99` |
+| `bsr $021B67` | `61 00 7D 0F` |
 
 **Ojo con el EA `(d8,An)`:** el byte del registro va **primero** y luego
 el desplazamiento de 16 bits (`91 6D 00 78` = `sub.w d0, $78(a5)`). Con el
 orden al reves (`91 00 78 05`) Capstone lo lee como otra cosa.
+
+**Ojo con el `bsr`:** el desplazamiento es `destino - (direccion + 2)` y va
+en 16 bits **con signo**. `bsr.w $18564` en `$019EC4` son los bytes
+`61 00 E6 9E` (E69E = -6498).
 
 ### El hueco libre del ROM
 
 | Tramo | Bytes | Destinos de salto dentro |
 |---|---|---|
 | `$021A32`-`$024001` | 9679 | **285** |
-| `$035961`-`$0375A6` | 7237 | ? |
 | **`$021B67`-`$021BCD`** | **102** | **0** |
 
 Huecos de 40+ bytes sin **ningun** destino de salto dentro: **774** en todo
-el ROM. En las paginas de codigo (`$010000`-`$030000`) **no hay ninguno**:
-los huecos grandes de `$02xxxx` estan atravesados por saltos.
+el ROM. En las paginas de codigo (`$010000`-`$030000`) **no hay ninguno**
+de esos: los huecos grandes de `$02xxxx` estan atravesados por saltos.

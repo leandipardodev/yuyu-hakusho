@@ -1474,13 +1474,42 @@ El rival de la CPU arranca en el **plano de atras** (304) y **mas pequeno**
 juego.** No lo volvemos a poner. Lo que si se queda es `un_plano` (que
 impide el CRUCE a la otra arena) y `sin_cruce`.
 
-### El handler del CRUCE es UNICO en todo el ROM ($01CA9C)
-El cruce de planos es el estado `$0F` y su handler esta en **`$01CA9C`**,
-con **una sola copia** del bloque en todo el ROM: lo usan los 11
-personajes, jugador y rival. La entrada (`move.b #$f, $5f(a5)`) tambien
-es unica: `$018748`. **Cualquier parche del cruce se hace una vez y vale
-para todos.** El frame del cruce es **uno solo de duracion 255**, asi que
-el tick `$5B` va de 0 a 254 y **es el contador de frames del cruce**.
+### EL CRUCE NO ES EL ESTADO $0F
+**El cruce de planos es el ESTADO `$0A` con el FRAME ID `$0F`.**
+
+| Que | Donde |
+|---|---|
+| el estado | `$01873A` (`move.b #$a, $5d(a5)`) |
+| el frame id | `$018748` (`move.b #$f, $5f(a5)`) |
+| **el handler** | **`$019E08`** |
+
+El estado **`$0F` (`$01CA9C`) NO es el cruce**: es el del **impulso**
+(velocidad 4.0, frame id `$0B`, `$016434`). Un parche ahi no hace nada
+durante el cruce. **Esta es la trampa que hizo fallar el primer intento.**
+
+### La tabla de handlers es GLOBAL y las entradas son offsets relativos
+El dispatcher (`$015A5A`) lee `$5D` y salta a la tabla `$15a68` (256
+entradas) con `lea.l $15a68(pc,d0.w),a0` + `adda.w (a0),a0`. O sea:
+**handler(N) = ($15a68 + 2*N) + word_en_esa_direccion**. **No hay un
+handler por personaje**: el del cruce sirve para los 11.
+
+### El tick $5B ES el contador de frames del cruce
+El frame data de `$0F` tiene **un solo frame de duracion 255** (8 de los 10
+personajes), asi que el frame nunca avanza y el tick va de 0 a 254. El tick
+se incrementa en `$019C96` y se reinicia en `$019CA6` al cambiar de frame.
+**"Cada 3 frames" = "tick multiplo de 3"** (`andi.b #$3`).
+
+### El bloque $019E10-$019E27 lo desactiva `un_plano`
+`un_plano` cambia `$019E0E` de `bne.b` a `bra.b`, y con eso ese bloque
+(el que baja el plano y la escala al cruzar) **nunca se ejecuta**. Como
+`un_plano` esta en la version unificada, **cualquier parche que se meta ahi
+no se vera nunca**. Lo que si se ejecuta siempre durante el estado `$0A`
+es `$019E56` (y los siguientes hasta `$019E84`).
+
+### El HP es $78
+Word, maximo **223** (`$012708`: `move.w #$df, $78(a5)`). El dano se resta
+en `$01F424` y `$01F3E0` (`sub.w d0, $78(a4)`) y el KO es cuando llega a 0
+(`$015BCC`: `cmpi.w #$0, $78(a5)`).
 
 ### El hueco libre del ROM: $021B67
 El bloque de relleno `$FF` de `$021A32`-`$024001` (9679 bytes) **esta
@@ -1497,12 +1526,15 @@ salto del ROM (los 4 modos de direccion de `bra`/`bsr`/`jmp`/`bra.l`/
 ### Codificar 68000: el EA `(d8,An)` va registro PRIMERO
 `sub.w d0, $78(a5)` = **`91 6D 00 78`** (4 bytes): opcode, **byte del
 registro**, luego el desplazamiento de 16 bits. Al reves (`91 00 78 05`)
-Capstone lo lee como `subx.b`. Lo mismo con `cmpi.b #$0, $5b(a5)` =
-`0C 2D 00 00 00 5B`.
+Capstone lo lee como `subx.b`.
+
+**El `bsr`:** el desplazamiento es `destino - (direccion + 2)`, en 16 bits
+**con signo**, y los bytes son `61 00 HH LL`. Ojo: el maximo es 32767, asi
+que no se puede llamar a una rutina lejana con `bsr` de 16 bits.
 
 **Regla: no codifiques instrucciones a mano. Copia los bytes de una
 instruccion equivalente que YA exista en el ROM y valida con Capstone.**
-Las trampas de esta sesion (una hora las perdio):
+Las trampas de esta sesion:
 
 1. `subi.w #$1, $78(a5)` no existe en esa forma: en el modo `(d8,An)` el
    inmediato de 16 bits no cabe. La solucion es `move.w #$1, d0` +
@@ -1510,3 +1542,5 @@ Las trampas de esta sesion (una hora las perdio):
 2. `52 00 01 00 78 00 05` se desensambla como `addq.b #$1, d0`: el opcode
    `52` es SUBI.**B**, no SUBI.W.
 3. El EA `(d8,An)` son **3 bytes** (registro + desplazamiento), no 2.
+4. `bne.b` = 0x66 y `ble.b` = 0x6F, pero mejor copiarlos del ROM: Capstone
+   puede desensamblar `66 00` como `bne.w` si el destino no cuadra.

@@ -1076,99 +1076,111 @@ cada 3 frames"*.
 
 ### Que hace
 
-Mientras un personaje esta en el **cruce de planos** (el estado `$0F`)
-pierde **1 de vida cada 3 frames**. Afecta a los **11 personajes**, jugador
-y rival, porque el handler del cruce es **UNICO en todo el ROM**.
+Mientras un personaje esta **cruzando de planos** pierde **1 de vida cada
+3 frames**. Afecta a los **11 personajes**, jugador y rival.
 
 El HP es `$78` (word), con un maximo de 223; a 0 es la muerte. Con un cruce
 tipico de 30-60 frames se pierden 10-20 puntos de vida.
 
-### Los datos que lo sostienen
+### DONDE ESTA EL CRUCE (esto es lo que costara encontrar)
+
+**El cruce NO es el estado `$0F`.** El estado `$0F` (handler `$01CA9C`) es
+el del **impulso** (velocidad 4.0, frame id `$0B`, `$016434`).
+
+**El cruce es el ESTADO `$0A` con el FRAME ID `$0F`:**
+
+| Que | Donde | Codigo |
+|---|---|---|
+| se pone el estado | `$01873A` | `move.b #$a, $5d(a5)` |
+| se pone el frame id | `$018748` | `move.b #$f, $5f(a5)` |
+| el plano pasa a 319 | `$01874E` | `move.l #$13f0000, $9c(a5)` |
+| **el handler** | **`$019E08`** | el estado `$0A` de la tabla global `$15a68` |
+
+Las **tablas de handlers son GLOBALES** (`$15a68`, 256 entradas) y las
+entradas son **offsets relativos**: el handler del estado `$N` es
+`($15a68 + 2*$N) + word_en_esa_direccion`. Asi que no hay un handler por
+personaje: el del cruce sirve para los 11.
+
+**Los 4 sitios que comparan con `$0F`** (el frame id del cruce) son
+`$019E08`, `$019E86`, `$019ECC` y `$019F4A`: dos en el handler del cruce
+(estado `$0A`) y dos en el de la vuelta (estado `$0B`).
+
+### El TICK: como se cuenta "cada 3 frames"
+
+El frame data de `$0F` tiene **UN solo frame, de duracion 255**, para 8 de
+los 10 personajes (ctx0 = 72, ctx5 = 16 frames). Con duracion 255 el tick
+`$5B` va de 0 a 254 y **es el contador de frames del cruce**:
 
 | Dato | Valor | Donde |
 |---|---|---|
-| El cruce es el estado | **`$0F`** | |
-| Su handler | **`$01CA9C`** | **UNICO en todo el ROM** (una sola copia del bloque) |
-| El frame del cruce | **uno solo, duracion 255** | el frame data de cada ctx |
-| El tick `$5B` | de 0 a 254 | **es el contador de frames del cruce** (porque hay un solo frame) |
-| El HP | `$78` (word) | maximo 223; a 0 es la muerte |
-| Como se entra al cruce | `move.b #$f, $5f(a5)` | `$018748`, **unico en todo el ROM** |
+| El tick se incrementa | `addq.b #$1, $5b(a5)` | `$019C96` |
+| Se reinicia al cambiar de frame | `clr.b $5b(a5)` | `$019CA6` |
+| El frame avanza si el tick llega a la duracion | `cmp.b $5b(a5), d0` / `bhi.b` | `$019CA0` |
+| Al empezar el move el tick = 255 (overflow a 0) | `move.b #$ff, $5b(a5)` | `$019C26` |
 
-**Lo clave:** el cruce tiene **un solo frame** (duracion 255, o sea "espera"),
-asi que el tick `$5B` va de 0 a 254 y hace de **contador de frames**. Por eso
-"cada 3 frames" es exactamente "tick multiplo de 3".
+Con duracion 255 el frame **nunca** cambia, asi que el tick nunca se
+reinicia: es el contador de frames. **"Cada 3 frames" = "tick multiplo de
+3"** (`andi.b #$3`).
 
 ### El cambio
 
-El handler del cruce (en la base):
-
-```
-$01CABA  move.l  $10(a5), d1     ; la velocidad
-$01CABE  btst.b  #$0, $61(a5)    ; el facing
-$01CAC2  beq.b   $01CAC6
-$01CAC4  neg.l   d1
-$01CAC8  add.l   d1, $40(a5)     ; avanza hacia el otro plano
-$01CACC  tst.b   $59(a5)         ; ¿el frame es 0?      <- ESTE SE CAMBIA
-$01CAD0  beq.b   $01CB04
-$01CAD2  tst.b   $5b(a5)         ; ¿el tick 0?
-$01CAD6  bne.b   $01CB04
-$01CAD8  move.l  $10(a5), d0     ; FRENA (la velocidad a la mitad)
-$01CADC  asr.l   #$1, d0
-$01CAE0  move.l  d0, $10(a5)
-$01CAE2  bra.w   $15afc          ; <- NO SE TOCA
-```
-
-El handler no tiene hueco para las 14 bytes que hacen falta, asi que el
-cambio es:
+El handler del cruce ($019E08-$019EBE) no tiene hueco para las 14 bytes
+que hacen falta, asi que el dano va en una **rutina nueva en un hueco
+libre del ROM** y se llama con un `bsr`:
 
 | Direccion | Antes | Despues |
 |---|---|---|
-| `$01CACC` | `tst.b $59(a5)` (4 bytes) | **`bsr $021B67`** (4 bytes) |
-| `$01CAD0`-`$01CAE1` | el check de la frenada + la frenada (18 bytes) | **18 nop** |
+| `$019E56` | `move.l $10(a5), d1` (4 bytes) | **`bsr $021B67`** (4 bytes) |
 | `$021B67`-`$021B8C` | relleno `$FF` (hueco libre) | **la rutina nueva** (38 bytes) |
-| `$01CAE2` | `bra.w $15afc` | *igual* (no se toca) |
 
 La rutina nueva:
 
 ```
-$021B67  move.b  $5b(a5), d0     ; el tick (contador de frames del cruce)
-$021B6B  andi.b  #$3, d0         ; ¿multiplo de 3?
-$021B6F  bne.b   $021B79          ; no -> la frenada
-$021B71  move.w  #$1, d0
-$021B75  sub.w   d0, $78(a5)      ; -1 DE VIDA
-$021B79  cmpi.b  #$0, $5b(a5)    ; ¿el tick 0? (la frenada)
-$021B7F  bne.b   $021B8B          ; no -> fuera
-$021B81  move.l  $10(a5), d0      ; FRENA
-$021B85  asr.l   #$1, d0
-$021B87  move.l  d0, $10(a5)
+$021B67  move.l  $10(a5), d1     ; la velocidad (SIEMPRE, como antes)
+$021B6B  cmpi.b  #$f, $5f(a5)    ; ¿es el cruce?
+$021B71  bne.b   $021B8B          ; no -> fuera
+$021B73  move.b  $5b(a5), d0     ; el tick
+$021B77  andi.b  #$3, d0         ; ¿multiplo de 3?
+$021B7B  bne.b   $021B8B          ; no -> fuera
+$021B7D  tst.w   $78(a5)          ; el HP
+$021B81  ble.b   $021B8B          ; si HP <= 0 -> fuera (no baja de 0)
+$021B83  move.w  #$1, d0
+$021B87  sub.w   d0, $78(a5)      ; -1 DE VIDA
 $021B8B  rts
 ```
 
-**La frenada se mantiene**: estaba en el handler y ahora esta dentro de la
-rutina, con la misma condicion (el tick 0 del cruce). El `cmpi.b #$0,
-$5b(a5)` sustituye al antiguo "frame 0 **y** tick 0" porque el cruce tiene
-un solo frame: el frame **siempre** es el 0.
+El `move.l $10(a5), d1` (la velocidad) se movede dentro de la rutina, asi
+que el resto del handler no cambia ni un byte: la rutina devuelve `d1`
+igual que la instruccion original.
+
+### POR QUE el bsr esta en $019E56 y no en $019E10
+
+Porque el bloque `$019E10`-`$019E27` (el que baja el plano y la escala al
+cruzar) es **justo el que `un_plano` desactiva**: `un_plano` cambia
+`$019E0E` de `bne.b` a `bra.b`, y entonces ese bloque **nunca se ejecuta**.
+Como `un_plano` esta en la version unificada, el dano ahi **no se veria
+nunca**.
+
+`$019E56` se ejecuta **siempre** durante el estado `$0A`:
+
+```
+con un_plano:    $019E08 -> $019E0E (bra.b) -> $019E28 -> $019E2E (bne.b) -> $019E56
+sin un_plano:    $019E08 -> $019E10 (el bloque del plano) -> $019E28 -> $019E2E -> $019E56
+```
+
+Y el check de "es el cruce" (`$5F == $0F`) esta **dentro** de la rutina,
+porque el estado `$0A` tambien se usa para el frame id `$10` (la vuelta).
 
 ### Por que la rutina va en un hueco del ROM
 
-No habia hueco en el handler. Se busco un hueco **libre de verdad**:
+El tramo **`$021B67`-`$021BCD`** (102 bytes) es de relleno `$FF` y tiene
+**CERO** destinos de salto dentro. Se verifico escaneando **todos** los
+destinos de salto del ROM (`bra`/`bsr`/`jmp`/`bra.l`/`jmp.l`, los 4 modos
+de direccion): el bloque grande de `$021A32` **no** sirve tal cual, tiene
+**285** destinos dentro.
 
-| Tramo | Bytes | Destinos de salto dentro |
-|---|---|---|
-| `$021A32`-`$024001` | 9679 | **285** (no sirve tal cual) |
-| **`$021B67`-`$021BCD`** | **102** | **0** <- el elegido |
+El `bsr` es de 16 bits con signo y el desplazamiento son 32015 bytes
+(el maximo es 32767), asi que **cabe por los pelos**: si la rutina se
+moviera mas lejos, habria que usar otra forma.
 
-Se verifico con un escaneo de **todos** los destinos de salto del ROM
-(`bra`/`bsr`/`jmp`/`bra.l`/`jmp.l` con los 4 modos de direccion): **ningun
-salto de todo el ROM apunta a `$021B67`**, asi que escribir ahi no rompe
-nada. La distancia desde el handler (`$01CACC`) es de 20377 bytes, o sea
-que cabe en el desplazamiento de 16 bits de un `bsr`.
-
-### Ojo: `un_plano` NO lo anula
-
-`un_plano` y `sin_cruce` cambian `$018751` (el plano 319 -> 320) y anulan
-el cambio de plano, pero **el estado `$0F` sigue entrando igual** (la
-entrada es `$018748`, antes de ese byte). Por eso el **daño se sigue
-viendo** en la version unificada, que tiene `un_plano`.
-
-**60 bytes** en total (4 del handler, 18 de relleno y 38 de la rutina).
+**42 bytes** en total (4 del handler y 38 de la rutina).

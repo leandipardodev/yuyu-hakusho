@@ -197,8 +197,8 @@
         "cruce_dano"
       ],
       "que_hade": "",
-      "que_hace": "Mientras un personaje esta en el cruce (el estado $0F) pierde 1 de vida cada 3 frames. Afecta a los 11 personajes, jugador y rival. 58 bytes.",
-      "bytes": 59
+      "que_hace": "Mientras un personaje esta en el cruce (el estado $0A con el frame id $0F) pierde 1 de vida cada 3 frames. Afecta a los 11 personajes, jugador y rival. 42 bytes.",
+      "bytes": 42
     }
   ],
   "combinaciones": [
