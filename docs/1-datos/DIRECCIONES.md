@@ -261,17 +261,21 @@ los dos `jsr $18454.l` de `0x15CFE` y `0x15D12` pasan a `jsr $18456.l`.
 El 4º byte del blob (`$67` alto, `$68` bajo) dice **en qué estado queda el
 rival**. [NOTAS]
 
-| Valor | `$67` | `$68` | Efecto |
+| `$68` | Estado | Frames | Qué es |
 |---|---|---|---|
-| `$24` | 2 | 4 | **derribo ciego** — el más simple, sin velocidad vertical alta |
-| `$25` | 2 | 5 | derribo normal |
-| `$28` | 2 | 8 | derribo más alto, `velY = -7.0` — **colgaba el juego (HANGUP 68000)** |
-| `$29` | 2 | 9 | (así está en el ROM **japonés**) |
+| 4 | `$23` | **164** | derribo ciego |
+| 5 | `$25` | **290** | derribo **con ventana** |
+| 6 | `$26` | **516** | lanzador (el rival sale volando) |
+| 7 | `$27` | **390** | alto fijo, sin velocidad |
+| **8** | **`$30`** | **430** | **elevación recta** (tiro vertical), **con ventana de frames** |
+| 9 | `$2F` | **334** | empuje diagonal (los agarres) |
+
+El byte: `$68 = 4` → `$24` · `$68 = 5` → `$25` · `$68 = 8` → `$28` ·
+`$68 = 9` → `$29`. El nibble **alto** es `$67` y se deja en 2.
 
 > **La planta de Kurama** (§6) usa `$68`. El **2º golpe** está en el blob
 > `$0D9C66` y su byte de estado es **`$0D9C69`**. En el ROM **inglés** vale
-> `$25` y en el **japonés** `$29`: la transformación a `$24` es la misma en
-> los dos, pero el valor de partida **no**. [NOTAS] [MEDIDO]
+> `$25` ($68=5) y en el **japonés** `$29` ($68=9). [NOTAS] [MEDIDO]
 
 ---
 
@@ -283,14 +287,23 @@ objeto en `$01EC0E`–`$01EC2C`. [NOTAS]
 
 | Golpe | Blob | `$65` daño | `$66` stun | `$64` empuje | byte de estado |
 |---|---|---|---|---|---|
-| 1º | `$0D9CFA` | 8 | 4 | `$1E` | `$0D9CFD` |
+| 1º | `$0D9CFA` | 8 | 4 | `$1E` | `$0D9CFD` = `$25` ($68=5) |
 | 2º | `$0D9C66` | 16 | 10 | `$1E` | **`$0D9C69`** |
 
-La firma de 3 bytes `$65 $66 $64` aparece **una sola vez en 3 MB** en cada
-caso: por eso se localizaron sin ambigüedad. [NOTAS]
+> La firma `$65=$10 $66=$0A $64=$1E` aparece **3 veces** en 3 MB: en `$0C3AF2`,
+> `$0C3B0A` y `$0D9C66`. Las dos primeras tienen `$68 = 0` (hitstun normal, 22
+> frames), que no es una caída. La de la planta es la tercera.
 
-**El parche entregado** (1 byte): `$0D9C69: $25 → $24` → el 2º golpe pasa del
-derribo normal al **derribo ciego**. El 1º golpe **no** se tocó.
+**El parche aplicado** (1 byte): `$0D9C69: $29 → $28` → el 2º golpe pasa a
+**elevación recta** (estado `$30`, 430 frames, con la ventana de frames
+activada hasta la caída al suelo): el rival cae de otra forma y queda mucho
+más tiempo para conectar. El 1º golpe **no** se tocó.
+
+> **El error que hubo antes**: el parche que se había entregado era
+> `$0D9C69: $25 → $24` sobre el ROM **inglés**, o sea **derribo ciego, 164
+> frames**. Aplicado sobre el **japonés** (donde el byte es `$29` = `$68 = 9`,
+> 334 frames) daba `$29 → $24`: **de 334 frames a 164**, justo lo contrario de
+> lo que se buscaba.
 
 ---
 

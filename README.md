@@ -106,14 +106,14 @@ yuyu-hakusho/
 
 Estaban repartidos en ROMs distintas, en tres carpetas. Ahora están en **una**:
 
-**`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** — SHA1 `21A859C88FA046D0` — 33 bytes.
+**`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** — SHA1 `4D0459F8CB420BA2` — 33 bytes.
 
 | Cambio | Qué hace | Bytes |
 |---|---|---|
 | **Habilidad de Hiei** | el dragón 炎殺黒龍波 va a media velocidad y su hitbox se estrecha de 68 a 9 px | `$0C8168` `$012585` `$012586` `$0C99AE` `$0C99B6` |
 | **Manos de Itsuki** | 影手 sale instantáneo (las duraciones **medidas**, ids 166/167), se desplaza ÷4 y su onda va a media velocidad | `$0D053A` `$0D0542` `$0D054A` `$0D0552` `$018809` `$01FD0D` `$01FD59` |
 | **Fix del doble salto** | la rutina de reset limpia `$87(a5)`, el **contador de saltos** | `$015D03` `$015D17` + 16 bytes en `$018443` |
-| **Planta de Kurama** | su 2º golpe pasa del derribo normal al **derribo ciego** | `$0D9C69` |
+| **Planta de Kurama** | su 2º golpe pasa a **elevación recta** (estado `$30`): cae de otra forma y da **430 frames** con ventana para conectar | `$0D9C69` |
 
 Reconstruirla:
 

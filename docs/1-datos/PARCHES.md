@@ -402,7 +402,7 @@ tres carpetas: `base/`, `modificadas/` y `fuentes/`.
 | Fichero | SHA1 (16) | Cambios | Qué hace |
 |---|---|---|---|
 | `rom/base/yuyu_makyou_base.bin` | `BE4461EBA61F3999` | 8 | base reparada + checksum al día |
-| **`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** | `21A859C88FA046D0` | 33 | **LA UNIFICADA**: dragón de Hiei + 影手 de Itsuki + fix del doble salto + planta de Kurama |
+| **`rom/modificadas/yuyu_makyou_UNIFICADA.bin`** | `4D0459F8CB420BA2` | 33 | **LA UNIFICADA**: dragón de Hiei + 影手 de Itsuki + fix del doble salto + planta de Kurama (estado `$30`) |
 | **`rom/modificadas/yuyu_makyou_UNIFICADA_EXPERIMENTAL.bin`** | `DE29A8119B2903D9` | 89 | la anterior + el refactor del camino del proyectil (experimental) |
 
 ### Las que hubo mientras (ya no están)
@@ -501,7 +501,7 @@ y las generadas por el parcheador). Esta sección es el mapa final.
 | **Habilidad de Hiei** (dragón) | `$0C8168` 82→81 · `$012585` 01→00 · `$012586` C0→E0 · `$0C99AE` 44→09 · `$0C99B6` 44→09 | `v3_DRAGON` / `v5` / `v8` / `v12` |
 | **Manos de Itsuki** (影手) | `$0D053A` `$0D0542` `$0D054A` 04→00 · `$0D0552` 02→00 · `$018809` 80→40 · `$01FD0D` FF→FE · `$01FD59` 01→00 | `ROM A MODIFICAR - HIEI v3 + ITSUKI KAGE 14f-7f.md` (durations) + `v10`/`v14`/`v15` (velocidades) |
 | **Fix del doble salto** | `$015D03` 54→56 · `$015D17` 54→56 · `$018443`–`$018457` (16 bytes) | `ROM A MODIFICAR.md` |
-| **Planta de Kurama** | `$0D9C69` 29→24 | `HERRAMIENTAS/ENTREGAS` (el parche entregado, sobre el ROM inglés: `$25`→`$24`) |
+| **Planta de Kurama** | `$0D9C69` 29→28 | el objetivo: estado `$30` (elevación recta, 430 f, con ventana). Ver §8.4 |
 
 ## 8.2 `$87(a5)` = EL CONTADOR DE SALTOS
 
@@ -538,41 +538,75 @@ código saltando a media instrucción.**
 **No es un golpe de Kurama.** Kurama lo *invoca* (con el move `$A3`), pero **los
 golpes salen de un objeto**: el motor copia el blob del golpe a la RAM del
 objeto en `$01EC0E`–`$01EC2C`. Ese blob se localizó por la firma de 3 bytes
-`$65 $66 $64`, que aparece **una sola vez en 3 MB** en cada caso:
+`$65 $66 $64`:
 
-| Golpe | Blob | `$65` daño | `$66` stun | `$64` empuje |
-|---|---|---|---|---|
-| 1º | `$0D9CFA` | 8 | 4 | `$1E` |
-| 2º | `$0D9C66` | 16 | 10 | `$1E` |
+| Golpe | Blob | `$65` daño | `$66` stun | `$64` empuje | byte de estado |
+|---|---|---|---|---|---|
+| 1º | `$0D9CFA` | 8 | 4 | `$1E` | `$0D9CFD` |
+| 2º | `$0D9C66` | 16 | 10 | `$1E` | **`$0D9C69`** |
 
-El **4º byte** de la cabecera del blob (`$0D9C69` para el 2º golpe) guarda **dos
-nibbles**: el **alto es `$67`** y el **bajo es `$68`**. Y `$68` es el **estado de
-derribo** que queda el rival.
+> **Ojo: la firma NO es única.** `$65=$10 $66=$0A $64=$1E` aparece **3 veces** en
+> 3 MB: en `$0C3AF2`, `$0C3B0A` y `$0D9C66`. Las dos primeras tienen `$68 = 0`
+> (hitstun normal, 22 frames), que no es una caída. La de la planta es la
+> tercera. La búsqueda original se hizo sobre el ROM **inglés**.
 
-| Valor | `$67` (alto) | `$68` (bajo) | Efecto |
+El **4º byte** de la cabecera del blob guarda **dos nibbles**: el **alto es
+`$67`** y el **bajo es `$68`**. Y `$68` es el **estado de derribo** en el que
+queda el rival.
+
+### La tabla de `$68` (de las notas, `HIT STATE.txt`)
+
+| `$68` | Estado | Frames | Qué es |
 |---|---|---|---|
-| `$29` | 2 | 9 | (así está en el ROM **japonés**) |
-| `$25` | 2 | 5 | derribo normal |
-| `$24` | 2 | 4 | **derribo ciego** |
-| `$28` | 2 | 8 | derribo más alto, `velY = -7.0` — **colgaba el juego** |
+| 0 | `$20` | 22 | hitstun normal |
+| 1 | `$21` | 102 | hitstun normal, variante |
+| 2 | `$20` | 18 | chip |
+| 3 | `$21` | 98 | chip, variante |
+| 4 | `$23` | **164** | derribo ciego |
+| 5 | `$25` | **290** | derribo **con ventana** |
+| 6 | `$26` | **516** | lanzador (el rival sale volando) |
+| 7 | `$27` | **390** | alto fijo, sin velocidad |
+| **8** | **`$30`** | **430** | **elevación recta** (tiro vertical), **con ventana de frames** |
+| 9 | `$2F` | **334** | empuje diagonal (los agarres) |
 
-El parche entregado (`notas/HERRAMIENTAS/ENTREGAS/`) es **1 byte**:
-`$0D9C69: $25 → $24`. Solo se toca el nibble bajo; el alto (`$67 = 2`) se queda.
+### Qué hay en cada ROM
 
-> **OJO, las dos ROMs no tienen el mismo byte.** En el **ROM japonés** el byte
-> vale `$29` (`$68 = 9`) y en el **inglés** vale `$25` (`$68 = 5`). La
-> transformación a `$24` (`$68 = 4`) es la misma en las dos, pero el valor de
-> partida **no**. El grupo `kurama_planta` del manifiesto usa el del **japonés**
-> (`$29 → $24`), que es la ROM de este proyecto.
->
+| ROM | 1º golpe | 2º golpe | Frames |
+|---|---|---|---|
+| **Japonés** (la de este proyecto) | `$68=5` → `$25` | **`$68=9` → `$2F`** | 334 |
+| **Inglés** | `$68=5` → `$25` | `$68=5` → `$25` | 290 |
+| Japonés + parche entregado | `$68=5` | `$68=4` → `$23` | **164** |
+
+### Lo que se aplica, y el error que se cometió
+
+**El objetivo: `$68 = 8` → estado `$30` = elevación recta**, 430 frames, con la
+ventana de frames activada hasta la caída al suelo. Así el rival **cae de otra
+forma** y queda **mucho más tiempo para conectar**.
+
+> **El error**: el parche que había entregado (`$0D9C69: $25 → $24`) deja el 2º
+> golpe en **derribo ciego, 164 frames** — la mitad de frames que da el
+> derribo con ventana, y un tercio de la elevación recta. Se aplicó sobre el
+> ROM **japonés**, donde el byte de partida es `$29` (`$68 = 9`, 334 frames),
+> así que el resultado final fue `$29 → $24`: **de 334 frames a 164**.
+
+Los grupos del manifiesto:
+
+| Grupo | Byte | Estado | Frames | Cuándo |
+|---|---|---|---|---|
+| **`kurama_planta`** | `$0D9C69` `$29` → **`$28`** | `$30` elevación recta | **430** | **el que se quiere** |
+| `kurama_ventana` | `$0D9C69` `$29` → `$25` | `$25` derribo con ventana | 290 | como el ROM inglés |
+| `kurama_ciego` | `$0D9C69` `$29` → `$24` | `$23` derribo ciego | 164 | el parche que se había entregado |
+
+**El 1º golpe NO se toca** (`$0D9CFD`).
+
+> ⚠️ **Antecedente**: con `$68 = 8` el juego **se colgó una vez** (HANGUP 68000)
+> y no se sabe por qué (commit 163 de las notas). El estado `$30` lo usan
+> Itsuki y Sensui, así que **no es un estado roto**: lo que no se explica es el
+> cuelgue. Por eso hay tres variantes: para probar cuál funciona.
+
 > La nota de las notas ("las direcciones coinciden con la japonesa; la
 > traducción solo tocó texto") **no se cumple en este byte**: entre el ROM
 > japonés y el inglés hay **113.280 bytes** distintos en 124 bloques.
-
-**El 1º golpe NO se tocó.**
-
-> Nota: el "estado 9" del ROM japonés no está descrito en las notas (que
-> trabajaron sobre el inglés). Queda **pendiente de medir** qué derribo da.
 
 ## 8.4.bis Lo que NO es la planta
 
@@ -590,14 +624,25 @@ python herramientas/desensamblado\patch_rom.py `
     dragon dragon_vel blob kage_dur kage_vel onda_vel doble_salto kurama_planta
 ```
 
+Los otros dos valores de la planta se cambian por el grupo:
+
+```powershell
+# derribo CON VENTANA (estado $25, 290 f) en vez de elevacion recta
+python _disasm_tools\patch_rom.py ... kurama_ventana
+# derribo CIEGO (estado $23, 164 f): el parche que se habia entregado
+python _disasm_tools\patch_rom.py ... kurama_ciego
+```
+
 El checksum se reescribe **siempre** al final. Cada byte declara su valor
 esperado: si el ROM de entrada no lo tiene, el parcheador **aborta sin escribir
 nada**.
 
 | ROM | SHA1 (16) | Cambios |
 |---|---|---|
-| `rom/modificadas/yuyu_makyou_UNIFICADA.bin` | `21A859C88FA046D0` | 33 bytes |
-| `rom/modificadas/yuyu_makyou_UNIFICADA_EXPERIMENTAL.bin` | `DE29A8119B2903D9` | 89 bytes |
+| `rom/modificadas/yuyu_makyou_UNIFICADA.bin` | `4D0459F8CB420BA2` | 33 bytes |
+| `rom/modificadas/yuyu_makyou_UNIFICADA_EXPERIMENTAL.bin` | (idem + `kage_proj`) | 89 bytes |
+| `rom/modificadas/yuyu_makyou_UNIFICADA_VENTANA.bin` | `2DB5976139592474` | 33 bytes | la misma, con la planta en derribo **con ventana** (290 f) |
+| `rom/modificadas/yuyu_makyou_UNIFICADA_CIEGO.bin` | `21A859C88FA046D0` | 33 bytes | la misma, con la planta en derribo **ciego** (164 f): el parche que se había entregado |
 
 `v17` = `v16` + `kage_proj` (el refactor de `$01C3BA`/`$021A08` que hace el
 usuario en su ROM más reciente). **Va aparte porque cambia qué ruta crea el

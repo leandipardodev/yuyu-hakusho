@@ -1054,14 +1054,14 @@
       ]
     },
     "kurama_planta": {
-      "desc": "PLANTA DE KURAMA, segundo golpe. El byte es el 4o de la cabecera del blob del golpe ($0D9C66), que se lee en $01EC0E-$01EC2C. Ese byte guarda DOS nibbles: el ALTO es $67 y el BAJO es $68, y $68 es el estado de derribo. Con $68=5 el golpe manda al derribo normal; con $68=4 manda al DERRIBO CIEGO. Solo se toca el nibble bajo: el nibble alto ($67) se queda en 2.",
-      "confianza": "MEDIDO (los valores $65 $66 $64 $67 $68 se leyeron de la RAM del objeto con la planta pegando) + DEDUCIDO (que el blob $0D9C66 es el 2do golpe: la firma de 3 bytes aparece una sola vez en 3 MB)",
+      "desc": "PLANTA DE KURAMA, 2do golpe. El byte es el 4o de la cabecera del blob del golpe ($0D9C66), que se lee en $01EC0E-$01EC2C. Ese byte guarda DOS nibbles: el ALTO es $67 y el BAJO es $68, y $68 es el ESTADO DE DERRIBO. Solo se toca el nibble bajo: $67 se queda en 2. El 1er golpe de la planta (blob $0D9CFA, byte $0D9CFD) NO se toca. OBJETIVO: $68 = 8, estado $30 = ELEVACION RECTA, 430 frames, con la ventana de frames activada hasta la caida al suelo. Asi el rival cae de otra forma y queda mas tiempo para conectar. AVISO: con $68 = 8 se colgo el juego una vez (HANGUP 68000) y no se sabe por que; el estado $30 lo usan Itsuki y Sensui, asi que no es un estado roto.",
+      "confianza": "MEDIDO (los valores $65 $66 $64 $67 $68 se leyeron de la RAM del objeto con la planta pegando) + MEDIDO (la tabla de estados $68 -> estado y frames, en las notas)",
       "bytes": [
         {
           "addr": "0x0D9C69",
           "old": "29",
-          "new": "24",
-          "nota": "estado del 2do golpe de la planta: $68 9 -> 4 (derribo ciego). OJO: en el ROM japones el byte es $29 ($68=9) y en el ROM ingles es $25 ($68=5); la transformacion a $68=4 ($24) es la misma en los dos. La version entregada por el autor (notas/HERRAMIENTAS/ENTREGAS) es sobre el ROM ingles: $25 -> $24."
+          "new": "28",
+          "nota": "estado del 2do golpe de la planta: $68 9 -> 8, o sea estado $30 (elevacion recta, 430 frames, ventana de frames). En el ROM ingles el byte es $25 ($68=5) y el parche de $28 es el que se probo primero y colgaba."
         }
       ]
     },
@@ -1362,6 +1362,30 @@
           "addr": "0x021A39",
           "old": "FF",
           "new": "C2"
+        }
+      ]
+    },
+    "kurama_ventana": {
+      "desc": "PLANTA DE KURAMA, 2do golpe: derribo CON VENTANA (estado $25, 290 frames). Variante del grupo 'kurama_planta' con otro valor final para $68.",
+      "confianza": "MEDIDO (los valores $65 $66 $64 $67 $68 se leyeron de la RAM del objeto con la planta pegando) + MEDIDO (la tabla de estados $68 -> estado y frames, en las notas)",
+      "bytes": [
+        {
+          "addr": "0x0D9C69",
+          "old": "29",
+          "new": "25",
+          "nota": "estado $68 = 5"
+        }
+      ]
+    },
+    "kurama_ciego": {
+      "desc": "PLANTA DE KURAMA, 2do golpe: derribo CIEGO (estado $23, 164 frames). Variante del grupo 'kurama_planta' con otro valor final para $68.",
+      "confianza": "MEDIDO (los valores $65 $66 $64 $67 $68 se leyeron de la RAM del objeto con la planta pegando) + MEDIDO (la tabla de estados $68 -> estado y frames, en las notas)",
+      "bytes": [
+        {
+          "addr": "0x0D9C69",
+          "old": "29",
+          "new": "24",
+          "nota": "estado $68 = 4"
         }
       ]
     }
