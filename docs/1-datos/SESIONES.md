@@ -313,3 +313,53 @@ $021B8D  rts
   `$19c96` (el `++tick`), asi que el tick va 0,1,2... durante el cruce.
 - El dispatcher se llama desde **un solo sitio** (`$01269A`), o sea que los
   handlers de estado son solo de los personajes (no de los proyectiles).
+
+
+<a name="s-2024-10-21e"></a>
+
+## S-2024-10-21e: el cruce rompia el juego (pantalla negra) -> el dano INLINE
+
+**Sintoma de la v3:** *"instantaneamente al cruzar enfrente se pone la
+pantalla negra o de algun color y queda trabado ahi"*.
+
+**La causa:** la v3 metia el dano en una **rutina nueva** en el relleno
+`$FF` del final del ROM (`$021B67`) y la llamaba con un `bsr` desde
+`$019E56`. El juego se colgaba al ejecutar ese `bsr`.
+
+**La regla que sale de esto: UN PARCHE NO DEBE LLAMAR A CODIGO NUEVO EN
+EL ROM.** Se puede parchear lo que haya, pero meter rutina nueva en un
+hueco rompe el juego (aunque el hueco no lo apunte ningun salto y el
+`bsr` apunte a donde debe).
+
+**La v4: el dano INLINE, dentro del handler, sin llamar a nada.**
+
+El bloque `$019E10`-`$019E27` (24 bytes) del handler del cruce (el que
+bajaba el plano y la escala) se sustituye por el dano, y **mide
+exactamente los mismos 24 bytes**, asi que no se desplaza nada:
+
+```
+$019E10  cmpi.w  #$2, $78(a5)    ; ¿el HP es > 1?
+$019E16  ble.b   $019E28
+$019E18  move.b  $5b(a5), d0
+$019E1C  andi.b  #$3, d0
+$019E20  bne.b   $019E28
+$019E22  moveq   #$1, d0
+$019E24  sub.w   d0, $78(a5)
+```
+
+**Y `un_plano`:** quitamos su cambio en `$019E0E` (que neutralizaba ese
+bloque). El plano sigue sin bajar (su codigo ya no esta), y el dano
+funciona. **Las dos ROMs (la individual y la unificada) hacen lo mismo.**
+
+**Aprendido:**
+
+- **`moveq #$1, d0` son 2 bytes** (`70 01`), frente a los 4 de
+  `move.w #$1, d0`. Con eso el dano cabe en 24 bytes exactos.
+- **`subq.w #1, <ea>` NO EXISTE** con el EA `(d8,An)`: el SUBQ con memoria
+  solo es de byte o de long. Para restar 1 de un word: `moveq #$1, d0` +
+  `sub.w d0, <ea>`.
+- **El EA `(d8,An)` en `cmpi`/`cmpi.w`**: opcode (0x0C para los dos) +
+  byte de modo/reg + inmediato + d16: `cmpi.w #$2, $78(a5)` =
+  `0C 6D 00 02 00 78`.
+- **El dispatcher de estados llama al handler DESPUES** de `$19C96` (el
+  `++tick`), asi que el tick va 0,1,2... durante el cruce ✓.

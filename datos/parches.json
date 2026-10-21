@@ -1390,7 +1390,7 @@
       ]
     },
     "un_plano": {
-      "desc": "UN SOLO PLANO. (1) Los TRES bloques que alejan al personaje a otro plano se neutralizan: $019E0E y $019ED2 (que bajan $9c en $A800 y $5000 y reducen la escala $3E) y $019E8C (que lo pone a $9c = 304). Con 'bne.b' -> 'bra.b' el destino no cambia. (2) El dash deja $9c = 320 y no 319, para que un dash no deje al personaje en un plano distinto del rival. (3) Los CUATRO filtros de plano de los resolvers se anulan cambiando el REGISTRO de la instruccion 'move.w $9c(a3),d0' (byte 0x2b) por a4 (0x2c): el atacante se compara consigo mismo y la comprobacion de 'distinto plano' nunca salta.",
+      "desc": "UN SOLO PLANO. (1) Los bloques que alejan el personaje a otro plano se neutralizan: $019E8C (el 'move.l #$1300000, $9c(a5)' del cruce) y $019ED2 (el bloque de la vuelta). Con 'bne.b' -> 'bra.b' el destino no cambia. OJO: $019E0E YA NO se toca, porque ese bloque (el del cruce) lo sustituye ahora el grupo 'cruce_dano' por el dano; el plano deja de bajar igualmente. (2) El dash deja $9c = 320 y no 319, para que un dash no deje al personaje en un plano distinto del rival. (3) Los CUATRO filtros de plano de los resolvers se anulan cambiando el REGISTRO de la instruccion 'move.w $9c(a3),d0' (byte 0x2b) por a4 (0x2c): el atacante se compara consigo mismo y la comprobacion de 'distinto plano' nunca salta.",
       "confianza": "CODIGO (las cuatro instrucciones y los tres bloques de cruce, leidos del desensamblado) / MEDIDO (que el filtro es lo que separa a los peleadores)",
       "bytes": [
         {
@@ -1398,12 +1398,6 @@
           "old": "3F",
           "new": "40",
           "nota": "el dash: $9c = $013F0000 (319) -> $01400000 (320, el plano delantero)"
-        },
-        {
-          "addr": "0x019E0E",
-          "old": "66",
-          "new": "60",
-          "nota": "cruce 1: bne.b $19e28 -> bra.b $19e28. Este bloque baja $9c en $A800 (40 px) y reduce la escala $3E en 3: es el que ALEJA al personaje. Sin el, el jugador no se va al otro plano"
         },
         {
           "addr": "0x019E8C",
@@ -1633,272 +1627,152 @@
       ]
     },
     "cruce_dano": {
-      "desc": "CRUZAR AL OTRO PLANO HACE PERDER 1 DE VIDA CADA 3 FRAMES. EL CRUCE es el ESTADO $0A con el frame id $0F: la entrada esta en $01873A ('move.b #$a, $5d(a5)') y $018748 ('move.b #$f, $5f(a5)'), y su handler es $019E08 (el estado $0A de la tabla global de handlers $15a68). OJO: el estado $0F ($01CA9C) NO es el cruce, es el del impulso (velocidad 4.0, frame id $0B). El frame data de $0F tiene UN solo frame de duracion 255, asi que el TICK ($5B) va de 0 a 254 y ES el contador de frames del cruce: 'cada 3 frames' = 'tick multiplo de 3'. El tick se incrementa en $019C96, antes del handler del estado ($015A54). EL HP es $78 (word, maximo 223 en $012708). IMPORTANTE: el KO del juego se detecta con el HP NEGATIVO y SOLO en el handler del estado $00 ($019CFC: 'btst.b #$7, $78(a5)'). En el estado del CRUCE ($0A) nadie vigila el HP: ni el KO ni el 'levantarse' ($015BCC: 'bge.w $1877e', que solo se dispara con HP > 0). El unico sitio que pone el estado del KO es el RESOLVER de golpes ($01F3F0: 'move.b #$4, $5d(a4)'), y este dano no pasa por ahi. Por eso, si el HP llegaba a 0 en mitad de un cruce, el personaje se quedaba vivo con 0 de vida, la ronda no acababa y el juego se quedaba colgado. Por eso aqui el HP NUNCA baja de 1: cruzar deja al personaje al borde de la muerte, pero no lo mata. El cambio: en $019E56, 'move.l $10(a5), d1' pasa a ser 'bsr $021B67', que llama a una rutina nueva en el HUECO LIBRE del ROM $021B67 (dentro del relleno $FF que hay al final del ROM, desde $021A32; el juego acaba ahi y de ahi al final todo es $FF). La rutina devuelve d1 = la velocidad (igual que la instruccion original) y, SOLO si el frame id es $0F (el cruce), el tick es multiplo de 3 y el HP es > 1, resta 1 de vida. El bsr esta en $019E56 (y no en $019E10) porque el bloque $019E10-$019E27 es el que 'un_plano' desactiva (cambia $019E0E de 'bne.b' a 'bra.b'): con 'un_plano', que esta en la version unificada, ese bloque no se ejecuta nunca. $019E56 se ejecuta siempre durante el estado $0A. 44 bytes en total (4 del handler y 40 de la rutina nueva).",
+      "desc": "CRUZAR AL OTRO PLANO HACE PERDER 1 DE VIDA CADA 3 FRAMES. EL CRUCE es el ESTADO $0A con el frame id $0F: la entrada esta en $01873A ('move.b #$a, $5d(a5)') y $018748 ('move.b #$f, $5f(a5)'), y su handler es $019E08 (el estado $0A de la tabla global de handlers $15a68). OJO: el estado $0F ($01CA9C) NO es el cruce, es el del impulso (velocidad 4.0, frame id $0B). El frame data de $0F tiene UN solo frame de duracion 255, asi que el TICK ($5B) va de 0 a 254 y ES el contador de frames del cruce: 'cada 3 frames' = 'tick multiplo de 3'. El tick se incrementa en $019C96, antes del handler del estado ($015A54). EL HP es $78 (word, maximo 223 en $012708). IMPORTANTE: el KO del juego se detecta con el HP NEGATIVO y SOLO en el handler del estado $00 ($019CFC: 'btst.b #$7, $78(a5)'), y el unico que pone el estado del KO es el resolver de golpes ($01F3F0). En el estado del CRUCE ($0A) nadie vigila el HP, asi que si el HP llegaba a 0 el personaje se quedaba vivo con 0 de vida, la ronda no acababa y el juego se colgaba. Por eso aqui el HP NUNCA baja de 1: cruzar deja al personaje al borde de la muerte pero no lo mata. EL CAMBIO: el bloque $019E10-$019E27 (24 bytes) del handler del cruce (el que bajaba el plano y la escala) se sustituye por el DANO, escrito AHORA MISMO, sin llamar a ninguna rutina ni a ningun sitio. El bloque nuevo mide exactamente los mismos 24 bytes, asi que no se desplaza nada del handler. Y como ese bloque es justo el que 'un_plano' neutralizaba (cambiando $019E0E de 'bne.b' a 'bra.b'), ese cambio se quita de 'un_plano': ahora ese bloque es el dao y no el plano, asi que el plano sigue sin bajar (igual que antes) y el dao funciona. El bloque esta dentro del check '$5F == $0F' ($019E08), asi que el dao solo se aplica durante el cruce, no en la vuelta ($10). 24 bytes en total (todo dentro del handler, sin codigo nuevo).",
       "confianza": "CODIGO (el cruce = estado $0A + frame id $0F, handler $019E08; $78 = el HP actual, maximo 223; el tick $5B es el contador de frames porque el frame del cruce dura 255; el KO solo se detecta con HP negativo y en el estado $00, asi que en el cruce el HP no puede llegar a 0) + CAPSTONE (todo desensamblado y validado)",
       "bytes": [
         {
-          "addr": "0x019E56",
-          "old": "22",
-          "new": "61",
-          "nota": "$019E56: 'move.l $10(a5), d1' -> 'bsr $021B67'. La rutina devuelve d1 = la velocidad (igual que la original) y hace el dano del cruce."
+          "addr": "0x019E10",
+          "old": "08",
+          "new": "0C",
+          "nota": "$019E10: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x019E57",
-          "old": "2D",
-          "new": "00",
-          "nota": "$019E57: 'move.l $10(a5), d1' -> 'bsr $021B67'. La rutina devuelve d1 = la velocidad (igual que la original) y hace el dano del cruce."
+          "addr": "0x019E11",
+          "old": "F8",
+          "new": "6D",
+          "nota": "$019E11: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x019E58",
+          "addr": "0x019E12",
           "old": "00",
-          "new": "7D",
-          "nota": "$019E58: 'move.l $10(a5), d1' -> 'bsr $021B67'. La rutina devuelve d1 = la velocidad (igual que la original) y hace el dano del cruce."
-        },
-        {
-          "addr": "0x019E59",
-          "old": "10",
-          "new": "0F",
-          "nota": "$019E59: 'move.l $10(a5), d1' -> 'bsr $021B67'. La rutina devuelve d1 = la velocidad (igual que la original) y hace el dano del cruce."
-        },
-        {
-          "addr": "0x021B67",
-          "old": "FF",
-          "new": "22",
-          "nota": "$021B67: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B68",
-          "old": "FF",
-          "new": "2D",
-          "nota": "$021B68: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B69",
-          "old": "FF",
           "new": "00",
-          "nota": "$021B69: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E12: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B6A",
-          "old": "FF",
+          "addr": "0x019E13",
+          "old": "01",
+          "new": "02",
+          "nota": "$019E13: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
+        },
+        {
+          "addr": "0x019E14",
+          "old": "A0",
+          "new": "00",
+          "nota": "$019E14: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
+        },
+        {
+          "addr": "0x019E15",
+          "old": "42",
+          "new": "78",
+          "nota": "$019E15: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
+        },
+        {
+          "addr": "0x019E16",
+          "old": "04",
+          "new": "6F",
+          "nota": "$019E16: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
+        },
+        {
+          "addr": "0x019E17",
+          "old": "AD",
           "new": "10",
-          "nota": "$021B6A: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E17: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B6B",
-          "old": "FF",
-          "new": "0C",
-          "nota": "$021B6B: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B6C",
-          "old": "FF",
-          "new": "2D",
-          "nota": "$021B6C: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B6D",
-          "old": "FF",
-          "new": "00",
-          "nota": "$021B6D: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B6E",
-          "old": "FF",
-          "new": "0F",
-          "nota": "$021B6E: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B6F",
-          "old": "FF",
-          "new": "00",
-          "nota": "$021B6F: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B70",
-          "old": "FF",
-          "new": "5F",
-          "nota": "$021B70: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B71",
-          "old": "FF",
-          "new": "66",
-          "nota": "$021B71: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B72",
-          "old": "FF",
-          "new": "1A",
-          "nota": "$021B72: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B73",
-          "old": "FF",
+          "addr": "0x019E18",
+          "old": "00",
           "new": "10",
-          "nota": "$021B73: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E18: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B74",
-          "old": "FF",
+          "addr": "0x019E19",
+          "old": "00",
           "new": "2D",
-          "nota": "$021B74: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E19: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B75",
-          "old": "FF",
+          "addr": "0x019E1A",
+          "old": "A8",
           "new": "00",
-          "nota": "$021B75: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E1A: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B76",
-          "old": "FF",
+          "addr": "0x019E1B",
+          "old": "00",
           "new": "5B",
-          "nota": "$021B76: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E1B: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B77",
-          "old": "FF",
+          "addr": "0x019E1C",
+          "old": "00",
           "new": "02",
-          "nota": "$021B77: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E1C: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B78",
-          "old": "FF",
+          "addr": "0x019E1D",
+          "old": "9C",
           "new": "00",
-          "nota": "$021B78: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E1D: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B79",
-          "old": "FF",
+          "addr": "0x019E1E",
+          "old": "06",
           "new": "00",
-          "nota": "$021B79: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E1E: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B7A",
-          "old": "FF",
+          "addr": "0x019E1F",
+          "old": "2D",
           "new": "03",
-          "nota": "$021B7A: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E1F: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B7B",
-          "old": "FF",
+          "addr": "0x019E20",
+          "old": "00",
           "new": "66",
-          "nota": "$021B7B: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E20: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B7C",
-          "old": "FF",
-          "new": "10",
-          "nota": "$021B7C: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "addr": "0x019E21",
+          "old": "03",
+          "new": "06",
+          "nota": "$019E21: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B7D",
-          "old": "FF",
-          "new": "0C",
-          "nota": "$021B7D: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "addr": "0x019E22",
+          "old": "00",
+          "new": "70",
+          "nota": "$019E22: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B7E",
-          "old": "FF",
-          "new": "6D",
-          "nota": "$021B7E: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B7F",
-          "old": "FF",
-          "new": "00",
-          "nota": "$021B7F: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B80",
-          "old": "FF",
-          "new": "02",
-          "nota": "$021B80: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B81",
-          "old": "FF",
-          "new": "00",
-          "nota": "$021B81: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B82",
-          "old": "FF",
-          "new": "78",
-          "nota": "$021B82: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B83",
-          "old": "FF",
-          "new": "6D",
-          "nota": "$021B83: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B84",
-          "old": "FF",
-          "new": "08",
-          "nota": "$021B84: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B85",
-          "old": "FF",
-          "new": "30",
-          "nota": "$021B85: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B86",
-          "old": "FF",
-          "new": "3C",
-          "nota": "$021B86: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B87",
-          "old": "FF",
-          "new": "00",
-          "nota": "$021B87: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B88",
-          "old": "FF",
+          "addr": "0x019E23",
+          "old": "26",
           "new": "01",
-          "nota": "$021B88: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E23: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B89",
-          "old": "FF",
+          "addr": "0x019E24",
+          "old": "57",
           "new": "91",
-          "nota": "$021B89: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E24: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B8A",
-          "old": "FF",
+          "addr": "0x019E25",
+          "old": "6D",
           "new": "6D",
-          "nota": "$021B8A: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E25: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B8B",
-          "old": "FF",
+          "addr": "0x019E26",
+          "old": "00",
           "new": "00",
-          "nota": "$021B8B: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E26: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         },
         {
-          "addr": "0x021B8C",
-          "old": "FF",
+          "addr": "0x019E27",
+          "old": "3E",
           "new": "78",
-          "nota": "$021B8C: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B8D",
-          "old": "FF",
-          "new": "4E",
-          "nota": "$021B8D: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
-        },
-        {
-          "addr": "0x021B8E",
-          "old": "FF",
-          "new": "75",
-          "nota": "$021B8E: la rutina nueva (el dano del cruce) en el hueco libre del ROM."
+          "nota": "$019E27: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         }
       ]
     }

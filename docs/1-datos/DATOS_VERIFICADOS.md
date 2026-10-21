@@ -3426,7 +3426,7 @@ orden al reves (`91 00 78 05`) Capstone lo lee como otra cosa.
 en 16 bits **con signo**. `bsr.w $18564` en `$019EC4` son los bytes
 `61 00 E6 9E` (E69E = -6498).
 
-### El hueco libre del ROM
+### El hueco libre del ROM (¡NO USARLO PARA CODIGO!)
 
 | Tramo | Bytes | Destinos de salto dentro |
 |---|---|---|
@@ -3436,3 +3436,12 @@ en 16 bits **con signo**. `bsr.w $18564` en `$019EC4` son los bytes
 Huecos de 40+ bytes sin **ningun** destino de salto dentro: **774** en todo
 el ROM. En las paginas de codigo (`$010000`-`$030000`) **no hay ninguno**
 de esos: los huecos grandes de `$02xxxx` estan atravesados por saltos.
+
+**PERO: meter codigo ejecutable ahi ROMPE EL JUEGO.** La v3 del parche del
+cruce lo hacia (una rutina en `$021B67` llamada con un `bsr`) y el juego se
+quedaba con la pantalla negra al instante. **Los huecos del ROM no son
+código ejecutable aunque no apunte a ellos ningun salto.** El dano del
+cruce se hace INLINE, en el propio handler.
+
+**El ROM son 3 MB** (3145728 bytes) y **el juego acaba en `$021A32`**: de
+ahi al final, todo es `$FF`.

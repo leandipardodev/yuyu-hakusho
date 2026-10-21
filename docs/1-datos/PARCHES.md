@@ -1126,68 +1126,49 @@ Con duracion 255 el frame **nunca** cambia, asi que el tick nunca se
 reinicia: es el contador de frames. **"Cada 3 frames" = "tick multiplo de
 3"** (`andi.b #$3`).
 
-### El cambio
+### EL CAMBIO (v4): el dano, INLINE, sin llamar a ninguna rutina
 
-El handler del cruce ($019E08-$019EBE) no tiene hueco para las 14 bytes
-que hacen falta, asi que el dano va en una **rutina nueva en un hueco
-libre del ROM** y se llama con un `bsr`:
-
-| Direccion | Antes | Despues |
-|---|---|---|
-| `$019E56` | `move.l $10(a5), d1` (4 bytes) | **`bsr $021B67`** (4 bytes) |
-| `$021B67`-`$021B8C` | relleno `$FF` (hueco libre) | **la rutina nueva** (38 bytes) |
-
-La rutina nueva:
+**Ni un byte nuevo fuera del handler.** El bloque `$019E10`-`$019E27` (24
+bytes) del handler del cruce (el que bajaba el plano y la escala) se
+sustituye por el dano:
 
 ```
-$021B67  move.l  $10(a5), d1     ; la velocidad (SIEMPRE, como antes)
-$021B6B  cmpi.b  #$f, $5f(a5)    ; ¿es el cruce?
-$021B71  bne.b   $021B8D          ; no -> fuera
-$021B73  move.b  $5b(a5), d0     ; el tick
-$021B77  andi.b  #$3, d0         ; ¿multiplo de 3?
-$021B7B  bne.b   $021B8D          ; no -> fuera
-$021B7D  cmpi.w  #$2, $78(a5)    ; ¿el HP es > 1?
-$021B83  blt.b   $021B8D          ; si HP <= 1 -> fuera (NUNCA baja de 1)
-$021B85  move.w  #$1, d0
-$021B89  sub.w   d0, $78(a5)      ; -1 DE VIDA
-$021B8D  rts
+$019E10  cmpi.w  #$2, $78(a5)    ; ¿el HP es > 1?
+$019E16  ble.b   $019E28          ; si HP <= 1 -> fuera (NUNCA baja de 1)
+$019E18  move.b  $5b(a5), d0     ; el tick
+$019E1C  andi.b  #$3, d0         ; ¿multiplo de 3?
+$019E20  bne.b   $019E28          ; no -> fuera
+$019E22  moveq   #$1, d0         ; d0 = 1
+$019E24  sub.w   d0, $78(a5)      ; -1 DE VIDA
 ```
 
-El `move.l $10(a5), d1` (la velocidad) se movede dentro de la rutina, asi
-que el resto del handler no cambia ni un byte: la rutina devuelve `d1`
-igual que la instruccion original.
+**El bloque mide EXACTAMENTE los mismos 24 bytes**, asi que no se
+desplaza nada del handler: el bloque siguiente (el de la vuelta) sigue en
+`$019E28`. Los dos saltos apuntan a `$019E28` (el final del bloque).
 
-### POR QUE el bsr esta en $019E56 y no en $019E10
+El bloque esta **dentro** del check `$5F == $0F` (`$019E08`:
+`cmpi.b #$f, $5f(a5)` / `$019E0E`: `bne.b $19e28`), asi que el dano solo se
+aplica durante el cruce, no en la vuelta (el frame id `$10`).
 
-Porque el bloque `$019E10`-`$019E27` (el que baja el plano y la escala al
-cruzar) es **justo el que `un_plano` desactiva**: `un_plano` cambia
-`$019E0E` de `bne.b` a `bra.b`, y entonces ese bloque **nunca se ejecuta**.
-Como `un_plano` esta en la version unificada, el dano ahi **no se veria
-nunca**.
+### Y `un_plano`
 
-`$019E56` se ejecuta **siempre** durante el estado `$0A`:
+`un_plano` neutralizaba este mismo bloque (cambiando `$019E0E` de
+`bne.b` a `bra.b`), porque era el que bajaba el plano y la escala al
+cruzar. **Ahora ese cambio se quita de `un_plano`**: el bloque ya no es
+el del plano, es el del dano. El plano sigue sin bajar (igual que antes),
+porque el codigo que lo hacia ya no esta, y el dano funciona.
 
-```
-con un_plano:    $019E08 -> $019E0E (bra.b) -> $019E28 -> $019E2E (bne.b) -> $019E56
-sin un_plano:    $019E08 -> $019E10 (el bloque del plano) -> $019E28 -> $019E2E -> $019E56
-```
+**24 bytes** en total, todo dentro del handler.
 
-Y el check de "es el cruce" (`$5F == $0F`) esta **dentro** de la rutina,
-porque el estado `$0A` tambien se usa para el frame id `$10` (la vuelta).
+### Por que la v3 (con una rutina en el final del ROM) ROMPIA EL JUEGO
 
-### Por que la rutina va en un hueco del ROM
+La v3 metia el dano en una **rutina nueva** en el relleno `$FF` del final
+del ROM (`$021B67`) y la llamaba con un `bsr`. **Eso rompia el juego**:
+pantalla negra al instante y trabado. **La v4 hace el dano INLINE, sin
+llamar a nada**, y por eso ya no hay ningun sitio raro donde saltar.
 
-El tramo **`$021B67`-`$021BCD`** (102 bytes) es de relleno `$FF` y tiene
-**CERO** destinos de salto dentro. Se verifico escaneando **todos** los
-destinos de salto del ROM (`bra`/`bsr`/`jmp`/`bra.l`/`jmp.l`, los 4 modos
-de direccion): el bloque grande de `$021A32` **no** sirve tal cual, tiene
-**285** destinos dentro.
-
-El `bsr` es de 16 bits con signo y el desplazamiento son 32015 bytes
-(el maximo es 32767), asi que **cabe por los pelos**: si la rutina se
-moviera mas lejos, habria que usar otra forma.
-
-**42 bytes** en total (4 del handler y 38 de la rutina).
+**Regla: un parche NO debe llamar a codigo nuevo en el ROM.** Se puede
+parchear, pero no añadir codigo ejecutable en huecos: el juego se rompe.
 
 ### POR QUE EL HP NO PUEDE LLEGAR A 0
 

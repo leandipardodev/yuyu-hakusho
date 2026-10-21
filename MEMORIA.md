@@ -1565,3 +1565,17 @@ estado del KO a mano, como el resolver).
 que `cmpi.b`), **byte de modo/reg** (6D = a5), **inmediato de 16 bits** y
 despues el desplazamiento. Y **`subi.w #$1, <ea>` no existe** con el EA
 `(d8,An)`: hay que hacer `move.w #$1, d0` + `sub.w d0, <ea>`.
+
+### NUNCA LLAMAR A CODIGO NUEVO EN EL ROM
+Meter una rutina nueva en un hueco del ROM (aunque ningun salto lo apunte)
+y llamarla con un `bsr` **rompe el juego**: se queda con la pantalla negra
+y trabado. Le pasa a la v3 del parche del cruce.
+
+**=> TODO EL CODIGO NUEVO VA INLINE, dentro del bloque que se sustituye,
+y tiene que medir EXACTAMENTE los mismos bytes** (asi no se desplaza nada
+del handler que lo rodea).
+
+Para encajar en pocos bytes: `moveq #$1, d0` (2 bytes) en vez de
+`move.w #$1, d0` (4). Y **`subq.w #1, <ea>` no existe** con el EA
+`(d8,An)` (el SUBQ con memoria solo es byte o long): para restar 1 de un
+word, `moveq #$1, d0` + `sub.w d0, <ea>`.
