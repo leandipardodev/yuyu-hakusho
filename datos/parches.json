@@ -1519,26 +1519,26 @@
       ]
     },
     "kuwabara_hoja_2hits": {
-      "desc": "LA HOJA DIMENSIONAL DE KUWABARA, DE 3 GOLPES A 2. La hoja es el move $A6 de Kuwabara (DOWN,UP + A/B/C, 20 de mana). Los 3 golpes salen de un objeto, y ese objeto tiene UN blob con TRES cajas ($0D9CAA: radioX 12, 14 y 8). La ficha dice 8x3 y stun 6x3: 3 golpes. Para que solo haya 2, se corta la cadena de cajas poniendo a 0 el bit 7 del radioX de la 2a caja, que es el que dice 'hay mas cajas'. Asi el motor deja de leer la 3a caja. El shuriken tiene su propio blob ($0D9CD6, con 3 cajas) y NO se toca.",
-      "confianza": "CODIGO (el blob, sus 3 cajas y el bit 7 de 'hay mas cajas' estan en el desensamblado) + MEDIDO (la ficha dice 8x3) / SIN_CONFIRMAR (que los 3 golpes sean las 3 cajas y no 3 frames)",
+      "desc": "LA HOJA DIMENSIONAL DE KUWABARA, DE 3 GOLPES A 2. La hoja es el move $A6 (ABAJO,ARRIBA + A/B/C, 20 de mana) y sus golpes salen de un objeto con la sub-lista $0D9A3A. Su cadena (registro $0D948A) tiene TRES frames con hitbox: f0 (b1=24, flags en $0D9A9A), f1 (b1=25, $0D9A9E) y f2 (b1=26, $0D9AA2). Los tres usan blobs de dano 8, stun 6, empuje $1E y $67=2 (que es lo que la distingue del shuriken, que tiene $67=1). Este grupo le quita el bit de hitbox a f2, y con eso la hoja pega 2 veces en vez de 3. NO toca el shuriken (ABAJO,ABAJO), que usa blobs propios en $0D9CD6, $0D9CE2 y $0D9CEE.",
+      "confianza": "CODIGO (la cadena del objeto y los flags de la sub-lista) / MEDIDO (la ficha dice 8x3 y stun 6x3) / SIN_CONFIRMAR (que el 3er golpe sea el f2 y no otro)",
+      "bytes": [
+        {
+          "addr": "0x0D9AA2",
+          "old": "60",
+          "new": "20",
+          "nota": "flags de la entrada de sub-lista b1=26 (el f2 de la hoja dimensional): se quita el bit 6, el de hitbox. Ese frame deja de golpear, y la hoja se queda con 2 golpes (f0 y f1)."
+        }
+      ]
+    },
+    "kuwabara_hoja_2hits_alt": {
+      "desc": "ALTERNATIVA: en vez de quitar el hitbox de un frame, se recorta la CADENA DE CAJAS del primer blob de la hoja ($0D9CAA, que tiene 3 cajas de radioX 12, 14 y 8). Poniendo a 0 el bit 7 del radioX de la 2a caja, el motor deja de leer la 3a. OJO: $0D9CB6 es a la vez esa caja y la cabecera del blob siguiente, asi que hay que mirar de que lado cae el efecto antes de darla por buena.",
+      "confianza": "CODIGO / SIN_CONFIRMAR",
       "bytes": [
         {
           "addr": "0x0D9CB2",
           "old": "8E",
           "new": "0E",
-          "nota": "radioX de la 2a caja de la hoja dimensional: de 0x8E (radioX 14, bit 7 = 'hay mas cajas') a 0x0E. Al quitar el bit 7 la cadena termina aqui y la 3a caja (radioX 8, la del alcance) no se lee: la hoja pega 2 veces en vez de 3."
-        }
-      ]
-    },
-    "kuwabara_hoja_2hits_alt": {
-      "desc": "ALTERNATIVA para dejar la hoja dimensional en 2 golpes: quitarle el bit de hitbox al frame que usa la 3a caja. La entrada de sub-lista b1=19 ($0D9A86) es la que apunta al blob $0D9CC6 (una sola caja, radioX 9). Conviene probarla si la de las cajas no funciona.",
-      "confianza": "CODIGO / SIN_CONFIRMAR (misma duda que el grupo principal)",
-      "bytes": [
-        {
-          "addr": "0x0D9A86",
-          "old": "60",
-          "new": "20",
-          "nota": "flags de la entrada de sub-lista b1=19: se quita el bit 6 (hitbox)"
+          "nota": "radioX de la 2a caja del blob $0D9CAA: de 0x8E (radioX 14, bit 7 = 'hay mas cajas') a 0x0E"
         }
       ]
     }

@@ -88,45 +88,57 @@ Hoja dim. 1E   08   06   02   01     -> FISICA (con clash)
 | 11 | `$0D9452` | solo shuriken |
 
 
-### 1.5 Parche: que la hoja dimensional pegue 2 veces en vez de 3
+### 1.5 EL OBJETO DE LA HOJA Y EL DEL SHURIKEN
 
-**Grupo `kuwabara_hoja_2hits` — 1 byte: `$0D9CB2` `$8E` → `$0E`.**
+Los dos son objetos en la **misma tabla** (`$50 = $0D92CA`, sub-lista
+`$8C = $0D9A3A`) y los dos pegan **3 golpes de 8 con stun 6**. Se distinguen
+en **un solo byte: el `$67`** (el nibble alto del 4º byte del blob).
 
-La hoja dimensional tiene **un solo blob con TRES cajas** (`$0D9CAA`):
+| | Registro | `$67` | Qué es |
+|---|---|---|---|
+| **Hoja dimensional** (↓↑+A/B/C, `$A6`) | `$0D948A` | **2** | **FÍSICA**, con clash |
+| **Shuriken** (↓↓+A/B, `$A8`) | `$0D94AA` | **1** | **PROYECTIL** |
 
-| Caja | Dirección | radioX | offsetX | radioY | offsetY |
-|---|---|---|---|---|---|
-| 0 | `$0D9CAE` | 12 | 2 | 7 | −29 |
-| 1 | `$0D9CB2` | 14 | 2 | 10 | −29 |
-| 2 | `$0D9CB6` | 8 | −122 | 30 | −127 |
+Los tres frames con hitbox de cada uno, y el blob de cada uno:
 
-Y la ficha dice **8×3** (daño 8, tres veces) y **stun 6×3**. El shuriken tiene
-su propio blob (`$0D9CD6`) con también 3 cajas (radioX 6, 8, 8) y su ficha
-también dice 8×3. **Los 3 golpes son las 3 cajas.**
+| Técnica | frame | b1 | flags | blob | `$65` | `$66` | `$64` | `$67` | cajas (radioX) |
+|---|---|---|---|---|---|---|---|---|---|
+| **Hoja** | f0 | 24 | `$0D9A9A` | `$0D9CAA` | 8 | 6 | `$1E` | **2** | 12, 14, 8 |
+| | f1 | 25 | `$0D9A9E` | `$0D9CB6` | 8 | 6 | `$1E` | **2** | 18 |
+| | f2 | 26 | `$0D9AA2` | `$0D9CC6` | 8 | 6 | `$1E` | **2** | 9 |
+| **Shuriken** | f0 | 28 | `$0D9AAA` | `$0D9CD6` | 8 | 6 | `$1E` | 1 | 6, 8, 8 |
+| | f1 | 29 | `$0D9AAE` | `$0D9CE2` | 8 | 6 | `$1E` | 1 | 4, 6, 8 |
+| | f2 | 30 | `$0D9AB2` | `$0D9CEE` | 8 | 6 | `$1E` | 1 | 4, 6, 8 |
 
-**El bit 7 del radioX dice "hay más cajas"**. La caja 1 tiene `radioX = $8E`
-(el bit 7 puesto = sigue leyendo) y la caja 2 tiene `radioX = $08` (bit 7
-limpio = es la última).
+> **OJO con la resolucion del blob.** En la tabla de **objetos** el offset de la
+> sub-entrada es **relativo a la BASE de la sub-lista** (`$0D9A3A`), no a la
+> entrada: `blob = $0D9A3A + word(entrada+2)`. En la tabla de **personajes** es
+> relativo a la **entrada**: `blob = entrada + word(entrada+2)`. Con la forma
+> equivocada los datos salen absurdos (daño 136, stun 127…) en vez de 8 y 6.
+>
+> **El dato ancla:** la planta de Kurama tiene el blob `$0D9CF6` = `08 04 1E 25`
+> (daño 8, stun 4, empuje `$1E`, `$67=2`, `$68=5`), que es justo lo que dicen
+> las notas. Y el dragón de Hiei (ctx3, move 38, frame 0) da `$0C99B2` con
+> daño 56 / stun 36 / empuje `$06` con la forma **relativa a la entrada**.
 
-Poner a 0 el bit 7 de la caja 1 → el motor deja de leer la caja 2 → **la hoja
-pega 2 veces en vez de 3**, y el daño total baja de 24 a 16.
+> **Y OJO con `$0D9CB6`**: es a la vez la **caja 2** del blob `$0D9CAA` y la
+> **cabecera** del blob `$0D9CB6`. Por eso un parche ahi es ambiguo.
 
-```
-$0D9CB2   8E -> 0E      radioX 14 con "hay mas cajas" -> radioX 14 sin
-```
+### 1.6 Parche: que la hoja dimensional pegue 2 veces en vez de 3
 
-> **El shuriken NO se toca**: su blob es `$0D9CD6`, 16 bytes más allá.
+**Grupo `kuwabara_hoja_2hits` — 1 byte: `$0D9AA2` `$60` → `$20`.**
 
-**Alternativa por si esta no funciona:** el grupo `kuwabara_hoja_2hits_alt`
-(1 byte, `$0D9A86` `$60` → `$20`) le quita el bit de hitbox al frame que usa
-la 3ª caja. Si los 3 golpes fuesen **3 frames** y no 3 cajas, esta sería la
-buena.
+Quita el bit de hitbox (bit 6) del **tercer frame** de la cadena de la hoja
+(`b1 = 26`, entrada de sub-lista `$0D9AA2`). Ese frame deja de golpear, y la
+hoja pega **2 veces** (f0 y f1) en vez de 3.
 
-**Lo que NO se sabe todavía:** si los 3 golpes son las 3 cajas de un frame o
-3 frames distintos con hitbox. La diferencia se nota solo jugando: con 3 cajas
-la hoja pega al pasar el objeto (el objeto se mueve hacia el rival), y con 3
-frames en 12 ticks de actividad. Las notas medidos 12 frames de caja activa,
-que encaja con las 3 cajas.
+**No toca el shuriken**: sus blobs son `$0D9CD6`, `$0D9CE2` y `$0D9CEE`.
+
+**Alternativa** (`kuwabara_hoja_2hits_alt`, 1 byte, `$0D9CB2` `$8E` → `$0E`):
+recortar la **cadena de cajas** del primer blob de la hoja en vez de quitar un
+hitbox. Es la versión que se probó primero y que parecía afectar al shuriken
+— el byte `$0D9CB6` es a la vez caja y cabecera, así que el efecto de esa
+versión no está claro.
 
 ### 1.4 Lo que NO se sabe
 

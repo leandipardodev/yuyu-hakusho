@@ -139,7 +139,7 @@
       "grupos": [
         "kuwabara_hoja_2hits"
       ],
-      "que_hace": "La hoja dimensional (el move $A6 de Kuwabara, DOWN,UP + A/B/C) deja de tener 3 cajas en su blob y se queda con 2: pega 2 veces en vez de 3, y el daño total baja de 8x3=24 a 8x2=16. El shuriken de Kuwabara, que tiene su propio blob, no se toca.",
+      "que_hace": "La hoja dimensional (el move $A6 de Kuwabara, ABAJO,ARRIBA + A/B/C) pega 2 veces en vez de 3: se le quita el hitbox al tercer frame de su cadena de objeto. El shuriken (ABAJO,ABAJO) queda intacto.",
       "bytes": 1
     },
     {
@@ -150,6 +150,15 @@
       ],
       "que_hace": "Los frames del personaje en el especial (ids 166 y 167, los MEDIDOS) duran 0 ticks. El cambio de velocidad (÷4) va aparte, en el grupo kage_vel, porque esa parte afecta tambien al salto.",
       "bytes": 4
+    },
+    {
+      "id": "11b_kuwabara_hoja_2hits_cajas",
+      "titulo": "ALTERNATIVA: la hoja dimensional recorta la 3a caja de su blob",
+      "grupos": [
+        "kuwabara_hoja_2hits_alt"
+      ],
+      "que_hace": "La misma idea que 11_kuwabara_hoja_2_hits pero recortando la cadena de cajas del blob en vez de quitar un hitbox. Es la version que se probo primero y que parecio afectar al shuriken.",
+      "bytes": 1
     }
   ],
   "combinaciones": [
