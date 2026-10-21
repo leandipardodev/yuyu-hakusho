@@ -3262,3 +3262,24 @@ material externo de Discord / BizHawk.
 **El parche** `itsuki_teleport_suelo` cambia `$019061` de `25` a `03`
 (1 byte): el dash/teleport deja de terminar con el salto y vuelve al reposo
 en el suelo.
+
+
+## LAS 3 FASES DEL TELEPORT DE ITSUKI
+
+| Fase | Estado | Bloque de frames | Ticks (original) | Ticks (parcheado) | Receta |
+|---|---|---|---|---|---|
+| 1. el blink | `$A4` | `$0D044A` | 37 | **22** | `13_itsuki_teleport_40mas_rapido` |
+| 2. la colocacion | `$A5` | `$0D04BA` | 45 | **25** | `15_itsuki_teleport_colocacion_rapida` |
+| 3. el "aire" | `$25` | `$0CFE4A` | 4,4,8,**255** | (eliminado) | `14_itsuki_teleport_pisa_el_suelo` |
+
+**El bloque de frames de la fase 2** (`$0D04BA`, 16 registros de 8 bytes,
+byte+0 = duracion):
+
+| frame | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| dur original | 1 | 4 | 1 | 3 | 1 | 2 | 1 | 1 | 2 | 1 | 3 | 1 | 4 | 6 | 6 | 8 |
+| dur parcheado | 1 | 2 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 1 | 2 | 3 | 3 | 4 |
+| anim | 59 | 0 | 59 | 0 | 59 | 0 | 59 | 0 | 59 | 0 | 59 | 0 | 59 | 146 | 145 | 14 |
+| | | | | | | | | | | | | | | | **aterrizaje** |
+
+Anim 59 = visible, anim 0 = invisible (el parpadeo del teleport).

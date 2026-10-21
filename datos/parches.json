@@ -1607,6 +1607,66 @@
           "nota": "$019061: 'move.b #$25, $5d(a5)' -> 'move.b #$03, $5d(a5)'. El estado siguiente del dash/teleport deja de ser el salto ($25) y pasa a ser $03 (reposo en el suelo)."
         }
       ]
+    },
+    "itsuki_teleport_colocacion": {
+      "desc": "LA FASE DE COLOCACION DEL TELEPORT DE ITSUKI ($A5) PASA DE 45 TICKS A 25. Es la fase 2 del teleport: el estado $A5 de su tabla (ctx6 = Itsuki, base $0CF99A), con su bloque de frames en $0D04BA (16 registros de 8 bytes, byte+0 = duracion). Son el parpadeo final (13 frames, anim 59 visible / anim 0 invisible, 25 ticks) y la animacion de aterrizaje (3 frames, anims 146, 145 y 14, 20 ticks). El reparto nuevo es el mismo criterio que el parche del blink (grupo itsuki_teleport): minimo 1 tick por frame y el descuento se saca de los frames mas largos. El parpadeo pasa de 25 a 15 ticks y el aterrizaje de 20 a 10. Total 45 -> 25 ticks. 9 bytes, todos de duracion (byte+0), sin tocar ningun otro byte.",
+      "confianza": "MEDIDO (la fase 2 del teleport son 45 ticks: el bloque de frames de $A5 en $0D04BA lo da, y la sonda lo confirma frame a frame) + CALCULADO (el reparto de duraciones es una suma: 45 -> 25)",
+      "bytes": [
+        {
+          "addr": "0x0D04C2",
+          "old": "04",
+          "new": "02",
+          "nota": "$0D04C2: frame 1 de $A5 (Itsuki), duracion 4 -> 2 ticks."
+        },
+        {
+          "addr": "0x0D04D2",
+          "old": "03",
+          "new": "01",
+          "nota": "$0D04D2: frame 3 de $A5 (Itsuki), duracion 3 -> 1 ticks."
+        },
+        {
+          "addr": "0x0D04E2",
+          "old": "02",
+          "new": "01",
+          "nota": "$0D04E2: frame 5 de $A5 (Itsuki), duracion 2 -> 1 ticks."
+        },
+        {
+          "addr": "0x0D04FA",
+          "old": "02",
+          "new": "01",
+          "nota": "$0D04FA: frame 8 de $A5 (Itsuki), duracion 2 -> 1 ticks."
+        },
+        {
+          "addr": "0x0D050A",
+          "old": "03",
+          "new": "01",
+          "nota": "$0D050A: frame 10 de $A5 (Itsuki), duracion 3 -> 1 ticks."
+        },
+        {
+          "addr": "0x0D051A",
+          "old": "04",
+          "new": "02",
+          "nota": "$0D051A: frame 12 de $A5 (Itsuki), duracion 4 -> 2 ticks."
+        },
+        {
+          "addr": "0x0D0522",
+          "old": "06",
+          "new": "03",
+          "nota": "$0D0522: frame 13 de $A5 (Itsuki), duracion 6 -> 3 ticks."
+        },
+        {
+          "addr": "0x0D052A",
+          "old": "06",
+          "new": "03",
+          "nota": "$0D052A: frame 14 de $A5 (Itsuki), duracion 6 -> 3 ticks."
+        },
+        {
+          "addr": "0x0D0532",
+          "old": "08",
+          "new": "04",
+          "nota": "$0D0532: frame 15 de $A5 (Itsuki), duracion 8 -> 4 ticks."
+        }
+      ]
     }
   },
   "instrumentacion": {

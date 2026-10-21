@@ -235,7 +235,8 @@ las tres comparten el mismo estado.
 | Contexto | **ctx6** = Itsuki, tabla base `$0CF99A` |
 | Bloque de frames | **`$0D044A`** |
 | Frames | 14 (anims 57, 58, 59 y luego el parpadeo visible/invisible) |
-| Duracion | **37 ticks** (original) / **22 ticks** (con el parche `itsuki_teleport`) |
+| Duracion (fase 1, el blink) | **37 ticks** (original) / **22 ticks** (con el parche `itsuki_teleport`) |
+| Siguiente (fase 2) | **`$A5`**, bloque de frames **`$0D04BA`**: **45 ticks** (original) / **25 ticks** (con el parche `itsuki_teleport_colocacion`) |
 | Transicion `$A4`->`$A5` | **`$01926A`** (unica llamada: el handler de `$A4` en `$01B6E8`) |
 
 El byte +0 de cada registro es la duracion del frame (la copia a `$5A` esta en
@@ -254,3 +255,16 @@ volando 80 px (Y 320 → 240), tardando 70 frames en volver.
 El parche `itsuki_teleport_suelo` (**1 byte** en `$019061`) cambia
 `$5D = $25` por `$5D = $03`, y el teleport acaba en el reposo (estado `$00`)
 plantado en el suelo. Ver **PARCHES.md seccion 12**.
+
+
+### 1.9.ter LA FASE DE COLOCACION: 45 -> 25 TICKS
+
+El teleport tiene 3 fases: `$A4` (el blink), `$A5` (la colocacion, bloque de
+frames en `$0D04BA`) y `$25` (el "aire"). La fase 2 son 45 ticks: 25 del
+parpadeo final (13 frames, anim 59 visible / anim 0 invisible) y 20 de la
+animacion de aterrizaje (3 frames, anims 146, 145 y 14).
+
+El parche `itsuki_teleport_colocacion` (9 bytes, todos el byte+0 = duracion)
+la deja en **25 ticks**: el parpadeo en 15 y el aterrizaje en 10. Mismo
+criterio que el parche del blink: minimo 1 tick por frame y el descuento se
+saca de los frames mas largos. Ver **PARCHES.md seccion 13**.

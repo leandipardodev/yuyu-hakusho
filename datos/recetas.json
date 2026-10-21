@@ -22,7 +22,8 @@
     "11_kuwabara_hoja_2hits_doble",
     "03_itsuki_kage_instantaneo",
     "14_itsuki_teleport_pisa_el_suelo",
-    "13_itsuki_teleport_40mas_rapido"
+    "13_itsuki_teleport_40mas_rapido",
+    "15_itsuki_teleport_colocacion_rapida"
   ],
   "cambios": [
     {
@@ -178,6 +179,15 @@
       ],
       "que_hace": "Al acabar el teleport Itsuki se queda plantado en el suelo. Antes saltaba 80 px al aire (el dash que dispara el 'ARRIBA' del comando) y tardaba 70 frames en volver. Es 1 byte.",
       "bytes": 1
+    },
+    {
+      "id": "15_itsuki_teleport_colocacion_rapida",
+      "titulo": "La colocacion del teleport de Itsuki es mas rapida (45 -> 25 ticks)",
+      "grupos": [
+        "itsuki_teleport_colocacion"
+      ],
+      "que_hace": "La fase 2 del teleport (la colocacion en la zona) pasa de 45 ticks a 25. El parpadeo final baja de 25 a 15 ticks y la animacion de aterrizaje de 20 a 10. 9 bytes.",
+      "bytes": 9
     }
   ],
   "combinaciones": [

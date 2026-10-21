@@ -882,3 +882,82 @@ por el de `$019061`, que es el que va al nudo.
 
 Verificador de desensamblado: **OK**. La unificada queda en **58 bytes**,
 checksum **`$F1B3`**.
+
+
+## 13. LA FASE DE COLOCACION DEL TELEPORT: 45 -> 25 TICKS
+
+**Receta:** `15_itsuki_teleport_colocacion_rapida`. **Grupo:**
+`itsuki_teleport_colocacion`. **9 bytes** en `$0D04C2`-`$0D0532`.
+**Aceptado** en la unificada.
+
+### Que es
+
+El teleport de Itsuki tiene 3 fases:
+
+| Fase | Estado | Bloque de frames | Ticks |
+|---|---|---|---|
+| 1. el blink | `$A4` | `$0D044A` | 37 -> **22** (receta `13`) |
+| 2. **la colocacion** | **`$A5`** | **`$0D04BA`** | **45 -> 25** (esta receta) |
+| 3. el "aire" | `$25` | `$0CFE4A` | (fuera con la receta `14`) |
+
+Esta receta acorta la **fase 2**: el parpadeo final (13 frames, anim 59
+visible / anim 0 invisible) y la animacion de aterrizaje (3 frames, anims
+146, 145 y 14).
+
+### El reparto
+
+Los 16 registros de 8 bytes del bloque, con byte+0 = duracion:
+
+| frame | dur viejo | dur nuevo | anim | |
+|---|---|---|---|---|
+| f0 | 1 | 1 | 59 | visible |
+| f1 | 4 | **2** | 0 | invisible |
+| f2 | 1 | 1 | 59 | visible |
+| f3 | 3 | **1** | 0 | invisible |
+| f4 | 1 | 1 | 59 | visible |
+| f5 | 2 | **1** | 0 | invisible |
+| f6 | 1 | 1 | 59 | visible |
+| f7 | 1 | 1 | 0 | invisible |
+| f8 | 2 | **1** | 59 | visible |
+| f9 | 1 | 1 | 0 | invisible |
+| f10 | 3 | **1** | 59 | visible |
+| f11 | 1 | 1 | 0 | invisible |
+| f12 | 4 | **2** | 59 | visible |
+| f13 | 6 | **3** | 146 | el aterrizaje |
+| f14 | 6 | **3** | 145 | el aterrizaje |
+| f15 | 8 | **4** | 14 | el aterrizaje |
+| | **45** | **25** | | |
+
+- el **parpadeo**: 25 -> 15 ticks (once frames de 1 tick, f1 y f12 de 2)
+- el **aterrizaje**: 20 -> 10 ticks (la mitad)
+
+Es el **mismo criterio** que el parche del blink (receta `13`): minimo de
+1 tick por frame y el descuento se saca de los frames mas largos.
+
+### Los 9 bytes
+
+| Byte | Frame | De | A |
+|---|---|---|---|
+| `$0D04C2` | f1 | `04` | `02` |
+| `$0D04D2` | f3 | `03` | `01` |
+| `$0D04E2` | f5 | `02` | `01` |
+| `$0D04FA` | f8 | `02` | `01` |
+| `$0D050A` | f10 | `03` | `01` |
+| `$0D051A` | f12 | `04` | `02` |
+| `$0D0522` | f13 | `06` | `03` |
+| `$0D052A` | f14 | `06` | `03` |
+| `$0D0532` | f15 | `08` | `04` |
+
+Todos son el byte+0 (duracion) de su registro. No se toca ningun otro byte
+del ROM.
+
+### Comprobacion
+
+Verificador de desensamblado: **OK**. En la unificada:
+
+```
+fase 1: el blink        $0D044A  14 frames  total= 22 ticks
+fase 2: la colocacion   $0D04BA  16 frames  total= 25 ticks
+```
+
+Unificada: **67 bytes**, checksum **`$DDB3`**.
