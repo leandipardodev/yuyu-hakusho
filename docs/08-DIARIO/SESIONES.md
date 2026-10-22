@@ -307,10 +307,10 @@ cruce: lo dice la sonda.
 
 <a name="s-2024-10-21o"></a>
 
-## S-2024-10-21o: el "2 cuerpos por detras" de Sensui (el `bra` no salta nunca)
+## S-2024-10-21o: el "" de Sensui (el `bra` no salta nunca)
 
 **Sintoma del usuario:** *"1 frame de sensui al caminar sale mal, como que
-aparecen 2 cuerpos por detras de el, es solo un frame"* y *"empezo a ocurrir
+aparecen  de el, es solo un frame"* y *"empezo a ocurrir
 luego de algun cambio tuyo"*.
 
 **La causa:** el grupo `un_plano` (el que desactiva el cruce de planos)
@@ -320,7 +320,7 @@ saltarse y **se ejecutaba siempre**, con cualquier move. Al pasar el
 personaje 1 frame por el estado `$0A` (pasa al cambiar de animacion,
 tambien al caminar), el juego ponia **el flag del plano de atras**
 (`$A042`) y **el suelo en 304** (`move.l #$1300000, $9c(a5)`) con la escala
-`$d8`: el personaje se dibujaba en el otro plano y se veian **2 cuerpos por
+`$d8`: el personaje se dibujaba en el otro plano y se veian ** por
 detras**.
 
 **El fix:** anular la **condicion**, no el salto: el inmediato del
@@ -337,7 +337,7 @@ en `rom/original/` y otra en
 generado `21_china_UNIFICADA_sin_un_plano.bin` (todo menos `un_plano`) para
 el biseccion.
 
-**Pendiente del usuario:** probar la unificada con el fix (el "2 cuerpos"
+**Pendiente del usuario:** probar la unificada con el fix (el ""
 debe desaparecer) y, si sigue, la `21` (sin `un_plano`) para el biseccion.
 
 <a name="s-2024-10-21p"></a>
@@ -372,14 +372,14 @@ ejecuta ⇒ **el cruce no ocurre y el dano no se aplica**. Son las dos
 opciones: `un_plano` = sin cruce; `cruce_dano` (sin `un_plano`) = el cruce
 cuesta vida.
 
-**El "2 cuerpos por detras" de Sensui SIGUE** con el `un_plano` arreglado, asi
+**El "" de Sensui SIGUE** con el `un_plano` arreglado, asi
 que no es (solo) el `un_plano`. Se ha generado la
 `24_china_UNIFICADA_sin_hoja.bin` (la unificada sin el parche de la hoja de
 Kuwabara, `$0C2EA2` = la duracion de un frame de su cadena) para la
 biseccion.
 
 **Pendiente del usuario:** probar la `22_china_DANO_al_cruzar.bin` (el
-cruce con el dano) y la `24` (biseccion del "2 cuerpos").
+cruce con el dano) y la `24` (biseccion del "").
 
 <a name="s-2024-10-21q"></a>
 
@@ -392,10 +392,10 @@ seguro estas modificando un valor distinto que el cambio de plano"*.
 (por eso la sonda no lo podia leer). Todo lo anterior (el suelo, la escala
 `$3E`) es el suelo fisico.
 
-**EL "2 CUERPOS POR DETRAS":** los 6 escritores del flag son `bset.b`, que
+**EL " POR DETRAS":** los 6 escritores del flag son `bset.b`, que
 solo ponen bits y **nunca limpian el otro** ⇒ al pasar de un plano al otro
 el flag se queda con **los dos bits a 1** ⇒ el juego cree que el personaje
-esta en los dos planos a la vez y **dibuja 2 siluetas**.
+esta en los dos planos a la vez y **dibuja dos siluetas**.
 
 **El fix (grupo `plano_y_dano`, 76 bytes):** intercambiar los bits en los 6
 escritores y en los 2 lectores (`btst.b` de `$0186DA` y `$018722`) ⇒ los dos
@@ -416,7 +416,7 @@ vida por cruce**, no "1 cada 3 frames".
 dano) no se pueden usar a la vez.
 
 **Pendiente:** probar `22_china_PLANO_Y_DANO.bin` (el cruce con dano y sin
-"2 cuerpos") y `24_china_UNIFICADA_sin_hoja.bin` (biseccion del "2
+"") y `24_china_UNIFICADA_sin_hoja.bin` (biseccion del "2
 cuerpos", por si el parche de la hoja de Kuwabara es el culpable).
 
 <a name="s-2024-10-21r"></a>
@@ -451,12 +451,12 @@ como reescritos aunque la CPU los ejecuta bien.
     `bset.b #$0` + `rts`.
 - Los 4 `bset.b` que quedan en los handlers y los 2 `btst.b` (los lectores):
   **intercambian los bits**, para que los dos bits del flag nunca coexistan
-  (era el "2 cuerpos por detras": el flag se quedaba con los dos bits a 1
+  (era el "": el flag se quedaba con los dos bits a 1
   y el juego creia que el personaje estaba en los dos planos a la vez).
 
 **ROMs para probar:** `22_china_PLANO_Y_DANO.bin` (la minima), la
 `23_china_UNIFICADA_PLANO_Y_DANO.bin` (la unificada con el fix) y la
-`24_china_UNIFICADA_sin_hoja.bin` (la biseccion del "2 cuerpos" por si es
+`24_china_UNIFICADA_sin_hoja.bin` (la biseccion del "" por si es
 el parche de la hoja de Kuwabara).
 
 <a name="s-2024-10-22a"></a>
@@ -517,7 +517,7 @@ los borramos".
 **Tambien:** la sonda nueva `herramientas/lua/sonda_plano.lua` analiza todo lo
 relativo a los planos: mapea la RAM del Z80, busca la bandera del plano
 ($A042 = el offset $0042 del Z80), avisa cuando tiene los DOS bits a 1 (el
-"2 cuerpos") y tiene modos para **forzar** la bandera (1, 2 o 3) o **quitar
+"") y tiene modos para **forzar** la bandera (1, 2 o 3) o **quitar
 vida** desde el Lua, sin tocar la ROM.
 
 <a name="s-2024-10-22b"></a>
@@ -543,3 +543,84 @@ excluia las dos carpetas.
 y Shueisha. En `assets/imagenes/` hay volcados de la VRAM/CRAM y capturas
 del juego, y `datos/desensamblado_68000.asm` (1,5 MB) es el volcado del
 ROM: **si este repo se hace publico, hay que sacar todo eso.**
+
+## S-2024-10-22c: el daño al cruzar, rehecho y verificado
+
+### Lo que se pidio
+
+1. **Borrar todos los datos del "2 cuerpos"**: el usuario dijo que estaba
+   mal hecho y que no lo queria. Se borro de toda la documentacion (0
+   menciones) y se tiraron los dos parches que habian salido de esa
+   hipotesis (`plano_y_dano`, con el intercambio de bits del flag `$A042`, y
+   `escala_suave`, el byte de la escala).
+2. **Dejar el daño al cruzar** (que es lo que si se habia pedido).
+
+### Lo que se hizo
+
+**El grupo del daño se rehicio desde cero** (`daño_al_cruzar`, 50 bytes):
+
+- El daño va en el **aterrizaje en el plano de atrás** (`$019F52`), que es un
+  **evento de un frame**, no en el bloque de la caida (`$019ED4`, que dura
+  ~50 frames). Por eso el daño es **1 vida por cruce** (el "1 cada 3 frames"
+  venia de una idea equivocada de lo que era el cruce).
+- La rutina nueva (30 bytes) esta en el hueco libre `$1A06F0` (los ceros van
+  de `$1A06AE` a `$1A0827`).
+- El bloque **sigue midiendo 20 bytes**: el `jsr.l` sustituye al `move.w` de
+  la escala (6 bytes por 6).
+
+### EL BUG QUE CASO (y el que casi costaba la ROM)
+
+La primera version del bloque **media 22 bytes** (le habia puesto un `nop` de
+"relleno"): **podia el `cmpi.b #$10, $5f(a5)` de `$019F66`** y, con ello,
+desalineaba todo lo que venia despues. El verificador de desensamblado
+**no lo vio**, porque solo comprobaba el tamano de la PRIMERA instruccion de
+cada grupo.
+
+**Se ha anadido esa comprobacion al verificador** (`verificar_desensamblado.py`):
+ahora avisa si un parche **pisa el opcode de la instruccion de al lado**
+(que es el sintoma de "el rango del grupo se pasa de largo"). Es la
+comprobacion que faltaba.
+
+### LO NUEVO: EJECUTAR EL CODIGO CON UNICORN
+
+Para escribir la rutina nueva hacia falta codificacion 68000 exacta, y
+**capstone no es la CPU** (lee mal el `moveq`, el `cmpi.w`, los `move` con
+inmediato y EA...) y el manual no estaba a mano.
+
+**Se ha usado Unicorn** (`herramientas/desensamblado/probar_codigo.py`, nuevo):
+se mete el fragmento, se ejecuta con la RAM del juego (A5 = el struct del
+jugador) y se mira lo que ha cambiado. Con eso se encontraron:
+
+- que `A5` es el puntero al struct del jugador (`$FF8400`): sin eso el codigo
+  no hace nada **y no da error**.
+- que en el 68000 **no hay SP: el stack es A7**.
+- que Unicorn **no implementa el `TST.B` con un registro que no sea D0**.
+- los bytes exactos de cada instruccion (tabla en `docs/00-GUIA/TRAMPAS.md`).
+
+### El resultado, ejecutado
+
+| HP inicial | HP final (con el parche) | HP final (sin el parche) |
+|---|---|---|
+| 223 | **222** | 223 |
+| 5 | **4** | 5 |
+| 2 | **1** | 2 |
+| 1 | **-1** (negativo: el juego hara el KO) | 1 |
+
+El suelo queda en 304 (`$1300000`), la escala en 216 y el `$26` en `$C0`, igual
+que sin el parche.
+
+### Las ROMs
+
+| fichero | SHA1 | |
+|---|---|---|
+| `rom/cambios/22_china_DANO_al_cruzar.bin` | `41249F21B957C0E8EA4F61A60D4769DBFF8CB3A1` | la china + el daño |
+| `rom/cambios/23_china_UNIFICADA_con_DANO.bin` | `CA4117038E368340C7D5CCCC090F04A2FB040A30` | la unificada + el daño |
+
+Las dos verificadas con el verificador de desensamblado: **OK**.
+
+### Lo que falta
+
+- **Las pruebas del usuario** en FBNeo: que al cruzar baje 1 vida y que con
+  1 de vida el personaje pierda (el HP negativo).
+- El **push** del ultimo commit al repo: el token de `gh` no tiene el scope
+  de escritura (`Write access to repository not granted`).

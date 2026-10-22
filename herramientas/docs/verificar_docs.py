@@ -76,6 +76,39 @@ def carga_desensamblado():
     return codigo
 
 
+def carga_desensamblado_parcheado():
+    """lo mismo, pero con TODOS los grupos del manifiesto aplicados.
+
+    Sirve para comprobar las lineas del doc que describen el estado YA
+    PARCHEADO (las que llevan la marca "(parcheado)").
+    """
+    import json
+    from capstone import Cs, CS_ARCH_M68K, CS_MODE_BIG_ENDIAN
+    md = Cs(CS_ARCH_M68K, CS_MODE_BIG_ENDIAN)
+    codigo = {}
+    if not os.path.exists(ROM_BASE):
+        return codigo
+    rom = bytearray(open(ROM_BASE, "rb").read())
+    ruta = os.path.join(RAIZ, "datos", "parches.json")
+    if os.path.exists(ruta):
+        try:
+            man = json.load(open(ruta, encoding="utf-8"))["patches"]
+        except Exception:
+            man = {}
+        for g in man.values():
+            for b in g.get("bytes", []):
+                try:
+                    rom[int(b["addr"], 16)] = int(b["new"], 16)
+                except Exception:
+                    pass
+    rom = bytes(rom)
+    for d in range(0x200, len(rom) - 12):
+        for i in md.disasm(rom[d:d + 12], d, count=1):
+            codigo[d] = "%-9s %s" % (i.mnemonic, i.op_str)
+            break
+    return codigo
+
+
 def direccion_es_operando(codigo, d, ventana=24):
     """True si la direccion aparece como operando de alguna instruccion
     cercana (el destino de un salto, el puntero de una tabla, ...)."""
@@ -132,8 +165,10 @@ def mds_existentes():
 def main():
     solo_contra = "--solo-contradicciones" in sys.argv
     codigo = carga_desensamblado()
+    codigo_p = carga_desensamblado_parcheado()
     paginas = paginas_de_codigo()
     print("el desensamblado tiene %d instrucciones" % len(codigo))
+    print("el desensamblado PARCHEADO tiene %d instrucciones" % len(codigo_p))
     mds = mds_existentes()
 
     enlaces_rotos = []
@@ -149,6 +184,10 @@ def main():
             with io.open(ruta, encoding="utf-8", errors="replace") as fh:
                 lineas = fh.read().splitlines()
             for n, linea in enumerate(lineas, 1):
+                # si las lineas anteriores (o esta) dicen "(parcheado)", lo que
+                # hay que comprobar es la ROM CON los parches puestos
+                contexto = " ".join(lineas[max(0, n - 8):n]).lower()
+                parcheado = "(parcheado)" in contexto or "[parcheado]" in contexto
                 # 1) los enlaces a .md (solo los que son un token suelto)
                 if not solo_contra and ":\\" not in linea and "C:/" not in linea:
                     for nombre in RE_MD.findall(linea):
@@ -177,7 +216,12 @@ def main():
                     mn = m.group(2).lower()
                     if d < 0x200 or d > 0x2FFFFF:
                         continue
-                    ins = codigo.get(d)
+                    # si la linea dice "(parcheado)", lo que hay que mirar es
+                    # la ROM CON los parches del manifiesto puestos
+                    if parcheado:
+                        ins = codigo_p.get(d)
+                    else:
+                        ins = codigo.get(d)
                     if ins is None:
                         continue          # es un dato: no se comprueba
                     # si la pagina de la direccion no es de codigo, es un

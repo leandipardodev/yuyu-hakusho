@@ -104,7 +104,7 @@ def main():
         "un_plano",        # los bloques de cruce y el filtro, a proposito
         "sin_cruce",       # lo mismo
         "sin_atajo_cruce",  # los btst de los botones C e Y (cambia el bit)
-        "plano_y_dano",     # el flag del plano $A042 + el dano al cruzar
+        "daño_al_cruzar",   # el bloque del aterrizaje llama a la rutina del dano
         "kage_proj",       # refactor del proyectil
         "rival_delante",   # las inicializaciones
         "kage_dur",        # duraciones a 0
@@ -116,6 +116,50 @@ def main():
     problemas = 0
     avisos = 0
     vistos = set()
+
+    # --- COMPROBACION 1: el grupo no puede pisar el OPCODE de una instruccion
+    #     que no cubre entera ---
+    # (si el rango del grupo se pasa de largo, pisa la instruccion siguiente y
+    #  todo lo que viene despues queda desalineado: el fallo mas caro que hay)
+    # Legitimo:  cambiar un OPERANDO dentro de una instruccion (el inmediato de
+    # un cmpi, el byte del EA de un move, ...) o reescribir la instruccion
+    # ENTERA. Ilegitimo: cambiar el primer byte (el opcode) de una instruccion
+    # que el grupo solo pica por un lado -> es la instruccion de al lado.
+    for g in sorted(parches["patches"]):
+        gb = parches["patches"][g]["bytes"]
+        if not gb:
+            continue
+        if g in cambios_esperados:
+            continue                        # reescritura declarada (y crece)
+        addrs = sorted(int(b["addr"], 16) for b in gb)
+        ini, fin = addrs[0], addrs[-1] + 1
+        for ad in sorted(instr):
+            raw = instr[ad][0]
+            if ad >= fin or ad + len(raw) <= ini:
+                continue                    # no lo toca
+            if ad >= ini and ad + len(raw) <= fin:
+                continue                    # reescrita entera: vale
+            # la instruccion queda PARTIDA por el rango del grupo
+            for b in gb:
+                a = int(b["addr"], 16)
+                if a != ad:
+                    continue                # solo el primer byte es el opcode
+                if b["old"] == b["new"]:
+                    continue                # no lo cambia: no hay problema
+                if raw[0] in (0x50, 0x52, 0x54, 0x56, 0x58, 0x5A, 0x5C, 0x5E):
+                    continue                # ADDQ/SUBQ: el DATO va en el opcode
+                print("  [MAL] %-16s $%06X  PISA EL OPCODE DE LA INSTRUCCION DE AL LADO"
+                      % (g, a))
+                print("        la instruccion original en $%06X (%d bytes) es '%s %s'"
+                      % (ad, len(raw), instr[ad][1], instr[ad][2]))
+                print("        y el parche cambia su primer byte: %s -> %s"
+                      % (b["old"], b["new"]))
+                print("        el rango del grupo es $%06X-$%06X: se pasa de largo"
+                      % (ini, fin - 1))
+                problemas += 1
+                break
+
+    # --- COMPROBACION 2: cada instruccion tocada sigue siendo la misma ---
     for g in sorted(aplicados):
         if g not in parches["patches"]:
             continue

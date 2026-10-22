@@ -249,3 +249,82 @@ es justo lo contrario de lo que se queria.
 
 ---
 
+
+## LAS TRAMPAS DEL CODIGO NUEVO (2026-10-22)
+
+### LA TRAMPA MAS CARA: UN BLOQUE QUE CRECE
+
+Un parche **NO puede hacer que el codigo que viene despues se mueva**. Si el
+bloque parcheado crece 2 bytes, la siguiente instruccion se lee a partir de
+un punto incorrecto y **todo lo de despues queda desalineado** (el juego se
+rompe de formas inexplicables: un golpe que no sale, un salto raro, un KO que
+no llega).
+
+En el bloque del aterrizaje (`$019F52`) el `move.w #$d8, $3e(a5)` son 6 bytes
+y el `jsr.l` tambien son 6: **caben justos**. Si se añade un `nop` de relleno
+"por si acaso", el bloque pasa a medir 22 bytes, se pisa el `cmpi.b #$10,
+$5f(a5)` de `$019F66` y la ROM **no arranca bien**.
+
+**COMPROBACION AUTOMATICA**: `herramientas/desensamblado/verificar_desensamblado.py`
+ahora tiene una comprobacion nueva: *"el parche no puede pisar el opcode de
+la instruccion de al lado"*. Si un grupo cambia el primer byte de una
+instruccion que solo pica por un lado, lo dice como `[MAL]`.
+
+### COMO ESCRIBIR 68000 SIN ADIVINAR: EJECUTARLO CON UNICORN
+
+Capstone **lee mal** varias instrucciones de la 68000 (las que tienen un
+inmediato con un EA, el `moveq`, el `cmpi.w`...). Y **capstone no es la CPU**:
+si tu codigo "desensambla bien" puede que en la CPU haga otra cosa.
+
+**La forma segura de saber si un fragmento hace lo que quieres: EJECUTARLO.**
+El proyecto tiene Unicorn (`herramientas/desensamblado/probar_codigo.py`):
+
+```powershell
+# el codigo de un parche, con la ROM base (opcionalmente con un grupo aplicado)
+python herramientas\desensamblado\probar_codigo.py --addr 0x019F52 --largo 20 --grupo "daño_al_cruzar" --hp 1 --ver
+```
+
+Lo que hay que tener en cuenta al montarlo:
+
+| cosa | como es |
+|---|---|
+| **A5 es el puntero al struct del jugador** | el juego pone A5 = `$FF8400` (+ `$400` por jugador). Si no lo pones, el `sub.w d1, $78(a5)` escribe en `$000078` y no pasa nada (y no da error: **fallo en silencio**) |
+| **en el 68000 no hay SP: el stack es A7** | `uc.reg_write(UC_M68K_REG_SP, ...)` **no existe** (da `NameError`). Es `UC_M68K_REG_A7` |
+| **el stack tiene que estar en la memoria mapeada** | si A7 = `$FFF0` y el mapa de RAM empieza en `$FF0000`, el `move.l d0,-(a7)` da `WRITE_UNMAPPED` |
+| **el banco 1 tiene que estar mapeado** | un `jsr.l $1A06F0` sin mapear `$1A0000` da `READ_UNMAPPED` |
+| **el `emu_start` no puede cortar una instruccion** | el final tiene que caer en una frontera de instruccion, o el error es del corte, no del codigo |
+| **Unicorn no implementa el `TST.B` con un registro que no sea D0** | `4A 08` (tst.b d1) da excepcion; usa `tst.b d0` (`4A 00`) |
+
+### LOS BYTES DE LA 68000 (verificados EJECUTANDO, no leyendo el manual)
+
+| instruccion | bytes | notas |
+|---|---|---|
+| `move.w $78(a5), d0` | `30 2D 00 78` | el destino va en el opcode (los bits 3-1) |
+| `move.w $78(a5), d1` | `32 2D 00 78` | |
+| `move.l $78(a5), d0` | `22 2D 00 78` | |
+| `sub.w d1, $78(a5)` | `93 6D 00 78` | el SOURCE va en el opcode (los bits 11-9) |
+| `sub.w d0, $78(a5)` | `91 6D 00 78` | |
+| `moveq #$1, d1` | `72 01` | el dato va en los bits 6-4 y el registro en los bits 2-0 del byte ALTO... **probado, no leido** |
+| `tst.b d0` | `4A 00` | |
+| `move.l d0, -(a7)` | `2F 00` | |
+| `move.l (a7)+, d0` | `20 1F` | |
+| `move.w #$d8, $3e(a5)` | `3B 7C 00 D8 00 3E` | **8 bytes**: opcode + modrm + inmediato de 16 bits + el EA |
+| `move.l #$1300000, $9c(a5)` | `2B 7C 01 30 00 00 00 9C` | **8 bytes**: opcode + modrm + inmediato de 32 bits + el EA |
+| `move.b #$c0, $26(a5)` | `1B 7C 00 C0 00 26` | **6 bytes** |
+| `jsr.l $1A06F0` | `4E B9 00 1A 06 F0` | 6 bytes |
+| `nop` | `4E 71` | 2 bytes |
+
+> Ojo: `move.l #$1300000, $9c(a5)` son **8** bytes, no 10: el inmediato de 32
+> bits son 4 bytes (`01 30 00 00`) y el EA otros 2 (`00 9C`).
+
+### LO QUE CAPSTONE LEE MAL (y el verificador lo puede marcar como [MAL] sin que sea verdad)
+
+- `move.w #$d8, $3e(a5)`: Capstone lo lee como `movea.w` si el byte del
+  destino va mal puesto.
+- `cmpi.w` / `subi.w` con un EA: Capstone no los soporta (lee `dc.w`).
+- `moveq` con un dato de 8 bits: Capstone lo desensambla con el dato
+  equivocado.
+- El **byte del registro** de `tst.b dN` va en los bits 5-3 del byte bajo.
+
+**Por eso: si el verificador se queja de una instruccion que TU has escrito a
+mano, ejecuta el codigo con Unicorn antes de darlo por bueno.**

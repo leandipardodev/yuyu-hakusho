@@ -484,182 +484,33 @@ del bloque del cruce.
    `$A8` o un cambio del suelo `$9C`) **vuelca el historial**: asi se ve
    que boton habia pulsado en el frame que lo lanzo.
 
-## EL BUG DE LOS "2 CUERPOS POR DETRAS" (1 frame): el `bra` NO SALTA NUNCA
 
-**Sintoma (usuario):** *"1 frame de sensui al caminar sale mal, como que aparecen
-2 cuerpos por detras de el, es solo un frame"*. Empezo a ocurrir con un cambio
-nuestro.
+## EL PLANO: EL FLAG $A042
 
-**La causa: el grupo `un_plano` neutralizaba los bloques del cruce
-CAMBIANDO EL SALTO, y eso hacia lo CONTRARIO de lo que se queria.**
-
-| | original | parche viejo (mal) | parche nuevo (bien) |
-|---|---|---|---|
-| `$019E08` | `cmpi.b #$f, $5f(a5)` | `cmpi.b #$f, $5f(a5)` | `cmpi.b #$ff, $5f(a5)` |
-| `$019E0E` | `bne.b $19e28` | **`bra.b $19e28`** | `bne.b $19e28` (igual) |
-| bloque `$019E10` | `bset.b #$1, $a042.w` + `subi.l #$a800, $9c(a5)` + escala | **SE EJECUTA SIEMPRE** | no se ejecuta nunca |
-| `$019E86` | `cmpi.b #$f, $5f(a5)` | igual | `cmpi.b #$ff, $5f(a5)` |
-| `$019E8C` | `bne.b $19ea2` | **`bra.b $19ea2`** | `bne.b $19ea2` (igual) |
-| bloque `$019E8E` | `move.l #$1300000, $9c(a5)` (suelo = **304**) + escala `$d8` | **SE EJECUTA SIEMPRE** | no se ejecuta nunca |
-
-**El error conceptual:** `bne.b $19e28` significa "si el move **NO** es
-`$0F`, salta por encima del bloque". Al cambiarlo por `bra.b $19e28` el
-bloque **dejo de saltarse**: ahora se ejecutaba **siempre**, con cualquier
-move y en cualquier frame en que el personaje pasara por el estado `$0A`
-(que ocurre 1 frame al cambiar de animacion, tambien al caminar). Entonces
-el juego ponia **el flag del plano de atras** (`bset.b #$1, $a042.w`) y el
-**suelo en 304** (`move.l #$1300000, $9c(a5)`), con la escala `$d8` (216):
-el personaje se dibujaba **en el otro plano** -> se veian **2 cuerpos por
-detras durante 1 frame**.
-
-**El fix:** anular la **CONDICION** en vez del salto: el inmediato del
-`cmpi.b #$f, $5f(a5)` pasa a `$ff`. La comparacion nunca es igual, el
-`bne.b` salta **siempre** y el bloque **no se ejecuta nunca**. **El salto no
-se toca.** Los bytes:
-
-| byte | de | a | que hace |
-|---|---|---|---|
-| `$019E0B` | `$0F` | `$FF` | anula el bloque `$019E10-$019E27` (el flag del plano de atras + el suelo -40 px + la escala) |
-| `$019E89` | `$0F` | `$FF` | anula el bloque `$019E8E-$019E9C` (el suelo = 304 + la escala `$d8`) |
-| `$019ECF` | `$0F` | `$FF` | anula el bloque `$019ED4-$019EEA` (el flag + el suelo -20 px + la escala) |
-
-**El grupo `sin_cruce` tenia el MISMO error** (`bne` -> `bra` en `$019E8C` y
-`$019F50`): arreglado igual, cambiando los inmediatos `$019E89` y `$019F4D`
-a `$ff` (aqui NO se toca `$019E0B`, porque ese grupo si quiere que el
-jugador baje de plano).
-
-**REGLA (para no repetirlo):** para neutralizar un bloque condicional hay
-que anular la **condicion** (el inmediato del `cmpi`/`btst`), **nunca**
-convertir el salto condicional en uno incondicional. Un `bra` no salta nunca:
-cambiar `bne` por `bra` no neutraliza el bloque, lo hace SIEMPRE.
-
-### Las ROMs (la base del proyecto ES la china)
-
-| fichero | que es |
-|---|---|
-| `rom/base/yuyu_makyou_base.bin` | **la china** con el checksum arreglado a `$337B` (la de `$BE4F` es la inglesa, que no arranca) |
-| `rom/original/...chinese.bin` | copia de la base (la china de referencia) |
-| `rom/original/...english translation.bin` | la inglesa (checksum `$BE4F`, no arranca) |
-| `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la base + los 13 cambios aceptados (84 bytes, `$8C44`) |
-| `rom/cambios/19_china_sin_cruce.bin` | la base + `un_plano` + `sin_atajo_cruce` (33 bytes) |
-| `rom/cambios/20_china_UNIFICADA.bin` | la base + todo el proyecto (84 bytes) |
-| `rom/cambios/21_china_UNIFICADA_sin_un_plano.bin` | la base + todo **menos** `un_plano` (76 bytes) = la version de biseccion |
-
-**OJO:** `rom/` esta en `.gitignore` (derechos de autor), asi que **las ROMs
-no estan en git y se pierden si se borran la carpeta**. La china esta
-tambien en `C:\Users\leand\AppData\Local\Temp\opencode\CHINA_ORIGINAL.bin`.
-
-## EL "CAMBIO DE PLANO" ES EL FLAG $A042 (NO EL SUELO $9c)
-
-**El usuario lo dijo:** *"seguro estas modificando un valor distinto que el cambio
-de plano"*. **Tenia razon.** Todo lo anterior (el suelo `$9C`, la escala
-`$3E`) es el **suelo fisico**; el **plano** lo dice el **flag global
-`$A042`**, que es una variable de la RAM del Z80 (en `$A00000-$A0FFFF`, y por
-eso la sonda no la podia leer: `memory.readbyte(0xA042)` devuelve `$FF`).
-
-### El flag
+**El "plano" de un personaje lo dice el flag global `$A042`** (un byte de la
+RAM del Z80, que la 68000 ve en `$A00000-$A0FFFF`):
 
 | bit | significa | quien lo pone |
 |---|---|---|
-| **0** | "el personaje esta en el plano de **DELANTE**" | `$015BE7` (el suelo es 320), `$019E30`, `$019EF4` |
-| **1** | "el personaje esta en el plano de **ATRAS**" | `$015BF7` (el suelo es 304), `$019E10`, `$019ED4` |
+| **0** | el personaje esta en el plano de **DELANTE** (suelo 320) | `$015BE6` (el suelo es 320), `$019E30`, `$019EF4` |
+| **1** | el personaje esta en el plano de **ATRAS** (suelo 304) | `$015BF6` (el suelo es 304), `$019E10`, `$019ED4` |
 
-Los **6 escritores** son `bset.b` (`$08 F8 00 0n A0 42`) ⇒ **solo PONEN
-bits, nunca limpian el otro**. Los **2 lectores** son `btst.b #0` (`$0186DA`)
-y `btst.b #1` (`$018722`), en la funcion que decide si el personaje cruza o
-vuelve (`$0186BE`).
+Los dos bits estan en el mismo byte, asi que un valor 3 significa "los dos".
+El flag lo leen `btst.b #0` (`$0186DA`) y `btst.b #1` (`$018722`), en la
+funcion que decide si el personaje cruza o vuelve (`$0186BE`).
 
-**EL "2 CUERPOS POR DETRAS":** cuando el personaje pasa de un plano al otro,
-el flag se queda **con los dos bits a 1** (valor 3): el bit 0 dice "delante"
-y el bit 1 dice "atras" ⇒ **el juego cree que esta en los dos planos a la
-vez y dibuja DOS siluetas**. El `clr.b $a042.w` de `$01875C` (al aterrizar
-en el plano de delante) es lo unico que limpia el flag entero.
+**La rutina que lo actualiza cada frame es `$015BD8`** (la llama `$015A2E`
+con `bsr.w`): si el suelo (`$9c(a5)`) es 320 pone el bit 0, y si es 304
+pone el bit 1.
 
-**EL FIX (grupo `plano_y_dano`, 76 bytes): INTERCAMBIAR LOS BITS** en los 6
-escritores y en los 2 lectores (el bit 1 = "delante" y el bit 0 = "atras").
-ASI **los dos bits nunca pueden coexistir** y el flag siempre vale 1 o 2:
+**El resto de los datos del plano:**
 
-| byte | de | a | |
-|---|---|---|---|
-| `$015BE9` | `$00` | `$01` | `bset.b` de "delante" |
-| `$015BF9` | `$01` | `$00` | `bset.b` de "atras" |
-| `$019E12` | `$01` | `$00` | `bset.b` de "atras" |
-| `$019E32` | `$00` | `$01` | `bset.b` de "delante" |
-| `$019ED6` | `$01` | `$00` | `bset.b` de "atras" |
-| `$019EF6` | `$00` | `$01` | `bset.b` de "delante" |
-| `$0186DC` | `$00` | `$01` | `btst.b` de "delante" |
-| `$018724` | `$01` | `$00` | `btst.b` de "atras" |
-
-### El DAO al cruzar (en la misma rutina)
-
-La rutina que actualiza el plano cada frame es `$015BD8` (la llama
-`$015A2E` con `bsr.w`):
-
-```
-$015BD8  tst.w    $78(a5)          ; si el HP es negativo (KO), no tocar el flag
-$015BDC  bmi.b    $15bfc
-$015BDE  cmpi.w   #$140, $9c(a5)   ; ¿el suelo es 320?
-$015BE4  bne.b    $15bee
-$015BE6  bset.b   #$0, $a042.w     ; -> "delante"
-$015BEC  rts
-$015BEE  cmpi.w   #$130, $9c(a5)   ; ¿el suelo es 304?
-$015BF4  bne.b    $15bfc
-$015BF6  bset.b   #$1, $a042.w     ; -> "atras"
-$015BFC  rts
-```
-
-Se reescribe con **6 bytes mas** y al llegar al plano de atras llama a una
-**rutina nueva** (`$1A06F0`, 26 bytes) que **quita 1 de vida** del HP
-(`$78(a5)`). Si el HP era 1 se quitan **2**, para que quede **NEGATIVO**: el
-juego solo detecta el KO con el HP negativo (`btst.b #$7, $78(a5)` en
-`$019CFC`, el handler del estado `$00`); si el HP llegara a 0 en este punto
-nadie lo vigilantia, la ronda no acabaria y **el juego se colgaria**.
-
-**El cruce es un EVENTO (un frame), no una duracion:** el daño es **1 vida
-por cruce**, en el momento en que el personaje aterriza en el plano de atras.
-
-**OJO - EXCLUYENTES:** el grupo `un_plano` anula el `cmpi` de `$019ECF` (el
-handler del estado `$0B`) ⇒ sin el, el suelo no baja nunca hasta 304 ⇒ **el
-plano nunca cambia y el daño no se aplica**. O sea:
-- **`un_plano`** = un solo plano (el cruce no ocurre).
-- **`plano_y_dano`** = el cruce ocurre (y cuesta 1 vida), sin el "2 cuerpos".
-
-### Las ROMs
-
-| fichero | que es |
+| que | donde |
 |---|---|
-| `rom/cambios/22_china_PLANO_Y_DANO.bin` | la base + `plano_y_dano` (78 bytes) = **el cruce con dano y sin "2 cuerpos"** |
-| `rom/cambios/23_china_UNIFICADA_PLANO_Y_DANO.bin` | la unificada (sin `un_plano`) + `plano_y_dano` (152 bytes) |
-| `rom/cambios/24_china_UNIFICADA_sin_hoja.bin` | la unificada sin la hoja de Kuwabara (81 bytes) = biseccion |
-
-### EL ERROR QUE ROMPIA LA ROM (y el "2 cuerpos")
-
-**La codificacion del numero de bit de estas instrucciones es el CUARTO
-byte (offset +3), NO el tercero:**
-```
-bset.b #n, $a042.w   =  08 F8 00 <n> A0 42     (6 bytes)
-btst.b #n, $a042.w   =  08 38 00 <n> A0 42     (6 bytes)
-```
-Yo habia cambiado el byte **+1** (el primero de la direccion) ⇒ **los seis
-`bset.b` y los dos `btst.b` del flag se rompian** (el flag receiveia un
-numero de bit al azar) ⇒ el juego se colgaba al entrar en combate (pantalla
-negra) y el "2 cuerpos" no se arreglaba.
-
-Ademas, la primera version de la rutina del plano **crecia 6 bytes** y se
-comia el codigo de `$015C04` (`mulu.w $c4(a5),d0`): la rutina tiene que
-mantener **exactamente 38 bytes**. El fix: los `bset.b` (6 bytes) se
-sustituyen por `jsr.l` (6 bytes) y el `bra.b` sustituye al `rts`.
-
-### La codificacion de las operaciones con un EA y un registro
-
-En la 68000 el **byte del registro va AL FINAL** (como en el MOVE):
-```
-move.w $78(a5), d0   =  32 2D 00 78 00    (5 bytes; el ultimo $00 = d0)
-sub.w  d0, $78(a5)   =  93 2D 00 78 00    (5 bytes; el ultimo $00 = d0)
-move.l (a7), d0      =  22 00              (2 bytes; el $00 = d0)
-```
-Capstone **no cuenta** ese ultimo byte (lee 4 en vez de 5), asi que el
-verificador los marca como "reescritos"; la CPU los ejecuta bien. Por eso
-la rutina del dano mete un `ori.b #$0, d0` (`00 00 00`) justo despues del
-`move.w`: ese es el byte que Capstone se deja sin contar.
+| el suelo del plano | `$9c(a5)` (un long, 16.16): 320 = delante, 304 = atras |
+| la escala del sprite | `$3e(a5)` (un word): 256 = delante, 216 = atras |
+| el indice del sprite | `$26(a5)` (un byte) |
+| el cambio de plano (la caida) | el estado `$0B` con el move `$0F`: el suelo baja 0.31 px por frame |
+| el aterrizaje en el plano de atras | `$019F52` (el handler del estado `$0B`) |
+| el aterrizaje en el plano de delante | `$019E8E` (el handler del estado `$0A`) |
 

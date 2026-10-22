@@ -19,7 +19,7 @@ python herramientas/docs/verificar_docs.py
 | **01-MOTOR** | [`ARQUITECTURA.md`](../01-MOTOR/ARQUITECTURA.md) | el hardware, los bancos de ROM, los secretos y modos |
 | | [`ESTRUCTURA-DE-JUGADOR.md`](../01-MOTOR/ESTRUCTURA-DE-JUGADOR.md) | el struct del jugador en RAM ($40-$A0) |
 | | [`CAMARA-Y-SCROLL.md`](../01-MOTOR/CAMARA-Y-SCROLL.md) | la cámara y el scroll |
-| | [`ENTRADA-Y-PLANOS.md`](../01-MOTOR/ENTRADA-Y-PLANOS.md) | **la entrada y los planos**: el flag `$A042`, el suelo `$9c`, la escala `$3e`, el índice `$26`, los atajos de mando, el "2 cuerpos" |
+| | [`ENTRADA-Y-PLANOS.md`](../01-MOTOR/ENTRADA-Y-PLANOS.md) | **la entrada y los planos**: el flag `$A042`, el suelo `$9c`, la escala `$3e`, el índice `$26`, los atajos de mando, el "" |
 | | [`EMULADOR-68000.md`](../01-MOTOR/EMULADOR-68000.md) / [`EMULADOR-Z80.md`](../01-MOTOR/EMULADOR-Z80.md) | los emuladores propios |
 | **02-COMBATE** | [`VIDA-Y-MANA.md`](../02-COMBATE/VIDA-Y-MANA.md) | el sistema de vida y el cálculo del maná |
 | | [`STURDIMIENTO.md`](../02-COMBATE/STURDIMIENTO.md) | el stun, la salida del hitstun, el mash del aturdimiento |

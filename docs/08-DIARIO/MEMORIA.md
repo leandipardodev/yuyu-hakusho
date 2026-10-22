@@ -44,7 +44,7 @@ Y lo que estaba en `DATOS_VERIFICADOS.md` (169 KB) se repartió así:
 | *El teleport de Itsuki* | `../03-PERSONAJES/TECNICAS.md` |
 | *Las tablas de moves*, *los 191 moves* | `../04-DATOS/MOVES-Y-TIMING.md` |
 | *Las colisiones* | `../04-DATOS/COLISIONES-Y-HITBOXES.md` |
-| *Los atajos de mando del cruce*, *el "2 cuerpos"*, *el flag $A042*, *el índice $26* | `../01-MOTOR/ENTRADA-Y-PLANOS.md` |
+| *Los atajos de mando del cruce*, *el ""*, *el flag $A042*, *el índice $26* | `../01-MOTOR/ENTRADA-Y-PLANOS.md` |
 | *El daño al cruzar* | `../05-PARCHES/PARCHES.md` |
 | *Lo que NO está verificado* | `../00-GUIA/VERIFICACION.md` |
 | *Lo que falta* | `PENDIENTE.md` |

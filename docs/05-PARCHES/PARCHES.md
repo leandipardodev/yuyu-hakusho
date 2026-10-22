@@ -512,6 +512,7 @@ informa sin escribir nada.
 | `blob_dump.py` | vuelca los blobs de un personaje: daño, stun, empuje, radios |
 | `blob_chain.py` | vuelca la cadena de cajas de un move, frame a frame |
 | `ctx_hiei.py` | grafo de llamadores de una dirección, con contexto |
+| **`probar_codigo.py`** | **ejecuta un fragmento de codigo 68000 con Unicorn** (con la RAM del juego) y dice lo que ha hecho: sirve para verificar un parche SIN el emulador |
 
 ---
 
@@ -1159,13 +1160,16 @@ le falta el grupo `un_plano` (el que desactiva el cruce de planos).
 | `rom/cambios/20_china_UNIFICADA.bin` | la china + todo el proyecto | 57 | `$9733` |
 | `rom/cambios/19_sin_atajos_de_cruce.bin` | la base del proyecto + los 23 bytes | 23 | — |
 | `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la unificada del proyecto | 84 | `$DD4A` |
-## EL DAÑO AL CRUZAR (grupo `cruce_dano`, 90 bytes)
+## EL DAÑO AL CRUZAR (grupo `daño_al_cruzar`, 50 bytes)
 
-### Los dos handlers del CRUCE
+**Cruzar al otro plano cuesta 1 vida.** Es el evento del aterrizaje en el
+plano de atrás.
+
+### Donde está el CRUCE
 
 | handler | donde | que hace |
 |---|---|---|
-| **estado `$0B`** (la CAIDA / la ida al otro plano) | **`$019ECC`** | el bloque `$019ED4-$019EE9`: `bset.b #$1, $a042.w` + `subi.l #$5000, $9c(a5)` (el suelo **-20 px** = -0.31 px/frame) + `addi.b #$2, $26(a5)` + `subq.w #$1, $3e(a5)` (la escala -1) |
+| **estado `$0B`** (la CAIDA / la ida al otro plano) | **`$019ECC`** | el bloque `$019ED4-$019EEB`: `bset.b #$1, $a042.w` + `subi.l #$5000, $9c(a5)` (el suelo **-20 px** = -0.31 px/frame) + `addi.b #$2, $26(a5)` + `subq.w #$1, $3e(a5)` (la escala -1) |
 | **estado `$0A`** (la VUELTA) | **`$019E08`** | el bloque `$019E10-$019E27`: el suelo **-40 px** de golpe + la escala -3 |
 
 Los dos tienen ademas el bloque del "aterrizaje":
@@ -1175,47 +1179,78 @@ Los dos tienen ademas el bloque del "aterrizaje":
 | **el aterrizaje en el otro plano** | **`$019F52`** (handler del `$0B`) | `move.l #$1300000, $9c(a5)` (el suelo = **304**) + `move.w #$d8, $3e(a5)` (la escala 216) + `move.b #$c0, $26(a5)` |
 | el aterrizaje en el plano de delante | `$019E8E` (handler del `$0A`) | `move.l #$1400000, $9c(a5)` (el suelo = **320**) + la escala 256 |
 
-**OJO: el `un_plano` NEUTRALIZA `$019ECF` (el `cmpi.b #$f` del handler del `$0B`),
-con lo que el bloque de la CAIDA no se ejecuta nunca: el suelo no baja, el
-personaje no llega al otro plano y el cruce NO ocurre. Por eso el grupo
-`cruce_dano` (que necesita ese bloque) SOLO funciona SIN `un_plano`.**
-
-### La rutina del daño
-
-El bloque de la CAIDA (`$019ED4-$019EEB`, 24 bytes) se sustituye por un
-`jsr.l` a una **rutina nueva de 66 bytes** en el **hueco libre `$1A06AE`**
-(377 bytes de ceros entre dos rutinas del banco 1) + 18 bytes de nops, de modo
-que no cambia ni el tamaño ni el flujo.
-
-La rutina hace **exactamente lo mismo** que el bloque original (el flag del
-plano de atras, el suelo, el `$26` y la escala) y ademas:
-
-| | |
-|---|---|
-| el contador | **d1** (guardado y restaurado con la pila: `move.l d1,-(a7)` / `move.l (a7),d1`) |
-| se reinicia | cuando el **tick `$5B` es 0** (`cmpi.b #$0, $5b(a5)`) = el primer frame del cruce |
-| se decrementa | cada frame (`subq.w #$1, d1`) |
-| el daño | cuando el contador llega a **-3** (`cmpi.w #$fffd, d1`) = **el tercer frame del cruce** ⇒ **1 de vida cada 3 frames** |
-| el HP | `$78(a5)` (un word): `sub.w d1, $78(a5)` |
-| si el HP queda en 0 | se resta **otro** 1, para que quede **NEGATIVO**: el juego solo detecta el KO con el HP negativo (`btst.b #$7, $78(a5)` en `$019CFC`, el handler del estado `$00`). Si el HP llegara a 0 en el estado `$0B` nadie lo vigilaria, la ronda no acabaria y **el juego se colgaria** |
-
 **El estado `$0B` con el move `$0F` es SOLO del cruce** (un salto normal usa
 el estado `$0E` con el move `$0B`, medido con la sonda), asi que **saltar no
 cuesta vida**.
+
+**El cruce es un EVENTO de un frame**: el aterrizaje. Por eso el daño es
+**1 vida por cruce**, no "1 cada 3 frames": la idea de "cada 3 frames" venia
+de pensar que el cruce era la caida entera (unos 50 frames), pero la caida
+solo mueve el suelo; el daño va en el aterrizaje.
+
+### El parche (50 bytes)
+
+El bloque del aterrizaje (`$019F52`, **20 bytes**) cambia el `move.w` de la
+escala por un `jsr.l` a una rutina nueva:
+
+<!-- (parcheado): este bloque es el estado DESPUES del parche. En la ROM
+     sin parche, $019F5A es un 'move.w #$d8, $3e(a5)'. -->
+
+```asm
+$019F52  move.l  #$1300000, $9c(a5)   ; el suelo = 304      (8 bytes, igual)
+$019F5A  jsr.l  $1A06F0               ; <<< LA RUTINA DEL DAÑO (6 bytes)
+$019F60  move.b #$c0, $26(a5)         ; el $26 = $C0        (6 bytes, igual)
+```
+
+**El bloque sigue midiendo 20 bytes** (el `jsr.l` sustituye al `move.w`, que
+tambien son 6). Esto es OBLIGATORIO: si creciera, el `cmpi.b #$10, $5f(a5)`
+de `$019F66` se desalinearia y todo lo de despues se leeria mal.
+
+La rutina nueva (30 bytes) esta en el **hueco libre `$1A06F0`** (el hueco de
+ceros va de `$1A06AE` a `$1A0827`, 377 bytes):
+
+```asm
+$1A06F0  move.l  d0, -(a7)        ; guardar d0
+$1A06F2  moveq   #$1, d1          ; el 1 a restar
+$1A06F4  sub.w   d1, $78(a5)      ; el HP - 1
+$1A06F8  move.w  $78(a5), d0      ; el HP nuevo
+$1A06FC  tst.b   d0               ; ¿el HP nuevo = 0?
+$1A06FE  bne.b   +4               ; no: saltar al pop
+$1A0700  sub.w   d1, $78(a5)      ; -1 mas: que quede NEGATIVO
+$1A0704  move.l  (a7)+, d0        ; restaurar d0
+$1A0706  move.w  #$d8, $3e(a5)    ; la escala = 216 (igual que antes)
+$1A070C  rts
+```
+
+| | |
+|---|---|
+| el HP | `$78(a5)` (un word) |
+| el daño | **1 vida** por cruce |
+| si el HP queda en 0 | se resta **otro** 1, para que quede **NEGATIVO**: el juego solo detecta el KO con el HP negativo (`btst.b #$7, $78(a5)` en `$019CFC`, el handler del estado `$00`). Si el HP llegara a 0 en el estado `$0B` nadie lo vigilaria, la ronda no acabaria y **el juego se colgaria** |
+
+### Comprobacion (EJECUTADA, no solo desensamblada)
+
+Con Unicorn (`herramientas/desensamblado/probar_codigo.py`), ejecutando el
+bloque **desde la ROM parcheada**:
+
+| HP inicial | HP final | |
+|---|---|---|
+| 223 | **222** | normal |
+| 5 | **4** | normal |
+| 2 | **1** | normal |
+| 1 | **-1** | **NEGATIVO: el juego hara el KO** |
+
+Y el bloque **sin** el parche deja el HP igual (223 -> 223).
 
 ### Las ROMs
 
 | fichero | que es |
 |---|---|
-| `rom/cambios/22_china_DANO_al_cruzar.bin` | la base + `sin_atajo_cruce` + `cruce_dano` (99 bytes) = **el cruce con el dano** |
-| `rom/cambios/23_china_UNIFICADA_con_DANO.bin` | la unificada + el dano (158 bytes) |
-| `rom/cambios/24_china_UNIFICADA_sin_hoja.bin` | la unificada **sin** `kuwabara_hoja_2hits_doble` (81 bytes) = la **biseccion del "2 cuerpos"** |
+| `rom/cambios/22_china_DANO_al_cruzar.bin` | la **china** + `daño_al_cruzar` (30 bytes distintos) = **el cruce con el daño** |
+| `rom/cambios/23_china_UNIFICADA_con_DANO.bin` | la unificada + el daño (104 bytes distintos) |
 
-### Lo que falta por averiguar
-
-El "2 cuerpos por detras" **sigue con el `un_plano` arreglado**, asi que no
-es (solo) el `un_plano`. Los candidatos: el bloque del aterrizaje en 304
-(`$019F52`, que pone el suelo de golpe de 319.9 a 304 = un salto de 15 px y
-el cambio de escala) o el parche de la hoja de Kuwabara (`$0C2EA2`, la
-duracion de un frame de su cadena). La `24` aisla el segundo.
-
+> **OJO: `daño_al_cruzar` y `un_plano` son EXCLUYENTES.** `un_plano` neutraliza
+> el `cmpi.b #$f` de `$019ECF`, con lo que el bloque de la CAIDA no se ejecuta
+> nunca: el suelo no baja, el personaje no llega al otro plano, **el cruce no
+> ocurre** y por tanto no hay nada que danar. Con `un_plano` el grupo del daño
+> no hace nada (no rompe nada, pero tampoco sirve).
