@@ -1160,97 +1160,112 @@ le falta el grupo `un_plano` (el que desactiva el cruce de planos).
 | `rom/cambios/20_china_UNIFICADA.bin` | la china + todo el proyecto | 57 | `$9733` |
 | `rom/cambios/19_sin_atajos_de_cruce.bin` | la base del proyecto + los 23 bytes | 23 | — |
 | `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la unificada del proyecto | 84 | `$DD4A` |
-## EL DAÑO AL CRUZAR (grupo `daño_al_cruzar`, 50 bytes)
+## EL VENENO DEL PLANO (grupo `veneno_plano`, 58 bytes)
 
-**Cruzar al otro plano cuesta 1 vida.** Es el evento del aterrizaje en el
-plano de atrás.
+**Cruzar al otro plano ENVENENA al personaje: el HP baja 1 por frame (60 por
+segundo) mientras esta en el plano de atras, y deja de bajar en cuanto vuelve
+al plano principal.** No es un golpe: es un veneno, el dano es continuo.
 
-### Donde está el CRUCE
+**Si se queda sin vida, vuelve al plano principal Y muere.**
 
-| handler | donde | que hace |
-|---|---|---|
-| **estado `$0B`** (la CAIDA / la ida al otro plano) | **`$019ECC`** | el bloque `$019ED4-$019EEB`: `bset.b #$1, $a042.w` + `subi.l #$5000, $9c(a5)` (el suelo **-20 px** = -0.31 px/frame) + `addi.b #$2, $26(a5)` + `subq.w #$1, $3e(a5)` (la escala -1) |
-| **estado `$0A`** (la VUELTA) | **`$019E08`** | el bloque `$019E10-$019E27`: el suelo **-40 px** de golpe + la escala -3 |
+**Se aplica a CUALQUIER personaje** (P1, P2 o el rival): da igual en que slot
+este, porque **el slot del P2 no siempre es el mismo** (`$FF8800` desde el
+select, `$FF9000` con un savestate, stride `$C00`).
 
-Los dos tienen ademas el bloque del "aterrizaje":
+### Donde esta enganchado
 
-| bloque | donde | que hace |
-|---|---|---|
-| **el aterrizaje en el otro plano** | **`$019F52`** (handler del `$0B`) | `move.l #$1300000, $9c(a5)` (el suelo = **304**) + `move.w #$d8, $3e(a5)` (la escala 216) + `move.b #$c0, $26(a5)` |
-| el aterrizaje en el plano de delante | `$019E8E` (handler del `$0A`) | `move.l #$1400000, $9c(a5)` (el suelo = **320**) + la escala 256 |
+La rutina **`$015BD8`** actualiza el flag del plano `$A042` **cada frame** (la
+llama `$015A2E` con `bsr.w`). Mira el suelo (`$9c(a5)`):
 
-**El estado `$0B` con el move `$0F` es SOLO del cruce** (un salto normal usa
-el estado `$0E` con el move `$0B`, medido con la sonda), asi que **saltar no
-cuesta vida**.
-
-**El cruce es un EVENTO de un frame**: el aterrizaje. Por eso el daño es
-**1 vida por cruce**, no "1 cada 3 frames": la idea de "cada 3 frames" venia
-de pensar que el cruce era la caida entera (unos 50 frames), pero la caida
-solo mueve el suelo; el daño va en el aterrizaje.
-
-### El parche (50 bytes)
-
-El bloque del aterrizaje (`$019F52`, **20 bytes**) cambia el `move.w` de la
-escala por un `jsr.l` a una rutina nueva:
-
-<!-- (parcheado): este bloque es el estado DESPUES del parche. En la ROM
-     sin parche, $019F5A es un 'move.w #$d8, $3e(a5)'. -->
-
-```asm
-$019F52  move.l  #$1300000, $9c(a5)   ; el suelo = 304      (8 bytes, igual)
-$019F5A  jsr.l  $1A06F0               ; <<< LA RUTINA DEL DAÑO (6 bytes)
-$019F60  move.b #$c0, $26(a5)         ; el $26 = $C0        (6 bytes, igual)
-```
-
-**El bloque sigue midiendo 20 bytes** (el `jsr.l` sustituye al `move.w`, que
-tambien son 6). Esto es OBLIGATORIO: si creciera, el `cmpi.b #$10, $5f(a5)`
-de `$019F66` se desalinearia y todo lo de despues se leeria mal.
-
-La rutina nueva (30 bytes) esta en el **hueco libre `$1A06F0`** (el hueco de
-ceros va de `$1A06AE` a `$1A0827`, 377 bytes):
-
-```asm
-$1A06F0  move.l  d0, -(a7)        ; guardar d0
-$1A06F2  moveq   #$1, d1          ; el 1 a restar
-$1A06F4  sub.w   d1, $78(a5)      ; el HP - 1
-$1A06F8  move.w  $78(a5), d0      ; el HP nuevo
-$1A06FC  tst.b   d0               ; ¿el HP nuevo = 0?
-$1A06FE  bne.b   +4               ; no: saltar al pop
-$1A0700  sub.w   d1, $78(a5)      ; -1 mas: que quede NEGATIVO
-$1A0704  move.l  (a7)+, d0        ; restaurar d0
-$1A0706  move.w  #$d8, $3e(a5)    ; la escala = 216 (igual que antes)
-$1A070C  rts
-```
-
-| | |
+| el suelo | que hace |
 |---|---|
-| el HP | `$78(a5)` (un word) |
-| el daño | **1 vida** por cruce |
-| si el HP queda en 0 | se resta **otro** 1, para que quede **NEGATIVO**: el juego solo detecta el KO con el HP negativo (`btst.b #$7, $78(a5)` en `$019CFC`, el handler del estado `$00`). Si el HP llegara a 0 en el estado `$0B` nadie lo vigilaria, la ronda no acabaria y **el juego se colgaria** |
+| **320** (`$01400000`) | el plano de **delante**: pone el bit 0 del flag |
+| **304** (`$01300000`) | el plano de **atras**: pone el bit 1 del flag |
 
-### Comprobacion (EJECUTADA, no solo desensamblada)
+**El suelo solo vale exactamente 304 cuando el personaje esta PARADO en el
+plano de atras** (durante la caida va por intermedios: 319.9, 319.6...). Por
+eso el veneno **empieza al aterrizar** y **para al volver** al plano principal.
 
-Con Unicorn (`herramientas/desensamblado/probar_codigo.py`), ejecutando el
-bloque **desde la ROM parcheada**:
+**El enganche** (6 bytes por 6, el tamano no cambia):
 
-| HP inicial | HP final | |
-|---|---|---|
-| 223 | **222** | normal |
-| 5 | **4** | normal |
-| 2 | **1** | normal |
-| 1 | **-1** | **NEGATIVO: el juego hara el KO** |
+```asm
+$015BF6  bset.b  #$1, $a042.w      ; el original: poner el bit 1 del flag
+```
 
-Y el bloque **sin** el parche deja el HP igual (223 -> 223).
+se sustituye por un `jsr.l` a una rutina nueva en el **hueco libre `$1A0720`**
+(14 bytes) que hace lo mismo que el bset **y ademas aplica el veneno**:
+
+```asm
+$1A0720  bset.b  #$1, $a042.w      ; el flag: el plano de atras      (6)
+$1A0726  jsr.l   $1A06F0           ; EL VENENO                        (6)
+$1A072C  rts                                                        (2)
+```
+
+### El veneno (38 bytes en `$1A06F0`)
+
+```asm
+$1A06F0  move.l  d0, -(a7)         ; guardar d0                    (2)
+$1A06F2  moveq   #$1, d1           ; el 1 a restar                  (2)
+$1A06F4  sub.w   d1, $78(a5)       ; el HP - 1                      (4)
+$1A06F8  move.w  $78(a5), d0       ; el HP nuevo                    (4)
+$1A06FC  tst.b   d0                ; ¿el HP = 0?                    (2)
+$1A06FE  bne.b   $1A0714           ; no: salir                      (2)
+$1A0700  sub.w   d1, $78(a5)       ; -1 mas: que quede NEGATIVO     (4)
+$1A0704  move.l  #$1400000, $9c(a5); el suelo = 320: VUELVE al      (8)
+$1A070C  move.b  #$00, $5d(a5)     ; plano principal y al estado    (6)
+$1A0712  move.l  (a7)+, d0         ; de reposo                      (2)
+$1A0714  rts                                                        (2)
+```
+
+**Cuando el HP llega a 0**:
+1. Se resta **otro 1**, para que quede **NEGATIVO**: el juego solo detecta el
+   KO con el HP negativo (`btst.b #$7, $78(a5)` en `$019CFC`, el handler del
+   estado `$00`). Si el HP quedara en 0 en este punto nadie lo vigilaria, la
+   ronda no acabaria y **el juego se colgaria**.
+2. El **suelo pasa a 320**: el personaje **vuelve al plano principal**.
+3. El **estado pasa a reposo** (`$5D = 0`): el siguiente frame se ejecuta el
+   handler del estado `$00`, que es donde el juego mira el HP negativo ⇒
+   **muere**.
+
+O sea: se queda sin vida, **vuelve al plano principal y muere**.
 
 ### Las ROMs
 
-| fichero | que es |
-|---|---|
-| `rom/cambios/22_china_DANO_al_cruzar.bin` | la **china** + `daño_al_cruzar` (30 bytes distintos) = **el cruce con el daño** |
-| `rom/cambios/23_china_UNIFICADA_con_DANO.bin` | la unificada + el daño (104 bytes distintos) |
+| fichero | que es | SHA1 |
+|---|---|---|
+| `rom/cambios/22_china_VENENO_plano.bin` | la **china** + `veneno_plano` | `BBBB52C8B34AB458A5845889D43AC849E2BA82DD` |
+| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno | `14508BD23941B02557F257ADA451AF19ED5C42BC` |
 
-> **OJO: `daño_al_cruzar` y `un_plano` son EXCLUYENTES.** `un_plano` neutraliza
-> el `cmpi.b #$f` de `$019ECF`, con lo que el bloque de la CAIDA no se ejecuta
-> nunca: el suelo no baja, el personaje no llega al otro plano, **el cruce no
-> ocurre** y por tanto no hay nada que danar. Con `un_plano` el grupo del daño
-> no hace nada (no rompe nada, pero tampoco sirve).
+> **OJO: `veneno_plano` y `un_plano` son excluyentes en la practica.** Con
+> `un_plano` el suelo nunca es 304 (no hay dos planos) y el veneno no se
+> activa nunca. Para que el veneno funcione hace falta una ROM **con dos
+> planos**.
+
+### El camino (las versiones que hubo)
+
+| version | que cambiba | que pasó |
+|---|---|---|
+| **v1** | el veneno solo para el P1 (`cmpi.w #$8400,d0`), el HP = 0 con `tst.b` | **el usuario la probo y FUNCIONA** |
+| v2 | el HP = 0 con `cmpi.w #$0,d0` y el P2 en `$FF8800` | **se rompia al cruzar el P1 (pantalla en negro)**: el `cmpi.w` con un registro no compara el word como se espera y disparaba el final sin vida en cada frame. Y el P2 no suffering nada: **su slot no es `$FF8800`** |
+| **v4 (esta)** | vuelta al `tst.b` y **sin comparar el slot** (el veneno es para todos) | |
+
+### Que esta verificado y que no
+
+| | |
+|---|---|
+| la rutina del veneno (HP 223->222, 5->4, 2->1, **1->-1**) | **EJECUTADO** con Unicorn |
+| el `move.l a5,d0` | **EJECUTADO** con Unicorn |
+| el veneno en si (baja al cruzar, para al volver) | **PROBADO POR EL USUARIO** (v1) |
+| el resto | el verificador de desensamblado: **OK** |
+
+**OJO con una cosa: el `cmpi.w` con un registro no es de fiar** (el Unicorn no
+lo puede ejecutar y en el juego no se comporta como deberia). Por eso la v4
+no lo usa: el HP = 0 se comprueba con un `tst.b` (que compara el byte bajo del
+HP: con el HP entre 0 y 223 solo da 0 cuando el HP es 0 de verdad).
+
+### Si el veneno es muy rapido
+
+Son 60 de vida por segundo (el HP maximo es 223 ⇒ ~3,7 segundos en el plano
+de atras). Para hacerlo mas lento, la rutina del veneno (`$1A06F0`) es la que
+quita el 1: se puede cambiar por un "1 cada 2 frames" (un contador) o por
+quitar menos vida.

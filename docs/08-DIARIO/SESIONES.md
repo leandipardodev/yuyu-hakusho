@@ -624,3 +624,131 @@ Las dos verificadas con el verificador de desensamblado: **OK**.
   1 de vida el personaje pierda (el HP negativo).
 - El **push** del ultimo commit al repo: el token de `gh` no tiene el scope
   de escritura (`Write access to repository not granted`).
+
+## S-2024-10-22d: el veneno del plano
+
+### Lo que se pidio
+
+El golpe de 1 vida al cruzar se quedaba corto: el usuario quiere **una resta
+de HP constante, como si el personaje estuviera envenenado, hasta volver al
+plano principal**.
+
+### Lo que se hizo
+
+El grupo `daño_al_cruzar` (el golpe de 1 punto en el aterrizaje) se sustituyo
+por **`veneno_plano`** (52 bytes):
+
+- El enganche esta en la rutina **`$015BD8`**, la que actualiza el flag del
+  plano `$A042` cada frame. En `$015BF6` el `bset.b #$1, $a042.w` (6 bytes) se
+  sustituye por un `jsr.l` a una rutina nueva en el hueco libre `$1A0710`.
+- Esa rutina hace lo mismo que el bset (poner el bit 1 del flag) y ademas
+  **quita 1 de vida por frame**.
+- **El suelo solo vale 304 cuando el personaje esta parado en el plano de
+  atras** (durante la caida va por intermedios), asi que el veneno empieza al
+  aterrizar y para al volver al plano principal.
+- **Solo el jugador 1**: la rutina copia A5 a D0 (`move.l a5,d0`) y lo compara
+  con `$8400` (la palabra baja de `$FF8400`). El rival de la CPU esta en otro
+  slot y no sufre el veneno.
+- Si el HP queda en 0 se resta otro 1, para que quede **NEGATIVO** (el juego
+  solo detecta el KO con el HP negativo; si quedara en 0, la ronda no
+  acabaria y el juego se colgaria).
+
+### LO QUE NO SE HA PODIDO VERIFICAR
+
+**El `cmpi.w #$8400, d0`**: el core M68K de Unicorn 2.1.4 no implementa el
+CMPI (tampoco el `cmpi.w #$0140, $9c(a5)` del propio juego). La codificacion
+se ha sacado del patron del juego. **Si en la prueba el rival tambien pierde
+vida, o si nadie pierde vida, el fallo esta ahi.**
+
+Lo que SI se ha ejecutado con Unicorn: la rutina del veneno (HP 223->222,
+5->4, 2->1 y **1->-1**) y el `move.l a5,d0`.
+
+### Las ROMs
+
+| fichero | SHA1 |
+|---|---|
+| `rom/cambios/22_china_VENENO_plano.bin` | `BBBB52C8B34AB458A5845889D43AC849E2BA82DD` |
+| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | `14508BD23941B02557F257ADA451AF19ED5C42BC` |
+
+Las dos con el verificador de desensamblado: **OK**.
+
+### Lo que falta
+
+- **La prueba del usuario** en FBNeo: cruzar y ver si el HP baja 1 por frame
+  y si para al volver. Y que el rival NO pierda vida.
+- Si el veneno resulta muy rapido (60 de vida por segundo), bajarlo.
+
+## S-2024-10-22e: el veneno tambien para el P2 y el final sin vida
+
+### Lo que se pidio
+
+1. El veneno tambien para el **jugador 2** (el usuario va a quitar las
+   opciones de la CPU para que el juego sea P1 vs P2: asi que da igual que el
+   rival de la CPU sufra el veneno).
+2. Que **si el jugador se queda sin vida, vuelva al plano principal o muera**
+   (lo que sea mas facil).
+
+### Lo que se hizo
+
+- El veneno se aplica ahora a los **dos slots de los jugadores**: `$FF8400`
+  (P1) y `$FF8800` (P2). La rutina compara A5 con `$8400` y con `$8800`.
+- **Al quedarse sin vida hace LAS DOS COSAS**: se resta otro 1 (para que el HP
+  quede NEGATIVO, que es como el juego detecta el KO), se pone el **suelo a
+  320** (vuelve al plano principal) y el **estado a reposo** (`$5D = 0`), que
+  es el handler donde el juego mira el HP negativo (`$019CFC`) ⇒ **vuelve y
+  muere**.
+- Por lo de antes, el `cmpi.w` con un registro es el mismo codigo que ya
+  habia (**el usuario lo probo y funciona**), y el "HP = 0" se comprueba con
+  un `cmpi.w #$0, d0` (el mismo patron) en vez de un `tst.w`, que no se ha
+  podido verificar.
+
+### Lo que se sabe y lo que no
+
+El usuario probo la version 1 (solo el P1) y **funciona**: al cruzar le baja
+la vida y al volver deja de bajar. Eso confirma el `cmpi.w` con un registro
+en la 68000 real (Unicorn no lo puede ejecutar).
+
+Las ROMs:
+
+| fichero | SHA1 |
+|---|---|
+| `rom/cambios/22_china_VENENO_plano.bin` | `BBBB52C8B34AB458A5845889D43AC849E2BA82DD` |
+| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | `14508BD23941B02557F257ADA451AF19ED5C42BC` |
+
+## S-2024-10-22f: el veneno para todos y el final sin vida (v4)
+
+### Lo que pasó
+
+La v2 (el P2 con `cmpi.w #$8800,d0` y el HP = 0 con `cmpi.w #$0,d0`) **se rompio
+al cruzar el P1** (la pantalla se quedaba en negro) y **al P2 no le pasaba
+nada**. Las dos cosas tienen la misma causa:
+
+1. **El `cmpi.w` con un registro no es de fiar.** En la v2, el `cmpi.w #$0,d0`
+   (para comprobar si el HP llegaba a 0) disparaba el final sin vida **en cada
+   frame**: el personaje volvia al plano principal, se le forzaba el estado de
+   reposo y le bajaba 2 de vida por frame ⇒ en dos segundos estaba muerto ⇒
+   pantalla en negro. Volviendo al `tst.b` de la v1 (que el usuario ya habia
+   probado) se arregla.
+2. **El P2 no esta en `$FF8800`.** El material externo dice "P2, stride $C00" ⇒
+   el P2 esta en `$FF9000` (o `$FF8800` segun como se armo la partida). Por eso
+   la v4 **quita la comparacion de slot**: el veneno se aplica a cualquier
+   personaje en el plano de atras.
+
+### Lo que se hizo (v4)
+
+- El veneno se aplica a **cualquier personaje** (P1, P2 o el rival de la CPU).
+- Con 0 de vida hace **las dos cosas**: el suelo a 320 (**vuelve al plano
+  principal**) y el estado a reposo (`$5D = 0`), que es el handler donde el
+  juego mira el HP negativo (`$019CFC`) ⇒ **vuelve y muere**.
+- La comprobacion del HP = 0 es con `tst.b d0` (la de la v1, probada).
+
+### Las ROMs
+
+| fichero | SHA1 |
+|---|---|
+| `rom/cambios/22_china_VENENO_plano.bin` | `BBBB52C8B34AB458A5845889D43AC849E2BA82DD` |
+| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | `14508BD23941B02557F257ADA451AF19ED5C42BC` |
+
+> Con el veneno para todos, **en un 1v1 el rival de la CPU tambien se
+> envenena** (y se muere solo). Para probar el P2 hay que jugar P1 vs P2 (que
+> es lo que va a hacer el usuario: quitar las opciones de la CPU).

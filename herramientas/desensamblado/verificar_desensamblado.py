@@ -105,6 +105,7 @@ def main():
         "sin_cruce",       # lo mismo
         "sin_atajo_cruce",  # los btst de los botones C e Y (cambia el bit)
         "daño_al_cruzar",   # el bloque del aterrizaje llama a la rutina del dano
+        "veneno_plano",     # el bset del flag del plano -> un jsr.l al veneno
         "kage_proj",       # refactor del proyectil
         "rival_delante",   # las inicializaciones
         "kage_dur",        # duraciones a 0
