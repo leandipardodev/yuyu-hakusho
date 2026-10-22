@@ -1272,8 +1272,8 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 
 | fichero | que es | SHA1 |
 |---|---|---|
-| `rom/cambios/29_china_VENENO_P1_P2_muere.bin` | la **china** + `veneno_plano` (la **v8b**, el marcador de cadaver `$FC00`, con la escritura del HP corregida) | `BC355A7AF307C326B9284EAA6DA8640AEE1AE50F` |
-| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno **v8b** | `80818566B752053733BD46F56B515C9EA36AE49C` |
+| `rom/cambios/29_china_VENENO_P1_P2_muere.bin` | la **china** + `veneno_plano` (la **v8b**, el marcador de cadaver `$FC00`, con la escritura del HP corregida) | `FE4348D17C61727F508626883DCF5CE9D9F18217` |
+| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno **v8b** | `96C2771175C94C35BA7252CCE23E86E88F44F2BF` |
 | `rom/cambios/28_china_VENENO_P1_P2_muere.bin` | la v7 (HP -1 + estado de reposo: **no muere, la ronda no acaba**) | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
 | `rom/cambios/27_china_VENENO_P1_P2.bin` | la v6 (el veneno sin el final sin vida) | `068F02B61D3981FCD84C718F270C75169179CF3E` |
 | `rom/cambios/24_china_VENENO_P1_referencia.bin` | la **v1** (solo P1), la que se probo primero | `7385066ADA220E0CED09EDAACCC2F2C3BB2059A3` |
@@ -1294,7 +1294,8 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 | v6 | el veneno de la v1 para todos los slots, sin el final sin vida | **funciona para el P1 y el P2** |
 | v7 | la v6 + el estado de reposo al llegar a 0 (sin tocar el suelo) | **NO muere**: el HP queda en -1 y la ronda no acaba (el escape: el `$F88C` sigue contandolo como vivo) |
 | v8 | el marcador de cadaver `$FC00` al llegar a 0 o menos | **se tildaba al cruzar**: la escritura del HP estaba mal codificada (`30 5D` no era `move.w d0,$78(a5)`) |
-| **v8b (esta)** | la v8 con la escritura corregida (`3B40 0078`, validada con capstone) | SEA LO QUE SEA: la secuencia de KO arranca sola |
+| v8b | el fix de la v8, PERO arreglando solo UN byte: quedo `3B 5D` = `move.w (a5)+, $78(a5)` (el puntero `a5` avanzaba 2 bytes por frame: OTRO tildo) | tildado igual |
+| **v8c (esta)** | los 28 bytes regenerados COMPLETOS desde el hex final y validados con capstone EN EL MISMO script (sin editar bytes sueltos a mano) | SEA LO QUE SEA: la secuencia de KO arranca sola |
 
 ### Que esta verificado y que no
 

@@ -869,3 +869,5 @@ bits 5-3 + reg en bits 2-0; para `move.w d0, $78(a5)` da `3B40 0078`.
 
 **Regla nueva para las skills**: instruccion escrita a mano = CAPSTONE OBLIGATORIO
 antes de meterla en el parche.
+
+**EL APENDICE del S-2024-10-22i: la v8b tambien tildaba.** El fix de la v8 arreglo SOLO el byte de $1A06FA (30 -> 3B) y me olvide del siguiente: quedo 3B 5D, que capstone decodifica `move.w (a5)+, $78(a5)` — copia (a5)+ al HP y AVANZA el puntero a5 2 bytes por frame. Mismo tildo, distinta instruccion mala. La v8c regenera los 28 bytes COMPLETOS desde el hex final y los valida con capstone dentro del MISMO script (error de letra imposible por construccion). Regla ampliada: NUNCA editar bytes sueltos de un payload, SIEMPRE regenerar el bloque completo. ROMs: 29 = FE4348D1..., 23 = 96C27711...
