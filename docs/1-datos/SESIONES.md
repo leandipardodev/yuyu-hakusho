@@ -553,3 +553,29 @@ justamente lo que hay que quitar, habria que desactivarlo solo en combate.
 personaje** (16 entradas, indexadas por la direccion, son las de los
 mandos) y la de **estados** (`$15a68`, indexada por `$5D`). Los atajos de
 mando estan en las por personaje, no en la global.
+
+
+<a name="s-2024-10-21k"></a>
+
+## S-2024-10-21k: la ROM es la CHINA, y el parche va en el input
+
+**Aclaracion importante del usuario:** *"en la version china no [sale el
+pantallazo rojo] pero en la china si se puede cruzar enfrente (cosa que no
+quiero). O sea: la inglesa no anda, la china se puede cruzar enfrente"*.
+
+O sea: **la ROM que se juega es la traduccion CHINA** (la inglesa no le
+arranca), y el objetivo es quitarle el cruce.
+
+**La china estaba en `temp/opencode/control.bin`** (y `fin.bin`, que es
+identica). Se ha copiado a
+`rom/original/yuu yuu hakusho - makyou toitsusen (chinese).bin`.
+
+**El parche de los atajos APLICA PERFECTAMENTE A LA CHINA** (los bytes
+"old" coinciden): el codigo esta en las mismas direcciones, lo unico que
+cambia son los textos.
+
+**Se entregan dos variantes de cada ROM** (con y sin reescribir el
+checksum de la cabecera) porque **no se ha podido confirmar que la suma
+que hace el parcheador sea la formula del juego**: el valor fijo de
+`$004318` es `$227C` en todas las ROMs y no es ni la suma ni el "cifrado
+por bloques" del Mega Drive.

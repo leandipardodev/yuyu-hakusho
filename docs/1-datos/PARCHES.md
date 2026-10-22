@@ -1282,3 +1282,39 @@ estado de la ronda.
 | `rom/cambios/18_sin_atajos_de_cruce_ingles.bin` | **la del usuario** (`rom/original/`) | 26 (+2) | `$BB90` |
 | `rom/cambios/18_sin_atajos_de_cruce.bin` | la base del proyecto | 26 (+2) | `$30BC` |
 | `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la base + todos los cambios | 105 | `$229D` |
+
+### La ROM china (la que se juega) y la inglesa (que no anda)
+
+El usuario juega con la **traduccion china**; la inglesa **no le arranca**
+(con o sin parche). Las dos tienen **el mismo codigo** (las direcciones de
+la tabla de comandos, del handler del cruce y de los atajos son las
+mismas); lo que cambia son los **textos** (113 KB en la inglesa frente a
+22 160 caracteres CJK en la china).
+
+**La china esta en `rom/original/`** (copiada de
+`temp/opencode/control.bin`):
+
+| Fichero | Que es |
+|---|---|
+| `rom/original/yuu yuu hakusho - makyou toitsusen (chinese).bin` | **la china** (checksum $5E4B) |
+| `rom/original/yuu yuu hakusho - makyou toitsusen (english translation).bin` | la inglesa (checksum $BE4F) |
+
+**El parche de los atajos aplica igual a las dos** (45 bytes, los bytes
+"old" coinciden).
+
+| ROM | Que es | Bytes | Checksum |
+|---|---|---|---|
+| `rom/cambios/19A_china_atajos_SIN_checksum.bin` | **la china + el parche**, sin tocar el checksum | 24 | `$5E4B` (el original) |
+| `rom/cambios/19B_china_atajos_CON_checksum.bin` | **la china + el parche** + el checksum reescrito | 26 | `$5B8C` |
+| `rom/cambios/18A_ingles_ORIGINAL_sin_tocar.bin` | la inglesa tal cual (control) | 0 | `$BE4F` |
+| `rom/cambios/18B_ingles_atajos_SIN_checksum.bin` | la inglesa + el parche, sin tocar el checksum | 24 | `$BE4F` |
+| `rom/cambios/18C_ingles_atajos_CON_checksum.bin` | la inglesa + el parche + el checksum | 26 | `$BE90` |
+
+**OJO con el checksum de la cabecera:** el parcheador lo reescribe con la
+suma de los datos desde `$200` hasta el final del fichero (3 MB). Esa suma
+**coincide con el valor de la cabecera** en las ROMs sin modificar, pero no
+se ha podido confirmar que sea la formula que usa el juego (el valor fijo
+de `$004318` es `$227C` en todas las ROMs, y **no** es ni la suma ni el
+"cifrado por bloques" del Mega Drive). Por eso se hacen **las dos
+variantes** (con y sin reescribir el checksum) de cada ROM: para saber si
+el problema es el checksum o el cambio.

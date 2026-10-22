@@ -1689,3 +1689,19 @@ El cruce de plano de verdad es el **estado `$0A` + el frame id `$0F`** y lo
 lanza `$01873A` (`move.b #$a, $5d(a5)`), que solo se alcanza desde la
 tabla global (entradas +80/+89). **La intro lo usa**: si se neutraliza
 (`$01873D`: `#$a` -> `#$0`), **la ROM arranca rota** (pantalla roja).
+
+### LA ROM QUE SE JUEGA ES LA CHINA (la inglesa no arranca)
+El usuario juega con la **traduccion china** (`rom/original/...chinese.bin`,
+checksum $5E4B). La **inglesa** (`...english translation.bin`, $BE4F) **no
+arranca**. Las dos comparten el **mismo codigo** (las direcciones de los
+handlers, de las tablas de comandos y de los atajos son identicas); solo
+cambian los textos.
+
+**Y EL **CHECKSUM **DE **LA **CABECERA** (¡el **proyecto **lo **reescribe**):
+la **suma **desde **$200 **hasta **el **fin **del **fichero** (3 **MB**) **coincide
+con **el **valor **de **la **cabecera** en **las **ROMs **sin **modificar**, pero
+**no **se **ha **podido **confirmar **que **sea **la **formula **del **juego**
+(el **valor **fijo **de **$004318** es **$227C** en **todas **las **ROMs** y **no
+es **ni **la **suma **ni **el **"cifrado **por **bloques"**). **Por **eso **se
+entregan **variantes **con **y **sin **reescribir **el **checksum** (¡el **patcher
+tiene **la **opcion **`--sin-checksum`**!)**.
