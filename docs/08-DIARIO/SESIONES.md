@@ -667,7 +667,7 @@ Lo que SI se ha ejecutado con Unicorn: la rutina del veneno (HP 223->222,
 
 | fichero | SHA1 |
 |---|---|
-| `rom/cambios/22_china_VENENO_plano.bin` | `BBBB52C8B34AB458A5845889D43AC849E2BA82DD` |
+| `rom/cambios/22_china_VENENO_plano.bin` | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
 | `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | `14508BD23941B02557F257ADA451AF19ED5C42BC` |
 
 Las dos con el verificador de desensamblado: **OK**.
@@ -712,7 +712,7 @@ Las ROMs:
 
 | fichero | SHA1 |
 |---|---|
-| `rom/cambios/22_china_VENENO_plano.bin` | `BBBB52C8B34AB458A5845889D43AC849E2BA82DD` |
+| `rom/cambios/22_china_VENENO_plano.bin` | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
 | `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | `14508BD23941B02557F257ADA451AF19ED5C42BC` |
 
 ## S-2024-10-22f: el veneno para todos y el final sin vida (v4)
@@ -746,9 +746,48 @@ nada**. Las dos cosas tienen la misma causa:
 
 | fichero | SHA1 |
 |---|---|
-| `rom/cambios/22_china_VENENO_plano.bin` | `BBBB52C8B34AB458A5845889D43AC849E2BA82DD` |
+| `rom/cambios/22_china_VENENO_plano.bin` | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
 | `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | `14508BD23941B02557F257ADA451AF19ED5C42BC` |
 
 > Con el veneno para todos, **en un 1v1 el rival de la CPU tambien se
 > envenena** (y se muere solo). Para probar el P2 hay que jugar P1 vs P2 (que
 > es lo que va a hacer el usuario: quitar las opciones de la CPU).
+
+## S-2024-10-22g: el veneno v7 (mueren al quedarse sin vida)
+
+### Lo que se pidio
+
+El usuario probo la v6 (`27_china_VENENO_P1_P2.bin`) y **funciona: le resta
+vida al P1 y al P2**. Pidio que, al quedarse con 0 de vida, murieran (opcion 1)
+u obliga a volver al plano principal (opcion 2), y que se implemente la mas
+facil.
+
+### Lo que se hizo (v7)
+
+**Opcion 1 (los mata), que es la mas facil**: cuando el HP llega a 0 se resta
+otro 1 (para que quede NEGATIVO, que es como el juego detecta el KO) y se
+fuerza el **estado de reposo** (`$5D = 0`), que es el handler donde el juego
+mira el HP negativo (`$019CFC`) ⇒ **mueren en el acto, donde estén**.
+
+**NO se toca el suelo.** La v5 (que ademas ponia el suelo a 320 para
+devolverles al plano principal) rompia la partida al cruzar: el suelo a 320 es
+lo que rompia (el motor ve un suelo incoherente con el sprite).
+
+### El camino que dejo claro dos cosas
+
+- El **`cmpi.w` con un registro** no es de fiar (Unicorn no lo puede ejecutar
+  y en el juego no se comporta como deberia): el "HP = 0" se comprueba con un
+  `tst.b`.
+- El **slot del P2** no es `$FF8800` (el material externo dice "P2, stride
+  `$C00`" ⇒ `$FF9000`): por eso la v6 aplica el veneno a cualquier slot.
+
+### El Lua
+
+`herramientas/lua/sonda_slots.lua` (nuevo): escanea la RAM y encuentra los
+personajes con vida, dice el slot de cada uno y su A5 (= el HP - `$78`),
+avisa de quien sufre el veneno y tiene un modo `hp1` que deja a un personaje
+con 1 de vida para probar el final sin vida.
+
+### La ROM
+
+`rom/cambios/28_china_VENENO_P1_P2_muere.bin` (SHA1 `688A9A09...`).

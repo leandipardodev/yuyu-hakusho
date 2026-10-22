@@ -1160,17 +1160,18 @@ le falta el grupo `un_plano` (el que desactiva el cruce de planos).
 | `rom/cambios/20_china_UNIFICADA.bin` | la china + todo el proyecto | 57 | `$9733` |
 | `rom/cambios/19_sin_atajos_de_cruce.bin` | la base del proyecto + los 23 bytes | 23 | — |
 | `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la unificada del proyecto | 84 | `$DD4A` |
-## EL VENENO DEL PLANO (grupo `veneno_plano`, 58 bytes)
+## EL VENENO DEL PLANO (grupo `veneno_plano`, 50 bytes)
 
 **Cruzar al otro plano ENVENENA al personaje: el HP baja 1 por frame (60 por
 segundo) mientras esta en el plano de atras, y deja de bajar en cuanto vuelve
 al plano principal.** No es un golpe: es un veneno, el dano es continuo.
 
-**Si se queda sin vida, vuelve al plano principal Y muere.**
+**Si se queda sin vida, MUERE en el acto** (el HP queda negativo y se le
+fuerza el estado de reposo, que es donde el juego mira el HP negativo).
 
-**Se aplica a CUALQUIER personaje** (P1, P2 o el rival): da igual en que slot
-este, porque **el slot del P2 no siempre es el mismo** (`$FF8800` desde el
-select, `$FF9000` con un savestate, stride `$C00`).
+**Le afecta a cualquier personaje** (P1, P2 o el rival): el slot del P2 no
+siempre es el mismo (`$FF8800` desde el select, `$FF9000` con un savestate,
+stride `$C00`).
 
 ### Donde esta enganchado
 
@@ -1192,16 +1193,16 @@ eso el veneno **empieza al aterrizar** y **para al volver** al plano principal.
 $015BF6  bset.b  #$1, $a042.w      ; el original: poner el bit 1 del flag
 ```
 
-se sustituye por un `jsr.l` a una rutina nueva en el **hueco libre `$1A0720`**
+se sustituye por un `jsr.l` a una rutina nueva en el **hueco libre `$1A0710`**
 (14 bytes) que hace lo mismo que el bset **y ademas aplica el veneno**:
 
 ```asm
-$1A0720  bset.b  #$1, $a042.w      ; el flag: el plano de atras      (6)
-$1A0726  jsr.l   $1A06F0           ; EL VENENO                        (6)
-$1A072C  rts                                                        (2)
+$1A0710  bset.b  #$1, $a042.w      ; el flag: el plano de atras      (6)
+$1A0716  jsr.l   $1A06F0           ; EL VENENO                        (6)
+$1A071C  rts                                                        (2)
 ```
 
-### El veneno (38 bytes en `$1A06F0`)
+### El veneno (30 bytes en `$1A06F0`)
 
 ```asm
 $1A06F0  move.l  d0, -(a7)         ; guardar d0                    (2)
@@ -1209,12 +1210,11 @@ $1A06F2  moveq   #$1, d1           ; el 1 a restar                  (2)
 $1A06F4  sub.w   d1, $78(a5)       ; el HP - 1                      (4)
 $1A06F8  move.w  $78(a5), d0       ; el HP nuevo                    (4)
 $1A06FC  tst.b   d0                ; ¿el HP = 0?                    (2)
-$1A06FE  bne.b   $1A0714           ; no: salir                      (2)
+$1A06FE  bne.b   $1A070A           ; no: salir                      (2)
 $1A0700  sub.w   d1, $78(a5)       ; -1 mas: que quede NEGATIVO     (4)
-$1A0704  move.l  #$1400000, $9c(a5); el suelo = 320: VUELVE al      (8)
-$1A070C  move.b  #$00, $5d(a5)     ; plano principal y al estado    (6)
-$1A0712  move.l  (a7)+, d0         ; de reposo                      (2)
-$1A0714  rts                                                        (2)
+$1A0704  move.b  #$00, $5d(a5)     ; el estado = reposo: el juego    (6)
+$1A070A  move.l  (a7)+, d0         ; ve el HP negativo y hace el KO  (2)
+$1A070C  rts                                                        (2)
 ```
 
 **Cuando el HP llega a 0**:
@@ -1222,19 +1222,22 @@ $1A0714  rts                                                        (2)
    KO con el HP negativo (`btst.b #$7, $78(a5)` en `$019CFC`, el handler del
    estado `$00`). Si el HP quedara en 0 en este punto nadie lo vigilaria, la
    ronda no acabaria y **el juego se colgaria**.
-2. El **suelo pasa a 320**: el personaje **vuelve al plano principal**.
-3. El **estado pasa a reposo** (`$5D = 0`): el siguiente frame se ejecuta el
+2. El **estado pasa a reposo** (`$5D = 0`): el siguiente frame se ejecuta el
    handler del estado `$00`, que es donde el juego mira el HP negativo ⇒
    **muere**.
 
-O sea: se queda sin vida, **vuelve al plano principal y muere**.
+> **NO se toca el suelo.** La version 5, que ademas ponia el suelo a 320 para
+> devolverle al plano principal, **ROMPIA LA PARTIDA al cruzar**. El suelo se
+> queda como esta: mueren donde están.
 
 ### Las ROMs
 
 | fichero | que es | SHA1 |
 |---|---|---|
-| `rom/cambios/22_china_VENENO_plano.bin` | la **china** + `veneno_plano` | `BBBB52C8B34AB458A5845889D43AC849E2BA82DD` |
-| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno | `14508BD23941B02557F257ADA451AF19ED5C42BC` |
+| `rom/cambios/28_china_VENENO_P1_P2_muere.bin` | la **china** + `veneno_plano` (la v7) | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
+| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno | `DDAF080340730AE595804A08FEE0BB3CDC52F50B` |
+| `rom/cambios/27_china_VENENO_P1_P2.bin` | la v6 (el veneno sin el final sin vida) | `068F02B61D3981FCD84C718F270C75169179CF3E` |
+| `rom/cambios/24_china_VENENO_P1_referencia.bin` | la **v1** (solo P1), la que se probo primero | `7385066ADA220E0CED09EDAACCC2F2C3BB2059A3` |
 
 > **OJO: `veneno_plano` y `un_plano` son excluyentes en la practica.** Con
 > `un_plano` el suelo nunca es 304 (no hay dos planos) y el veneno no se
@@ -1245,23 +1248,20 @@ O sea: se queda sin vida, **vuelve al plano principal y muere**.
 
 | version | que cambiba | que pasó |
 |---|---|---|
-| **v1** | el veneno solo para el P1 (`cmpi.w #$8400,d0`), el HP = 0 con `tst.b` | **el usuario la probo y FUNCIONA** |
-| v2 | el HP = 0 con `cmpi.w #$0,d0` y el P2 en `$FF8800` | **se rompia al cruzar el P1 (pantalla en negro)**: el `cmpi.w` con un registro no compara el word como se espera y disparaba el final sin vida en cada frame. Y el P2 no suffering nada: **su slot no es `$FF8800`** |
-| **v4 (esta)** | vuelta al `tst.b` y **sin comparar el slot** (el veneno es para todos) | |
+| **v1** | el veneno solo para el P1 (`cmpi.w #$8400,d0`) | **funciona** |
+| v2 | el HP = 0 con `cmpi.w #$0,d0` y el P2 en `$FF8800` | **se rompia al cruzar el P1**: el `cmpi.w` con un registro no compara el word como se espera y disparaba el final sin vida en cada frame. Y el P2 no suffering nada: **su slot no es `$FF8800`** |
+| v4 | veneno para todos (sin comparar el slot) | se rompia: **el rival de la CPU esta en el plano de atras desde el principio** y se envenenaba solo |
+| v5 | + el final sin vida (suelo a 320 y estado de reposo) | se rompia: **el suelo a 320** es lo que rompia la partida |
+| v6 | el veneno de la v1 para todos los slots, sin el final sin vida | **funciona para el P1 y el P2** |
+| **v7 (esta)** | la v6 + el estado de reposo al llegar a 0 (sin tocar el suelo) | **mueren en el acto** |
 
 ### Que esta verificado y que no
 
 | | |
 |---|---|
-| la rutina del veneno (HP 223->222, 5->4, 2->1, **1->-1**) | **EJECUTADO** con Unicorn |
-| el `move.l a5,d0` | **EJECUTADO** con Unicorn |
-| el veneno en si (baja al cruzar, para al volver) | **PROBADO POR EL USUARIO** (v1) |
+| el veneno (HP - 1 por frame) | **PROBADO POR EL USUARIO** (v6: le resta vida al P1 y al P2) |
+| el final sin vida (HP a -1 y el estado a reposo) | **EJECUTADO** con Unicorn: con el HP a 1 queda en **-1** y el estado en `$00`, y el suelo no se toca |
 | el resto | el verificador de desensamblado: **OK** |
-
-**OJO con una cosa: el `cmpi.w` con un registro no es de fiar** (el Unicorn no
-lo puede ejecutar y en el juego no se comporta como deberia). Por eso la v4
-no lo usa: el HP = 0 se comprueba con un `tst.b` (que compara el byte bajo del
-HP: con el HP entre 0 y 223 solo da 0 cuando el HP es 0 de verdad).
 
 ### Si el veneno es muy rapido
 
