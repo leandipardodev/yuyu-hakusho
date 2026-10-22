@@ -46,6 +46,19 @@ Lo que **sí** está en el repo: la documentación (por áreas), el manifiesto d
 parches (`datos/parches.json`), las recetas (`datos/recetas.json`) y las
 herramientas (el desensamblado, las sondas de Lua y los verificadores).
 
+
+---
+
+## Este repo es PRIVADO
+
+Por los derechos de autor del juego (Treasure / Toei Animation / Shueisha).
+Aunque el `.gitignore` ya deja fuera `rom/` (los dumps y las ROMs parcheadas),
+en `assets/imagenes/` hay volcados de la VRAM/CRAM y capturas del juego, que
+también son material protegido. **No lo publiques sin revisar eso.**
+
+Si algún día hay que hacerlo publico: sacar `assets/` y `datos/*.asm` (los
+volcados), y revisar los `.md` (llevan fragmentos del volcado del juego).
+
 ## 1. Por dónde empezar
 
 **Si vienes de fuera y no conoces el proyecto:**
