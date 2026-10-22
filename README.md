@@ -10,20 +10,33 @@ nunca suposiciones.
 
 ---
 
+## 0. Comprobar que la documentación es verdad
+
+```bash
+python herramientas/docs/verificar_docs.py
+```
+
+Compara **cada dirección citada en los documentos** contra la ROM base real y
+avisa de los enlaces rotos y de las **contradicciones** (el doc afirma una
+instrucción y en esa dirección hay otra). Hay que correrlo después de tocar
+cualquier documento con direcciones.
+
+---
+
 ## 1. Por dónde empezar
 
 **Si vienes de fuera y no conoces el proyecto:**
 
 | Lee esto | Y sabrás |
 |---|---|
-| **`docs/0-INDICE.md`** | **el mapa de todo**: qué hay, de dónde sale cada cosa, qué falta |
-| **`docs/1-datos/DIRECCIONES.md`** | **todas las direcciones** del juego en una sola tabla, con su fuente |
-| **`docs/1-datos/DATOS_VERIFICADOS.md`** | la fuente de verdad: todo lo verificado, con su dirección |
-| **`MEMORIA.md`** | la memoria del proyecto: ~140 trampas (errores ya detectados y por qué) |
-| **`docs/1-datos/PARCHES.md`** | los parches de ROM, con el porqué de cada byte |
+| **`docs/00-GUIA/INDICE.md`** | **el mapa de todo**: qué hay, de dónde sale cada cosa, qué falta |
+| **`docs/04-DATOS/DIRECCIONES.md`** | **todas las direcciones** del juego en una sola tabla, con su fuente |
+| **`docs/00-GUIA/VERIFICACION.md`** | el sistema de certeza: cómo se marca lo que no está confirmado |
+| **`docs/00-GUIA/TRAMPAS.md`** | la memoria del proyecto: las trampas (errores ya detectados y por qué) |
+| **`docs/05-PARCHES/PARCHES.md`** | los parches de ROM, con el porqué de cada byte |
 
 **Si quieres tocar la ROM:**
-`docs/1-datos/PARCHES.md` → `datos/parches.json` → `herramientas/desensamblado/patch_rom.py`
+`docs/05-PARCHES/PARCHES.md` → `datos/parches.json` → `herramientas/desensamblado/patch_rom.py`
 
 **Si quieres entender el juego:**
 `notas/GENERAL/SISTEMAS.txt` (las reglas, se lee entero) y
@@ -36,23 +49,23 @@ nunca suposiciones.
 ```
 yuyu-hakusho/
 ├── README.md                     <- este fichero
-├── MEMORIA.md                    <- la memoria del proyecto. LEER ANTES DE TOCAR NADA
+│   (la memoria del proyecto ahora vive en docs/00-GUIA/ y docs/08-DIARIO/)
 ├── .rom_path                     <- dónde está la ROM en ESTA máquina (no se comparte)
 │
-├── docs/
-│   ├── 0-INDICE.md               <- EL MAPA: qué hay y de dónde sale
-│   ├── 1-datos/                  <- los datos del juego
-│   │   ├── DIRECCIONES.md        ← ★ TODAS las direcciones, en una tabla
-│   │   ├── DATOS_VERIFICADOS.md  ← ★ la fuente de verdad
-│   │   ├── PARCHES.md            ← ★ los parches, con el porqué de cada byte
-│   │   ├── COLISIONES_Y_HITBOXES.md
-│   │   ├── FISICAS_Y_MOVIMIENTO.md
-│   │   ├── TABLAS_MOVES_Y_TIMING.md
-│   │   ├── VARIACION_DANOS_HITPAUSE_KNOCKDOWN.md
-│   │   └── DATOS_NUEVOS_2026-10-20.md
-│   ├── 2-personajes/             <- las fichas de los 11 personajes
-│   ├── 3-investigacion/          <- informes, fuentes web y errores
-│   └── 4-emulador/               <- cómo funciona el emulador propio
+├── docs/                         <- LA DOCUMENTACION, por areas
+│   ├── 00-GUIA/                  <- el indice, como trabajar, las trampas, la certeza
+│   │   ├── INDICE.md             ← ★ EL MAPA: qué hay y de dónde sale
+│   │   ├── COMO-TRABAJAR.md      ← ★ las reglas de trabajo
+│   │   ├── TRAMPAS.md            ← ★ las trampas (no volver a caer)
+│   │   └── VERIFICACION.md       ← ★ el sistema de certeza
+│   ├── 01-MOTOR/                 <- la arquitectura: hardware, entrada, PLANOS, emuladores
+│   ├── 02-COMBATE/               <- vida, mana, stun, dano, hitpause, KO
+│   ├── 03-PERSONAJES/            <- las fichas de los 11 personajes y sus tecnicas
+│   ├── 04-DATOS/                 <- las tablas y las direcciones (la tabla maestra)
+│   ├── 05-PARCHES/               <- los parches, con el por que de cada byte
+│   ├── 06-HERRAMIENTAS/          <- el desensamblado, las sondas, los verificadores
+│   ├── 07-INVESTIGACION/         <- informes, fuentes externas y errores
+│   └── 08-DIARIO/                <- la bitacora por sesion, la memoria y lo pendiente
 │
 ├── rom/
 │   ├── LEEME.md                  <- el índice de las ROM: qué hay y qué hace cada una
@@ -190,7 +203,7 @@ variable de entorno `YUYU_ROM`. Ver `herramientas/desensamblado/ruta_rom.py`.
 
 ## 5. Las reglas del proyecto
 
-Están todas en `MEMORIA.md`, pero estas son las que más importan:
+Están todas en `docs/00-GUIA/TRAMPAS.md`, pero estas son las que más importan:
 
 1. **`DATOS_VERIFICADOS.md` es la única fuente de verdad.** Lo que no esté ahí,
    no está verificado.
@@ -219,7 +232,7 @@ Están todas en `MEMORIA.md`, pero estas son las que más importan:
 **Lo que NO se sabe todavía:** el frame data exacto de cada golpe, el
 blockstun, el emparejamiento id de move ↔ nombre, y el slot del jugador 2.
 
-Todo eso está detallado en `docs/1-datos/DIRECCIONES.md` §9.
+Todo eso está detallado en `docs/04-DATOS/DIRECCIONES.md` §9.
 
 ---
 
