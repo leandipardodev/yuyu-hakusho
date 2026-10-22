@@ -173,7 +173,9 @@ local function escanea_la_ram()
   end
   if #con_datos == 0 then
     print("    >>> NO SE VE LA RAM DEL Z80 por ninguna via: la bandera del plano")
-    print("        no se puede leer desde el Lua (habria que mirar el codigo).")
+    print("        ($A042) NO se puede leer desde el Lua. Da igual: el plano")
+    print("        tambien se deduce del suelo ($9c) y de la escala ($3e),")
+    print("        que son de la RAM de la 68000. Usa la deteccion de SALTOS.")
   end
 end
 
@@ -316,6 +318,30 @@ local function cada_frame()
     memory.writebyte(P1 + OFF_HP + 1, 1)
   end
 
+  -- el estado del frame anterior, para detectar los saltos
+  for s = 1, 4 do
+    ultimo_est[s] = estado(s)
+  end
+
+  -- 2b) la DETECCION DE SALTOS: un salto de la escala o del suelo en un
+  --     solo frame es el '2 cuerpos por detras' (el sprite salta de tamano)
+  for s = 1, 4 do
+    local e = estado(s)
+    local prev = ultimo_est[s]
+    if prev ~= nil then
+      local dsuelo = e.suelo - prev.suelo
+      local desc = e.esc - prev.esc
+      local d26 = e.off26 - prev.off26
+      if math.abs(desc) >= 4 or math.abs(d26) >= 16 or math.abs(dsuelo) >= 2 then
+        print(string.format(
+          "[f %5d] *** SALTO en el slot %d: suelo %.2f -> %.2f (%+.2f) | escala %d -> %d (%+d) | $26 $%02X -> $%02X (%+d)   <<< el '2 CUERPOS'",
+          tick, s, prev.suelo, e.suelo, dsuelo, prev.esc, e.esc, desc,
+          prev.off26, e.off26, d26))
+        nlineas = nlineas + 1
+      end
+    end
+  end
+
   -- 3) los cambios de estado de los jugadores
   for s = 1, 4 do
     local e = estado(s)
@@ -326,7 +352,6 @@ local function cada_frame()
         print(string.format("[f %5d] slot %d: %s", tick, s, linea_estado(e)))
         nlineas = nlineas + 1
       end
-      ultimo_est[s] = e
     end
   end
 
