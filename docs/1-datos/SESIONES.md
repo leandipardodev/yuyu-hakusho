@@ -304,3 +304,38 @@ natural es cambiar **el byte bajo** del inmediato (el numero de bit, en
 `salto - 3`) a `$07` **solo en los `btst` que lanzan el cruce**, sin tocar
 los del bit 6 (los ataques). Falta saber cual es exactamente el move del
 cruce: lo dice la sonda.
+
+<a name="s-2024-10-21o"></a>
+
+## S-2024-10-21o: el "2 cuerpos por detras" de Sensui (el `bra` no salta nunca)
+
+**Sintoma del usuario:** *"1 frame de sensui al caminar sale mal, como que
+aparecen 2 cuerpos por detras de el, es solo un frame"* y *"empezo a ocurrir
+luego de algun cambio tuyo"*.
+
+**La causa:** el grupo `un_plano` (el que desactiva el cruce de planos)
+neutralizaba los TRES bloques del cruce **cambiando el `bne.b` por un
+`bra.b`**. Y un `bra` **no salta nunca**: al cambiarlo, el bloque dejo de
+saltarse y **se ejecutaba siempre**, con cualquier move. Al pasar el
+personaje 1 frame por el estado `$0A` (pasa al cambiar de animacion,
+tambien al caminar), el juego ponia **el flag del plano de atras**
+(`$A042`) y **el suelo en 304** (`move.l #$1300000, $9c(a5)`) con la escala
+`$d8`: el personaje se dibujaba en el otro plano y se veian **2 cuerpos por
+detras**.
+
+**El fix:** anular la **condicion**, no el salto: el inmediato del
+`cmpi.b #$f, $5f(a5)` pasa a `$ff` en `$019E0B`, `$019E89` y `$019ECF`. La
+comparacion nunca es igual, el `bne.b` salta siempre y el bloque no se
+ejecuta nunca. **El salto no se toca.** El grupo `sin_cruce` tenia el mismo
+error y se ha arreglado igual (`$019E89` y `$019F4D`).
+
+**Ademas:** al construir las ROMs se perdio la ROM china de
+`rom/original/`. Se ha|Sportado: **la base del proyecto ES la china** (la
+de `$BE4F` es la inglesa, que no arranca) y se ha vuelto a dejar una copia
+en `rom/original/` y otra en
+`C:\Users\leand\AppData\Local\Temp\opencode\CHINA_ORIGINAL.bin`. Se ha
+generado `21_china_UNIFICADA_sin_un_plano.bin` (todo menos `un_plano`) para
+el biseccion.
+
+**Pendiente del usuario:** probar la unificada con el fix (el "2 cuerpos"
+debe desaparecer) y, si sigue, la `21` (sin `un_plano`) para el biseccion.

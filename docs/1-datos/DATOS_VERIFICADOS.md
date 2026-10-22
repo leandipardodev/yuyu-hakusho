@@ -3457,3 +3457,68 @@ del bloque del cruce.
 3. Cuando detecta el cruce (el estado `$0A`, los moves `$0F`/`$10`/`$AA`/
    `$A8` o un cambio del suelo `$9C`) **vuelca el historial**: asi se ve
    que boton habia pulsado en el frame que lo lanzo.
+
+## EL BUG DE LOS "2 CUERPOS POR DETRAS" (1 frame): el `bra` NO SALTA NUNCA
+
+**Sintoma (usuario):** *"1 frame de sensui al caminar sale mal, como que aparecen
+2 cuerpos por detras de el, es solo un frame"*. Empezo a ocurrir con un cambio
+nuestro.
+
+**La causa: el grupo `un_plano` neutralizaba los bloques del cruce
+CAMBIANDO EL SALTO, y eso hacia lo CONTRARIO de lo que se queria.**
+
+| | original | parche viejo (mal) | parche nuevo (bien) |
+|---|---|---|---|
+| `$019E08` | `cmpi.b #$f, $5f(a5)` | `cmpi.b #$f, $5f(a5)` | `cmpi.b #$ff, $5f(a5)` |
+| `$019E0E` | `bne.b $19e28` | **`bra.b $19e28`** | `bne.b $19e28` (igual) |
+| bloque `$019E10` | `bset.b #$1, $a042.w` + `subi.l #$a800, $9c(a5)` + escala | **SE EJECUTA SIEMPRE** | no se ejecuta nunca |
+| `$019E86` | `cmpi.b #$f, $5f(a5)` | igual | `cmpi.b #$ff, $5f(a5)` |
+| `$019E8C` | `bne.b $19ea2` | **`bra.b $19ea2`** | `bne.b $19ea2` (igual) |
+| bloque `$019E8E` | `move.l #$1300000, $9c(a5)` (suelo = **304**) + escala `$d8` | **SE EJECUTA SIEMPRE** | no se ejecuta nunca |
+
+**El error conceptual:** `bne.b $19e28` significa "si el move **NO** es
+`$0F`, salta por encima del bloque". Al cambiarlo por `bra.b $19e28` el
+bloque **dejo de saltarse**: ahora se ejecutaba **siempre**, con cualquier
+move y en cualquier frame en que el personaje pasara por el estado `$0A`
+(que ocurre 1 frame al cambiar de animacion, tambien al caminar). Entonces
+el juego ponia **el flag del plano de atras** (`bset.b #$1, $a042.w`) y el
+**suelo en 304** (`move.l #$1300000, $9c(a5)`), con la escala `$d8` (216):
+el personaje se dibujaba **en el otro plano** -> se veian **2 cuerpos por
+detras durante 1 frame**.
+
+**El fix:** anular la **CONDICION** en vez del salto: el inmediato del
+`cmpi.b #$f, $5f(a5)` pasa a `$ff`. La comparacion nunca es igual, el
+`bne.b` salta **siempre** y el bloque **no se ejecuta nunca**. **El salto no
+se toca.** Los bytes:
+
+| byte | de | a | que hace |
+|---|---|---|---|
+| `$019E0B` | `$0F` | `$FF` | anula el bloque `$019E10-$019E27` (el flag del plano de atras + el suelo -40 px + la escala) |
+| `$019E89` | `$0F` | `$FF` | anula el bloque `$019E8E-$019E9C` (el suelo = 304 + la escala `$d8`) |
+| `$019ECF` | `$0F` | `$FF` | anula el bloque `$019ED4-$019EEA` (el flag + el suelo -20 px + la escala) |
+
+**El grupo `sin_cruce` tenia el MISMO error** (`bne` -> `bra` en `$019E8C` y
+`$019F50`): arreglado igual, cambiando los inmediatos `$019E89` y `$019F4D`
+a `$ff` (aqui NO se toca `$019E0B`, porque ese grupo si quiere que el
+jugador baje de plano).
+
+**REGLA (para no repetirlo):** para neutralizar un bloque condicional hay
+que anular la **condicion** (el inmediato del `cmpi`/`btst`), **nunca**
+convertir el salto condicional en uno incondicional. Un `bra` no salta nunca:
+cambiar `bne` por `bra` no neutraliza el bloque, lo hace SIEMPRE.
+
+### Las ROMs (la base del proyecto ES la china)
+
+| fichero | que es |
+|---|---|
+| `rom/base/yuyu_makyou_base.bin` | **la china** con el checksum arreglado a `$337B` (la de `$BE4F` es la inglesa, que no arranca) |
+| `rom/original/...chinese.bin` | copia de la base (la china de referencia) |
+| `rom/original/...english translation.bin` | la inglesa (checksum `$BE4F`, no arranca) |
+| `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la base + los 13 cambios aceptados (84 bytes, `$8C44`) |
+| `rom/cambios/19_china_sin_cruce.bin` | la base + `un_plano` + `sin_atajo_cruce` (33 bytes) |
+| `rom/cambios/20_china_UNIFICADA.bin` | la base + todo el proyecto (84 bytes) |
+| `rom/cambios/21_china_UNIFICADA_sin_un_plano.bin` | la base + todo **menos** `un_plano` (76 bytes) = la version de biseccion |
+
+**OJO:** `rom/` esta en `.gitignore` (derechos de autor), asi que **las ROMs
+no estan en git y se pierden si se borran la carpeta**. La china esta
+tambien en `C:\Users\leand\AppData\Local\Temp\opencode\CHINA_ORIGINAL.bin`.

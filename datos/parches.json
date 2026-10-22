@@ -1390,7 +1390,7 @@
       ]
     },
     "un_plano": {
-      "desc": "UN SOLO PLANO. (1) Los TRES bloques que alejan al personaje a otro plano se neutralizan: $019E0E y $019ED2 (que bajan $9c en $A800 y $5000 y reducen la escala $3E) y $019E8C (que lo pone a $9c = 304). Con 'bne.b' -> 'bra.b' el destino no cambia. (2) El dash deja $9c = 320 y no 319, para que un dash no deje al personaje en un plano distinto del rival. (3) Los CUATRO filtros de plano de los resolvers se anulan cambiando el REGISTRO de la instruccion 'move.w $9c(a3),d0' (byte 0x2b) por a4 (0x2c): el atacante se compara consigo mismo y la comprobacion de 'distinto plano' nunca salta.",
+      "desc": "UN SOLO PLANO. (1) Los TRES bloques que alejan al personaje a otro plano NO SE EJECUTAN NUNCA: son $019E10-$019E27 (que bajan $9c en $A800, reducen la escala $3E y ponen el flag del plano de atras $A042), $019E8E-$019E9C (que lo pone a $9c = 304) y $019ED4-$019EEA (que bajan $9c en $5000). SE ANULAN CAMBIANDO EL INMEDIATO DEL 'cmpi.b #$f, $5f(a5)' de $019E08, $019E86 y $019ECC por $ff: la comparacion nunca es igual, asi que el 'bne.b' salta SIEMPRE y el bloque nunca se ejecuta. NO SE TOCA EL SALTO: antes este grupo hacia 'bne.b' -> 'bra.b', y el 'bra' NO salta nunca, con lo que el bloque se ejecutaba SIEMPRE y el juego ponia el flag del plano de atras y el suelo en 304: el personaje se dibujaba en el otro plano (1 frame con 2 cuerpos por detras) y el cruce seguia siendo posible. (2) El dash deja $9c = 320 y no 319, para que un dash no deje al personaje en un plano distinto del rival. (3) Los CUATRO filtros de plano de los resolvers se anulan cambiando el REGISTRO de la instruccion 'move.w $9c(a3),d0' (byte 0x2b) por a4 (0x2c): el atacante se compara consigo mismo y la comprobacion de 'distinto plano' nunca salta.",
       "confianza": "CODIGO (las cuatro instrucciones y los tres bloques de cruce, leidos del desensamblado) / MEDIDO (que el filtro es lo que separa a los peleadores)",
       "bytes": [
         {
@@ -1400,22 +1400,22 @@
           "nota": "el dash: $9c = $013F0000 (319) -> $01400000 (320, el plano delantero)"
         },
         {
-          "addr": "0x019E0E",
-          "old": "66",
-          "new": "60",
-          "nota": "cruce 1: bne.b $19e28 -> bra.b $19e28. Este bloque baja $9c en $A800 (40 px) y reduce la escala $3E en 3: es el que ALEJA al personaje. Sin el, el jugador no se va al otro plano"
+          "addr": "0x019E0B",
+          "old": "0F",
+          "new": "FF",
+          "nota": "cruce 1: el INMEDIATO del 'cmpi.b #$f, $5f(a5)' de $019E08 pasa a $ff. La comparacion NUNCA es igual, asi que el 'bne.b $19e28' salta SIEMPRE y el bloque $019E10-$019E27 NUNCA se ejecuta: ni el 'bset.b #$1, $a042.w' (el flag del plano de atras), ni el 'subi.l #$a800' (el suelo -40 px), ni la escala. OJO: antes este grupo cambtaba el 'bne.b' por 'bra.b', y eso hacia que el bloque se ejecutara SIEMPRE (el 'bra' no salta nunca): el juego ponia el flag del plano de atras y el suelo en 304 y el personaje se dibujaba en el otro plano (1 frame con 2 cuerpos por detras)."
         },
         {
-          "addr": "0x019E8C",
-          "old": "66",
-          "new": "60",
-          "nota": "cruce 2: bne.b $19ea2 -> bra.b $19ea2 (aterrizaje a $9c = 304)"
+          "addr": "0x019E89",
+          "old": "0F",
+          "new": "FF",
+          "nota": "cruce 2: el INMEDIATO del 'cmpi.b #$f, $5f(a5)' de $019E86 pasa a $ff: el 'bne.b $19ea2' salta SIEMPRE y el bloque $019E8E-$019E9C NUNCA se ejecuta (el 'move.l #$1300000, $9c(a5)' = el suelo a 304 = el otro plano, y la escala $d8 = 216)."
         },
         {
-          "addr": "0x019ED2",
-          "old": "66",
-          "new": "60",
-          "nota": "cruce 3: bne.b $19eec -> bra.b $19eec. Este bloque baja $9c en $5000 (20 px), sube $26 y reduce la escala $3E en 1"
+          "addr": "0x019ECF",
+          "old": "0F",
+          "new": "FF",
+          "nota": "cruce 3: el INMEDIATO del 'cmpi.b #$f, $5f(a5)' de $019ECC pasa a $ff: el 'bne.b $19eec' salta SIEMPRE y el bloque $019ED4-$019EEA NUNCA se ejecuta (el 'bset.b #$1, $a042.w', el 'subi.l #$5000' del suelo, la escala y $26)."
         },
         {
           "addr": "0x01EE49",
@@ -1444,7 +1444,7 @@
       ]
     },
     "sin_cruce": {
-      "desc": "Solo el CRUCE, sin tocar los filtros de plano. El jugador no puede pasar al plano de atras, pero el rival que este arranca ahi sigue siendo intocable. Son 3 bytes.",
+      "desc": "Solo el CRUCE, sin tocar los filtros de plano. El jugador no puede pasar al plano de atras, pero el rival que este arranca ahi sigue siendo intocable. Son 3 bytes. IGUAL QUE 'un_plano' pero sin tocar $019E0B ni $019ECF: aqui el bloque $019E10-$019E27 (el flag del plano de atras y el suelo -40 px) SI se ejecuta, lo que el jugador baja de plano pero nunca aterriza en el 304. Los dos bloques que ponen el suelo en 304 ($019E8E y $019F52) SE ANULAN CAMBIANDO EL INMEDIATO DEL 'cmpi.b #$f, $5f(a5)' ($019E89 y $019F4F) por $ff: la comparacion nunca es igual y el 'bne.b' salta SIEMPRE. NO SE TOCA EL SALTO: con 'bne.b' -> 'bra.b' el bloque se ejecutaba SIEMPRE (el 'bra' no salta nunca) y el suelo se ponia en 304 igual o peor.",
       "confianza": "CODIGO",
       "bytes": [
         {
@@ -1453,14 +1453,16 @@
           "new": "40"
         },
         {
-          "addr": "0x019E8C",
-          "old": "66",
-          "new": "60"
+          "addr": "0x019E89",
+          "old": "0F",
+          "new": "FF",
+          "nota": "el INMEDIATO del 'cmpi.b #$f, $5f(a5)' de $019E86: la comparacion nunca es igual, el 'bne.b $19ea2' salta SIEMPRE y el bloque $019E8E-$019E9C (suelo = 304 y escala $d8) NO se ejecuta nunca"
         },
         {
-          "addr": "0x019F50",
-          "old": "66",
-          "new": "60"
+          "addr": "0x019F4D",
+          "old": "0F",
+          "new": "FF",
+          "nota": "el INMEDIATO del 'cmpi.b #$f, $5f(a5)' de $019F4A: igual que el de $019E89, el bloque $019F52-$019F64 (suelo = 304 y escala $d8) NO se ejecuta nunca"
         }
       ]
     },
