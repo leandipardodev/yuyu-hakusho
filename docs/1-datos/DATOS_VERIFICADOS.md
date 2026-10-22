@@ -3309,3 +3309,151 @@ el parche (x1,5, o sea -3) hacen falta **~85**.
 **Parche:** `mash_aturdimiento_x15`, 2 bytes: `$01A29A` (`$55`->`$57`) y
 `$01A2A6` (`$54`->`$56`). Ojo: el dato de SUBQ/ADDQ va en los bits 11-9
 del opcode, no en un byte aparte.
+
+## LOS ATAJOS DE MANDO DEL CRUCE (la bit mask del `btst` leida bien)
+
+**Fuente: desensamblado con Capstone sobre `rom/base/yuyu_makyou_base.bin`,
+verificado byte a byte.**
+
+### 1) El inmediato del `btst.b` es el NUMERO DE BIT (no una mascara)
+
+El `btst.b #n, $72(a5)` se codifica en **6 bytes**:
+
+```
+08 2D <n:word> 00 72
+^  ^    ^       ^-- el desplazamiento (1 byte, modo 2 = d8,A5)
+|  |    +------- el NUMERO DE BIT (un WORD, el inmediato)
+|  +------------ el modo/reg: 010 101 101 = d8,A5
++--------------- el opcode del BTST
+```
+
+**El numero de bit NO es una mascara.** `btst.b #$4, $72(a5)` prueba **el bit
+4** del byte de botones que hay en `$72(a5)`. Los bytes son tal cual:
+`$016106: 08 2D 00 04 00 72` = "prueba el bit 4".
+
+**CONSECUENCIA (importante):** en la 68000 el numero de bit de un BTST sobre
+un operando de **1 byte** se usa **modulo 8**. Por eso la receta 19
+(`sin_atajo_cruce`), que cambia **el byte ALTO** del inmediato (`$00` ->
+`$07`, en `salto - 4`), **NO HACE NADA**: el inmediato pasa a ser `$0704` y
+`$0704 & 7 = 4` = el mismo bit 4 de antes. **Es un parche inerte.**
+***(el usuario lo confirmo empiricamente: la ROM `19_china_sin_cruce.bin`
+arranca y golpea, pero el cruce sigue being possible)***
+
+**Para cambiar de verdad el bit que se prueba hay que tocar el byte BAJO**
+(el numero de bit, en `salto - 3`), y no en un `btst` que ademas decida un
+ataque (ver el punto 3).
+
+### 2) Census de todos los `btst.b #n, $72(a5)` del ROM
+
+| bit que se prueba | veces | donde |
+|---|---|---|
+| 2 | 2 | `$01A554`, `$01C4B4` |
+| 3 | 2 | `$01A560`, `$01C4C0` |
+| **4** | **74** | `$015C96`, `$016062`, `$01607A`, `$016106`, `$016152`, ... |
+| 5 | 8 | `$01A50C`, `$01A534`, `$01B434`, `$01BCD0`, `$01C00A`, `$01C2A6`, `$01C46A`, `$01C494` |
+| **6** | **78** | `$01386C`, `$013A8C`, `$01606C`, `$016084`, `$016110`, ... |
+
+**Los bits 0, 1 y 7 de `$72(a5)` no los prueba NINGUNA instruccion de todo el
+ROM** (0 usos). El bit 7 es el unico "libre" de los que no se usan, asi que
+**cambiar un numero de bit a `$07` deja el `btst` siempre falso** (el
+numero de bit `$07` con un byte = el bit 7, que nunca se escribe).
+
+### 3) Los 22 `btst` del bloque "C o Y" (los atajos por personaje)
+
+Los 11 dispatchers por personaje (el del personaje 1 empieza en `$015FDC`)
+muestran la **direccion** (`$71`) y despachan por una tabla de 16 entradas
+de 16 bits en `$016042` (`lea.l $16042(pc,d0.w),a0` + `adda.w (a0),a0` +
+`jmp (a0)`). Los destinos y los moves que pone cada atajo:
+
+| `btst` | destino | move | que direccion |
+|---|---|---|---|
+| bit 4 | `$018812` | `$80` | sin direccion |
+| bit 6 | `$018828` | `$82` | sin direccion |
+| **bit 4** | **`$01883E`** | **`$81`** | **ARRIBA** |
+| bit 4 | `$01886A` | `$84` | ABAJO+DERECHA |
+| bit 6 | `$018880` | `$86` | ABAJO+DERECHA |
+| bit 4 | `$0188EE` | `$90` | ARRIBA+ABAJO+DERECHA |
+| bit 6 | `$0188D8` | `$94` | idem |
+| bit 6 | `$018930` | `$95` | idem |
+| bit 6 | `$0194FA` | `$86` | (otro dispatcher) |
+| bit 6 | `$0195DC` | `$87` | (otro dispatcher) |
+
+Cada destino hace: `move.b #$3, $5d(a5)` (estado 3) + `move.b #$xx, $5f(a5)`
+(el move) + `move.b #$0, $6c(a5)` + `bra.w $19c00`.
+
+**OJO CON EL BIT 6:** en el dispatcher 1, con direccion ARRIBA, el
+`btst.b #$6, $72(a5)` **no** es un atajo: si el bit 6 esta puesto **crea un
+proyectil** (el bloque `$01608C`: `movea.l #$0,a1` + la tabla de 16 bytes de
+la posicion + `bra.w $18854` = el move `$83`). **Por eso tocar el numero de
+bit de un `btst` del bit 6 rompe los ataques**, y por eso la v1 de la receta
+19 (que cambiaba el byte bajo) rompio "abajo+A" y "abajo+B".
+
+### 4) El atajo GLOBAL (los 3 botones a la vez)
+
+```
+$015DE6  move.b   $73(a5), d0      ; los botones MANTENIDOS
+$015DEA  andi.b   #$70, d0         ; los bits 4, 5 y 6
+$015DEE  cmpi.b   #$70, d0         ; ¿los 3 a la vez?
+$015DF2  beq.w    $18764           ; -> estado 0, move $14
+```
+
+Es el **unico** parche de la receta 19 que **si** surte efecto (el inmediato
+`$70` -> `$71` en `$015DF1`). Ojo: **no** es el cruce: el destino `$18764`
+pone el estado `$00` y el move **`$14`**.
+
+### 5) El CRUCE de planos de verdad
+
+| que | valor | donde |
+|---|---|---|
+| el estado del cruce | **`$0A`** | handler en **`$019E08`** |
+| el move de la ida | **`$0F`** | `$01874E` |
+| el move de la vuelta | **`$10`** | `$018700` |
+| el suelo del plano | `$9c(a5)` = 320 (`$140`) o 304 (`$130`) | |
+| el flag global del plano | **`$A042`** (bit 0 = delante 320, bit 1 = atras 304) | |
+
+El handler `$019E08`:
+```
+$019E08  cmpi.b  #$f, $5f(a5)    ; ¿el move es $0F?
+$019E0E  bne.b   $19e28
+$019E10  bset.b  #$1, $a042.w    ; "el plano de atras"
+$019E16  subi.l  #$a800, $9c(a5) ; el suelo -40 px POR FRAME
+$019E1E  addi.b  #$3, $26(a5)
+$019E24  subq.w  #$3, $3e(a5)    ; la escala -3
+...
+$019E8C  bne.b   $19ea2
+$019E8E  move.l  #$1300000, $9c(a5)   ; el suelo final = 304 (el otro plano)
+$019E96  move.w  #$d8, $3e(a5)       ; la escala = 216
+```
+(por eso el grupo `un_plano` neutraliza `$019E0E`, `$019E8C` y `$019ED2`).
+
+**Los DOS unicos sitios que ponen el estado `$0A` son `$0186F2` y `$01873A`**
+(patron `1B 7C 00 0A 00 5D` = `move.b #$0A, $5d(a5)`). Los dos estan en el
+bloque `$0186BE-$018760`. Y **`$0186BE` no lo llama NINGUNA instruccion del
+ROM** (ni un `bsr`, ni un `jsr`, ni un `jmp`, ni una tabla de punteros):
+es un punto de entrada muerto. **ASI QUE EL CRUCE NO SE LANZA DESDE EL
+CODIGO DE LA 68000 QUE HEMOS VISTO: hay que averiguarlo en el emulador.**
+***(la sonda `herramientas/lua/sonda_cruce.lua` lo averigua)***
+
+### 6) Los `btst` del bit 5 (los que lanzan los moves $AA y $A8)
+
+| sitio | a donde va | que hace |
+|---|---|---|
+| `$01B434` | `$01B444` | `move.b #$aa, $5f(a5)` + estado `$03` |
+| `$01C00A` | `$01C01E` | `move.b #$a8, $5f(a5)` + estado `$03` |
+| `$01A50C`, `$01A534`, `$01C46A`, `$01C494` | `$01A56C` / `$01C4FE` | cambian la animacion (`move.b #$8, $59(a5)`) |
+| `$01BCD0`, `$01C2A6` | `$01BD36` / `$01C304` | (movimiento) |
+
+El `$AA` en `-$5556(a5)` (el "cambio de plano") lo pone **`$018748`**, dentro
+del bloque del cruce.
+
+### 7) La sonda que lo averigua en el emulador
+
+`herramientas/lua/sonda_cruce.lua` (FBNeo):
+1. Al arrancar **lee la ROM** y saca la tabla de atajos (el bit que prueba
+   cada `btst` y el move al que salta) + el atajo global.
+2. Cada frame **imprime los botones y las direcciones** (con nombre y en
+   hexadecimal) cuando cambian, y guarda un **historial de los 40 frames
+   anteriores**.
+3. Cuando detecta el cruce (el estado `$0A`, los moves `$0F`/`$10`/`$AA`/
+   `$A8` o un cambio del suelo `$9C`) **vuelca el historial**: asi se ve
+   que boton habia pulsado en el frame que lo lanzo.

@@ -255,3 +255,52 @@ toca**, asi que los ataques con A, B y C siguen exactamente igual.
 
 **Los tres atajos del cruce:** el movimiento `$84` (el boton C), el `$86` (B+C)
 y el `$AA` (el global C+B+Y, en `$015DEE`). Los tres quedan desactivados.
+
+<a name="s-2024-10-21n"></a>
+
+## S-2024-10-21n: el Lua de diagnostico + el parche inerte (la bit mask leida bien)
+
+**Prueba del usuario de `19_china_sin_cruce.bin`:** *"arranca y golpea, se
+puede cruzar tambien"*. O sea: la ROM arranca, los ataques con A y B
+funcionan, **pero el cruce de planos sigue disponible**.
+
+**El motivo (error mio de la sesion anterior):** el inmediato del
+`btst.b #n, $72(a5)` es un **WORD = el NUMERO DE BIT**, no una mascara. Los
+bytes son `08 2D 00 04 00 72` = "prueba el bit 4". La receta 19 cambiaba el
+**byte alto** de ese word (`$00` -> `$07`, en `salto - 4`), y como en la 68000
+el numero de bit de un operando de 1 byte se usa **modulo 8**, `$0704` sigue
+probando **el bit 4**: **el parche era inerte**. (El atajo global de
+`$015DF1` si que surte efecto: ese si es un inmediato de 1 byte.)
+
+**Lo que se ha descubierto ademas (todo con direccion):**
+- Los 22 `btst` del bloque "C o Y" de los 11 dispatchers por personaje
+  prueban **el bit 4** (-> moves `$80`, `$81`, `$84`, `$90`) o **el bit 6**
+  (-> moves `$82`, `$86`, `$87`, `$94`, `$95`). El **bit 6 tambien decide los
+  ataques** (en direccion ARRIBA crea el proyectil), asi que **el bit 6 no
+  se puede tocar**.
+- El "atajo de arriba+C" = direccion ARRIBA + bit 4 = **el move `$81`**
+  (`$01883E`).
+- Los **bits 0, 1 y 7** de `$72(a5)` no los prueba nadie en todo el ROM: el
+  **bit 7** es el unico "libre" para dejar un `btst` siempre falso.
+- El **atajo global** (`$015DEE`) son los **bits 4, 5 y 6** de los botones
+  **mantenidos** (`$73`), y **no** es el cruce: pone el estado `$00` y el
+  move `$14`.
+- El **CRUCE** = estado `$0A` + move `$0F` (ida) / `$10` (vuelta), handler
+  `$019E08`. Los **dos unicos** sitios que ponen el estado `$0A` son
+  `$0186F2` y `$01873A`, y **`$0186BE` no lo llama nadie** de todo el ROM:
+  es un punto de entrada muerto. **El cruce hay que averiguarlo en el
+  emulador.**
+- El move `$AA` lo pone `$018748` (dentro del bloque del cruce) y tambien
+  `$01B444` (tras un `btst` del **bit 5**); el move `$A8`, `$01C01E`.
+
+**Lo entregado:** `herramientas/lua/sonda_cruce.lua` (para FBNeo). Al
+arrancar lee la ROM y saca la tabla de atajos; cada frame imprime los
+botones y las direcciones (con nombre y en hex) y guarda 40 frames de
+historial; cuando detecta el cruce vuelca el historial, para ver que boton
+lo lanzo. **Probado con un simulador de la API de FBNeo (LuaJIT).**
+
+**Lo que NO se ha hecho (falta permiso):** arreglar la receta 19. El fix
+natural es cambiar **el byte bajo** del inmediato (el numero de bit, en
+`salto - 3`) a `$07` **solo en los `btst` que lanzan el cruce**, sin tocar
+los del bit 6 (los ataques). Falta saber cual es exactamente el move del
+cruce: lo dice la sonda.
