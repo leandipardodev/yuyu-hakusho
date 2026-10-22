@@ -791,3 +791,44 @@ con 1 de vida para probar el final sin vida.
 ### La ROM
 
 `rom/cambios/28_china_VENENO_P1_P2_muere.bin` (SHA1 `688A9A09...`).
+
+## S-2024-10-22h: el veneno v8 (el marcador de cadaver $FC00: KO y ronda de verdad)
+
+### El bug de la v7
+
+El usuario lo probo: el HP quedaba en -1 pero **el personaje no moria ni
+terminaba la ronda**. Investigacion en `datos/desensamblado_68000.asm`
+(ROM J, referencia): el juego NO hace un chequeo de HP negativo por frame.
+El HP negativo pasa por el resolver de dano (`$1F4CA`: `cmpi.w #$0, $78(a4)`
+-> `blt` -> `jsr $1FA70`, que solo enciende la camara lenta `$F558 = 160`), y
+el FIN DE RONDA lo manejan dos rutinas que escanean los 4 slots
+(`$FF8400 + n*$400`, firma `$00012668` en el longword 0):
+
+- `$F852` (la fase de combate, `$00F476`): saltea los HP NEGATIVO; avanza
+  cuando queda un solo bando (el `$6F`).
+- `$F88C` (la fase siguiente, `$00F490`): ADEMAS espera a que el caido tenga
+  HP == `$FC00` EXACTO, el marcador de cadaver que escribe el juego al
+  aterrizar con HP negativo (`$01A1A4`: `move.w #$fc00, $78(a5)`).
+
+Era la trampa: con HP = -1 (`$FFFF`) la fase `$00F490` lo sigue contando como
+vivo y NO avanza nunca. El envenenado esta parado, nunca toca el suelo,
+nunca recibe el `$FC00`.
+
+### La v8
+
+El payload (`$1A06F0`, ahora 28 bytes): al llegar el HP a 0 o menos se escribe
+`move.w #$fc00, $78(a5)` (el marcador de cadaver) y las dos rutinas pasan al
+toque: arranca la secuencia de KO (`$A032 = 1`, el contador `$A03A`, el
+mensaje y el ganador). Ademas el payload NO drena si el HP ya es negativo
+(`bmi` al inicio), para no romper el marcador de un muerto. No se toca el
+suelo ni el estado. Muere parado, donde esta.
+
+### Las ROMs
+
+- `rom/cambios/29_china_VENENO_P1_P2_muere.bin` (la v8, SHA1 `4A51649C...`)
+- `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` rearmada con la v8 (SHA1
+  `6BA8EBA5...`): la receta de la unificada se confirmo contra el SHA que
+  habia (solo diferia en kage_vel, que esta fuera de la unificada).
+- la v7 queda como `28` (el anti-ejemplo: no muere).
+
+Verificador de desensamblado: OK en las dos. Pendiente: probar en juego.

@@ -1779,7 +1779,7 @@
       ]
     },
     "veneno_plano": {
-      "desc": "EL VENENO DEL PLANO, version 7: el veneno de la v6 (que el usuario probo y FUNCIONA para el P1 y el P2) y ADEMAS, al llegar a 0 de vida, se fuerza el estado de reposo para que el juego haga el KO EN EL MOMENTO (opcion 1: los mata donde estan, en el plano de atras). EL VENENO: cruzar al otro plano quita 1 de vida POR FRAME (60 por segundo) mientras el personaje este en el plano de atras, y deja de quitar en cuanto vuelve al plano principal. Es un veneno, no un golpe: el dano es continuo y acumulativo. AL QUEDARSE SIN VIDA: se resta otro 1 (para que el HP quede NEGATIVO: el juego solo detecta el KO con el HP negativo, 'btst.b #$7, $78(a5)' en $019CFC, y si el HP quedara en 0 la ronda no acabaria y el juego se colgaria) y se pone el estado a reposo ($5D = 0), que es el handler donde el juego mira el HP negativo: o sea, MUERE en el acto. >>> NO SE TOCA EL SUELO: la version 5 (que ademas ponia el suelo a 320 para devolverles al plano principal) ROMPIA LA PARTIDA al cruzar. El suelo se queda como esta. DONDE: la rutina $015BD8, la que actualiza el flag del plano $A042 cada frame (la llama $015A2E con 'bsr.w'). Mira el suelo ($9c(a5)): si es 320 (el plano de delante) pone el bit 0 del flag, y si es 304 (el plano de atras) pone el bit 1. El suelo solo vale exactamente 304 cuando el personaje esta PARADO en el plano de atras (durante la caida va por intermedios: 319.9, 319.6...), asi que el veneno empieza al aterrizar y para al volver. EL ENGANCHE: en $015BF6, el 'bset.b #$1, $a042.w' (6 bytes) se sustituye por un 'jsr.l' a una rutina nueva en el hueco libre $1A0710 (14 bytes) que hace lo mismo que el bset (poner el bit 1 del flag) y ademas aplica el veneno. El 'jsr.l' son 6 bytes por 6: el tamano no cambia. EL VENENO (30 bytes en $1A06F0): 'moveq #$1,d1' + 'sub.w d1,$78(a5)' (el HP - 1) + 'move.w $78(a5),d0' + 'tst.b d0' + 'bne' + 'sub.w d1,$78(a5)' (-1 mas) + 'move.b #$00,$5d(a5)' (el estado = reposo) + 'move.l (a7)+,d0' + 'rts'. A QUIEN: a cualquier personaje (P1, P2 o el rival de la CPU): el slot del P2 no siempre es el mismo y el usuario va a jugar P1 vs P2. 50 bytes en total.",
+      "desc": "EL VENENO DEL PLANO, version 8: el veneno intacto de la v6/v7 (cruzar al otro plano quita 1 de vida POR FRAME (60 por segundo) mientras el personaje este en el plano de atras, y deja de quitar en cuanto vuelve al plano principal; es un veneno, no un golpe: el dano es continuo y acumulativo). LA DIFERENCIA CON LA V7: la v7 dejaba el HP en -1 y NO FUNCIONA: el juego NO detecta el KO con el HP negativo solo. EL FINAL SIN VIDA NUEVO: cuando el HP llega a 0 o menos se escribe EL MARCADOR DE CADAVER $FC00 (-1024) en el HP. Asi es como lo hace el juego: un HP negativo AL TOCAR EL SUELO tras un golpe letal queda en $FC00 (lo escribe $01A1A4: 'move.w #$fc00, $78(a5)'), y dos rutinas del fin de ronda escanean los slots ($FF8400 + n*$400, 4 slots, firma $00012668 en el primer longword): $F852 (la fase de combate, $00F476) saltea los slots con HP NEGATIVO y avanza cuando queda solo un bando ($6F igual en todos los vivos), y $F88C (la fase $00F490) ADEMAS espera a que el caido tenga HP == $FC00 EXACTO: con un HP negativo cualquiera ($FFFF, -1) $F88C lo sigue contando como vivo y la fase no avanza NUNCA (esa era la trampa de la v7: HP -1 que no moria ni acababa la ronda). Con $FC00 las dos pasan y la secuencia de KO arranca ($A032 = 1, el contador $A03A, el mensaje y el ganador). EL PAYLOAD (28 bytes en $1A06F0): 'move.l d0,-(a7)' + 'move.w $78(a5),d0' + 'bmi' (si el HP ya es negativo NO drena mas: el HP de un muerto se queda como esta, que no se borre el marcador $FC00) + 'subq.w #1,d0' (el veneno, HP - 1) + 'move.w d0,$78(a5)' + 'tst.w d0' + 'bgt' (si quedo mayor que 0 sigue vivo) + 'move.w #$fc00,$78(a5)' (el marcador de cadaver: KO) + 'move.l (a7)+,d0' + 'rts'. NO SE TOCA ni el suelo ni el estado $5D: muere tal como este (parado). >>> NO SE TOCA EL SUELO: la version 5 (que ademas ponia el suelo a 320 para devolverles al plano principal) ROMPIA LA PARTIDA al cruzar. DONDE: la rutina $015BD8, la que actualiza el flag del plano $A042 cada frame (la llama $015A2E con 'bsr.w'). Mira el suelo ($9c(a5)): si es 320 (el plano de delante) pone el bit 0 del flag, y si es 304 (el plano de atras) pone el bit 1. El suelo solo vale exactamente 304 cuando el personaje esta PARADO en el plano de atras (durante la caida va por intermedios: 319.9, 319.6...), asi que el veneno empieza al aterrizar y para al volver. EL ENGANCHE: en $015BF6, el 'bset.b #$1, $a042.w' (6 bytes) se sustituye por un 'jsr.l' a una rutina nueva en el hueco libre $1A0710 (14 bytes) que hace lo mismo que el bset (poner el bit 1 del flag) y ademas aplica el veneno. El 'jsr.l' son 6 bytes por 6: el tamano no cambia. A QUIEN: a cualquier personaje (P1, P2 o el rival de la CPU): el slot del P2 no siempre es el mismo y el usuario va a jugar P1 vs P2. 48 bytes en total.",
       "confianza": "CODIGO (la rutina del plano $015BD8, el engancho $015BF6, el HP en $78(a5), el estado en $5d(a5) y el KO del juego en $019CFC) + MEDIDO (con la sonda: el suelo baja 0.3125 px por frame desde 320 hasta 304 al cruzar y solo vale exactamente 304 al aterrizar) + PROBADO POR EL USUARIO (la v6: el veneno resta vida al P1 y al P2 y no rompe la partida) + EJECUTADO (Unicorn: el veneno con el HP a 1 deja el HP en -1 y el estado a $00)",
       "bytes": [
         {
@@ -1817,6 +1817,174 @@
           "old": "42",
           "new": "10",
           "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x1A06F0",
+          "old": "00",
+          "new": "2F",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06F1",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06F2",
+          "old": "00",
+          "new": "30",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06F3",
+          "old": "00",
+          "new": "2D",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06F4",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06F5",
+          "old": "00",
+          "new": "78",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06F6",
+          "old": "00",
+          "new": "6B",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06F7",
+          "old": "00",
+          "new": "10",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06F8",
+          "old": "00",
+          "new": "53",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06F9",
+          "old": "00",
+          "new": "40",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06FA",
+          "old": "00",
+          "new": "30",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06FB",
+          "old": "00",
+          "new": "5D",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06FC",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06FD",
+          "old": "00",
+          "new": "78",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06FE",
+          "old": "00",
+          "new": "4A",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A06FF",
+          "old": "00",
+          "new": "40",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0700",
+          "old": "00",
+          "new": "6E",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0701",
+          "old": "00",
+          "new": "06",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0702",
+          "old": "00",
+          "new": "3B",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0703",
+          "old": "00",
+          "new": "7C",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0704",
+          "old": "00",
+          "new": "FC",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0705",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0706",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0707",
+          "old": "00",
+          "new": "78",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0708",
+          "old": "00",
+          "new": "20",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A0709",
+          "old": "00",
+          "new": "1F",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A070A",
+          "old": "00",
+          "new": "4E",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
+        },
+        {
+          "addr": "0x1A070B",
+          "old": "00",
+          "new": "75",
+          "nota": "el veneno: HP - 1 por frame; al llegar a 0 se escribe el marcador de cadaver $FC00 (así dispara el KO del juego)"
         },
         {
           "addr": "0x1A0710",
@@ -1901,186 +2069,6 @@
           "old": "00",
           "new": "75",
           "nota": "la rutina del plano: el flag + el veneno"
-        },
-        {
-          "addr": "0x1A06F0",
-          "old": "00",
-          "new": "2F",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06F1",
-          "old": "00",
-          "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06F2",
-          "old": "00",
-          "new": "72",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06F3",
-          "old": "00",
-          "new": "01",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06F4",
-          "old": "00",
-          "new": "93",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06F5",
-          "old": "00",
-          "new": "6D",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06F6",
-          "old": "00",
-          "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06F7",
-          "old": "00",
-          "new": "78",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06F8",
-          "old": "00",
-          "new": "30",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06F9",
-          "old": "00",
-          "new": "2D",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06FA",
-          "old": "00",
-          "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06FB",
-          "old": "00",
-          "new": "78",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06FC",
-          "old": "00",
-          "new": "4A",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06FD",
-          "old": "00",
-          "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06FE",
-          "old": "00",
-          "new": "66",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A06FF",
-          "old": "00",
-          "new": "0A",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0700",
-          "old": "00",
-          "new": "93",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0701",
-          "old": "00",
-          "new": "6D",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0702",
-          "old": "00",
-          "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0703",
-          "old": "00",
-          "new": "78",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0704",
-          "old": "00",
-          "new": "1B",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0705",
-          "old": "00",
-          "new": "7C",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0706",
-          "old": "00",
-          "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0707",
-          "old": "00",
-          "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0708",
-          "old": "00",
-          "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A0709",
-          "old": "00",
-          "new": "5D",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A070A",
-          "old": "00",
-          "new": "20",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A070B",
-          "old": "00",
-          "new": "1F",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A070C",
-          "old": "00",
-          "new": "4E",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
-        },
-        {
-          "addr": "0x1A070D",
-          "old": "00",
-          "new": "75",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas y el estado de reposo (el KO)"
         }
       ]
     },
