@@ -3582,3 +3582,86 @@ es (solo) el `un_plano`. Los candidatos: el bloque del aterrizaje en 304
 (`$019F52`, que pone el suelo de golpe de 319.9 a 304 = un salto de 15 px y
 el cambio de escala) o el parche de la hoja de Kuwabara (`$0C2EA2`, la
 duracion de un frame de su cadena). La `24` aisla el segundo.
+
+## EL "CAMBIO DE PLANO" ES EL FLAG $A042 (NO EL SUELO $9c)
+
+**El usuario lo dijo:** *"seguro estas modificando un valor distinto que el cambio
+de plano"*. **Tenia razon.** Todo lo anterior (el suelo `$9C`, la escala
+`$3E`) es el **suelo fisico**; el **plano** lo dice el **flag global
+`$A042`**, que es una variable de la RAM del Z80 (en `$A00000-$A0FFFF`, y por
+eso la sonda no la podia leer: `memory.readbyte(0xA042)` devuelve `$FF`).
+
+### El flag
+
+| bit | significa | quien lo pone |
+|---|---|---|
+| **0** | "el personaje esta en el plano de **DELANTE**" | `$015BE7` (el suelo es 320), `$019E30`, `$019EF4` |
+| **1** | "el personaje esta en el plano de **ATRAS**" | `$015BF7` (el suelo es 304), `$019E10`, `$019ED4` |
+
+Los **6 escritores** son `bset.b` (`$08 F8 00 0n A0 42`) ⇒ **solo PONEN
+bits, nunca limpian el otro**. Los **2 lectores** son `btst.b #0` (`$0186DA`)
+y `btst.b #1` (`$018722`), en la funcion que decide si el personaje cruza o
+vuelve (`$0186BE`).
+
+**EL "2 CUERPOS POR DETRAS":** cuando el personaje pasa de un plano al otro,
+el flag se queda **con los dos bits a 1** (valor 3): el bit 0 dice "delante"
+y el bit 1 dice "atras" ⇒ **el juego cree que esta en los dos planos a la
+vez y dibuja DOS siluetas**. El `clr.b $a042.w` de `$01875C` (al aterrizar
+en el plano de delante) es lo unico que limpia el flag entero.
+
+**EL FIX (grupo `plano_y_dano`, 76 bytes): INTERCAMBIAR LOS BITS** en los 6
+escritores y en los 2 lectores (el bit 1 = "delante" y el bit 0 = "atras").
+ASI **los dos bits nunca pueden coexistir** y el flag siempre vale 1 o 2:
+
+| byte | de | a | |
+|---|---|---|---|
+| `$015BE9` | `$00` | `$01` | `bset.b` de "delante" |
+| `$015BF9` | `$01` | `$00` | `bset.b` de "atras" |
+| `$019E12` | `$01` | `$00` | `bset.b` de "atras" |
+| `$019E32` | `$00` | `$01` | `bset.b` de "delante" |
+| `$019ED6` | `$01` | `$00` | `bset.b` de "atras" |
+| `$019EF6` | `$00` | `$01` | `bset.b` de "delante" |
+| `$0186DC` | `$00` | `$01` | `btst.b` de "delante" |
+| `$018724` | `$01` | `$00` | `btst.b` de "atras" |
+
+### El DAO al cruzar (en la misma rutina)
+
+La rutina que actualiza el plano cada frame es `$015BD8` (la llama
+`$015A2E` con `bsr.w`):
+
+```
+$015BD8  tst.w    $78(a5)          ; si el HP es negativo (KO), no tocar el flag
+$015BDC  bmi.b    $15bfc
+$015BDE  cmpi.w   #$140, $9c(a5)   ; ¿el suelo es 320?
+$015BE4  bne.b    $15bee
+$015BE6  bset.b   #$0, $a042.w     ; -> "delante"
+$015BEC  rts
+$015BEE  cmpi.w   #$130, $9c(a5)   ; ¿el suelo es 304?
+$015BF4  bne.b    $15bfc
+$015BF6  bset.b   #$1, $a042.w     ; -> "atras"
+$015BFC  rts
+```
+
+Se reescribe con **6 bytes mas** y al llegar al plano de atras llama a una
+**rutina nueva** (`$1A06F0`, 26 bytes) que **quita 1 de vida** del HP
+(`$78(a5)`). Si el HP era 1 se quitan **2**, para que quede **NEGATIVO**: el
+juego solo detecta el KO con el HP negativo (`btst.b #$7, $78(a5)` en
+`$019CFC`, el handler del estado `$00`); si el HP llegara a 0 en este punto
+nadie lo vigilantia, la ronda no acabaria y **el juego se colgaria**.
+
+**El cruce es un EVENTO (un frame), no una duracion:** el daño es **1 vida
+por cruce**, en el momento en que el personaje aterriza en el plano de atras.
+
+**OJO - EXCLUYENTES:** el grupo `un_plano` anula el `cmpi` de `$019ECF` (el
+handler del estado `$0B`) ⇒ sin el, el suelo no baja nunca hasta 304 ⇒ **el
+plano nunca cambia y el daño no se aplica**. O sea:
+- **`un_plano`** = un solo plano (el cruce no ocurre).
+- **`plano_y_dano`** = el cruce ocurre (y cuesta 1 vida), sin el "2 cuerpos".
+
+### Las ROMs
+
+| fichero | que es |
+|---|---|
+| `rom/cambios/22_china_PLANO_Y_DANO.bin` | la base + `plano_y_dano` (78 bytes) = **el cruce con dano y sin "2 cuerpos"** |
+| `rom/cambios/23_china_UNIFICADA_PLANO_Y_DANO.bin` | la unificada (sin `un_plano`) + `plano_y_dano` (152 bytes) |
+| `rom/cambios/24_china_UNIFICADA_sin_hoja.bin` | la unificada sin la hoja de Kuwabara (81 bytes) = biseccion |

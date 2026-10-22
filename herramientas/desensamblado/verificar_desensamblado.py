@@ -104,7 +104,7 @@ def main():
         "un_plano",        # los bloques de cruce y el filtro, a proposito
         "sin_cruce",       # lo mismo
         "sin_atajo_cruce",  # los btst de los botones C e Y (cambia el bit)
-        "cruce_dano",       # el bloque de la IDA -> 'jsr.l' a la rutina del daño
+        "plano_y_dano",     # el flag del plano $A042 + el dano al cruzar
         "kage_proj",       # refactor del proyectil
         "rival_delante",   # las inicializaciones
         "kage_dur",        # duraciones a 0

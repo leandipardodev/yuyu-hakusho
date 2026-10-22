@@ -1778,549 +1778,465 @@
         }
       ]
     },
-    "cruce_dano": {
-      "desc": "CRUZAR AL OTRO PLANO HACE PERDER VIDA. El CRUCE es el estado $0B con el move $0F (la CAIDA al plano de atras): el suelo baja 0.31 px por frame desde 320 hasta 304 ($1310000) y la escala baja 1 por frame. Su bloque es $019ED4-$019ED9 ('bset.b #$1, $a042.w' + 'subi.l #$5000, $9c(a5)' + 'addi.b #$2, $26(a5)' + 'subq.w #$1, $3e(a5)'), dentro del handler del estado $0B. ESE BLOQUE SE SUSTITUYE por un 'jsr.l' a una rutina nueva en el hueco libre $1A06AE (66 bytes) + 18 bytes de nops, de modo que no cambia ni el tamano ni el flujo. La rutina hace EXACTAMENTE lo mismo que el bloque original (el flag del plano de atras, el suelo, el $26 y la escala) y ADEMAS quita 1 de vida del HP ($78(a5)) CADA 3 FRAMES: el contador va en d1 (que se guarda y se restaura con la pila), se reinicia a 0 cuando el tick ($5B) es 0 (el primer frame del cruce) y se decrementa cada frame; cuando llega a -3 (el tercer frame del cruce) se resta 1 de vida. Si el HP queda en 0 se resta OTRO 1, para que quede NEGATIVO: el juego solo detecta el KO con el HP negativo ('btst.b #$7, $78(a5)' en $019CFC, el handler del estado $00), y si el HP llegara a 0 en el estado $0B nadie lo vigilaria, la ronda no acabaria y el juego se colgaria. Con el HP negativo, el KO lo dispara el propio juego cuando el personaje vuelve al suelo. OJO: el estado $0B con el move $0F es SOLO del cruce (un salto normal usa el estado $0E con el move $0B), asi que saltar NO cuesta vida. 90 bytes en total.",
-      "confianza": "CODIGO (el handler del estado $0B, el bloque de la IDA, el tick $5B, el HP $78(a5) y el KO del juego en $019CFC) + CAPSTONE (toda la rutina verificada instruccion a instruccion)",
+    "plano_y_dano": {
+      "desc": "EL PLANO Y EL DANO AL CRUZAR. (1) EL FLAG DEL PLANO ES $A042 (NO el suelo $9c): el bit 0 = 'delante' y el bit 1 = 'atras'. Lo escriben SEIS sitios con 'bset.b' ($015BE7, $015BF7, $019E10, $019E30, $019ED4, $019EF4) y lo leen dos con 'btst.b' ($0186DA y $018722). COMO EL 'bset' SOLO PONE BITS Y NUNCA LIMPIA EL OTRO, cuando el personaje pasa de un plano al otro el flag se queda CON LOS DOS BITS A 1 (3): el juego cree que esta en los dos planos a la vez y DIBUJA DOS CUERPOS (el '2 cuerpos por detras' durante 1 frame). EL FIX: INTERCAMBIAR LOS BITS (el bit 1 = 'delante' y el bit 0 = 'atras') en los seis escritores y en los dos lectores, de modo que los dos bits NUNCA puedan coexistir. (2) EL DANO AL CRUZAR: la rutina de $015BD8 (la que actualiza el plano cada frame: si el suelo $9c es 320 pone 'delante' y si es 304 pone 'atras') se reescribe con 6 bytes mas: al llegar al plano de atras llama a una rutina nueva ($1A06F0, 26 bytes) que quita 1 de vida del HP ($78(a5)). Si el HP era 1 se quitan 2, para que quede NEGATIVO: el juego solo detecta el KO con el HP negativo ('btst.b #$7, $78(a5)' en $019CFC, el handler del estado $00) y si el HP llegara a 0 en este punto nadie lo vigilantia, la ronda no acabaria y el juego se colgaria. OJO: el 'move.w $78(a5), d0' deja un byte pendiente ($00) que la CPU consume como parte de la instruccion; el 'ori.b #$0, d0' de $1A06F6 es ese byte (no hace nada, solo consume). 76 bytes en total.",
+      "confianza": "CODIGO (los seis escritores y los dos lectores del flag $A042, la rutina del plano $015BD8 y el KO del juego en $019CFC) + CAPSTONE (la rutina revisada instruccion a instruccion; el 'ori.b' y el 'move.w' los lee Capstone con otro tamano, pero la CPU los ejecuta bien)",
       "bytes": [
         {
-          "addr": "0x1A06AE",
-          "old": "00",
-          "new": "08",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BD8",
+          "old": "4A",
+          "new": "4A",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06AF",
-          "old": "00",
-          "new": "F8",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BD9",
+          "old": "6D",
+          "new": "78",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06B0",
+          "addr": "0x015BDA",
           "old": "00",
           "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06B1",
-          "old": "00",
-          "new": "01",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BDB",
+          "old": "78",
+          "new": "78",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06B2",
-          "old": "00",
-          "new": "A0",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BDC",
+          "old": "6B",
+          "new": "66",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06B3",
-          "old": "00",
-          "new": "42",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BDD",
+          "old": "1E",
+          "new": "28",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06B4",
-          "old": "00",
-          "new": "04",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BDE",
+          "old": "0C",
+          "new": "0C",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06B5",
-          "old": "00",
-          "new": "AD",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BDF",
+          "old": "6D",
+          "new": "2D",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06B6",
+          "addr": "0x015BE0",
+          "old": "01",
+          "new": "00",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BE1",
+          "old": "40",
+          "new": "40",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BE2",
           "old": "00",
           "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06B7",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06B8",
-          "old": "00",
-          "new": "50",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06B9",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06BA",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06BB",
-          "old": "00",
+          "addr": "0x015BE3",
+          "old": "9C",
           "new": "9C",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06BC",
-          "old": "00",
-          "new": "06",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BE4",
+          "old": "66",
+          "new": "66",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06BD",
-          "old": "00",
-          "new": "2D",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BE5",
+          "old": "08",
+          "new": "08",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06BE",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BE6",
+          "old": "08",
+          "new": "08",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06BF",
-          "old": "00",
-          "new": "02",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BE7",
+          "old": "F8",
+          "new": "F8",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06C0",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06C1",
-          "old": "00",
-          "new": "26",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06C2",
-          "old": "00",
-          "new": "53",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06C3",
-          "old": "00",
-          "new": "6D",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06C4",
+          "addr": "0x015BE8",
           "old": "00",
           "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06C5",
-          "old": "00",
-          "new": "3E",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06C6",
-          "old": "00",
-          "new": "2F",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06C7",
+          "addr": "0x015BE9",
           "old": "00",
           "new": "01",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06C8",
-          "old": "00",
-          "new": "0C",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "addr": "0x015BEA",
+          "old": "A0",
+          "new": "A0",
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06C9",
-          "old": "00",
-          "new": "2D",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06CA",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06CB",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06CC",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06CD",
-          "old": "00",
-          "new": "5B",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06CE",
-          "old": "00",
-          "new": "66",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06CF",
-          "old": "00",
-          "new": "06",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06D0",
-          "old": "00",
+          "addr": "0x015BEB",
+          "old": "42",
           "new": "42",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06D1",
-          "old": "00",
-          "new": "41",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06D2",
-          "old": "00",
-          "new": "53",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06D3",
-          "old": "00",
-          "new": "41",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06D4",
-          "old": "00",
-          "new": "60",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06D5",
-          "old": "00",
-          "new": "02",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06D6",
-          "old": "00",
-          "new": "53",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06D7",
-          "old": "00",
-          "new": "41",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06D8",
-          "old": "00",
-          "new": "0C",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06D9",
-          "old": "00",
-          "new": "41",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06DA",
-          "old": "00",
-          "new": "FF",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06DB",
-          "old": "00",
-          "new": "FD",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06DC",
-          "old": "00",
-          "new": "66",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06DD",
-          "old": "00",
-          "new": "0E",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06DE",
-          "old": "00",
-          "new": "93",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06DF",
-          "old": "00",
-          "new": "6D",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E0",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E1",
-          "old": "00",
-          "new": "78",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E2",
-          "old": "00",
-          "new": "0C",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E3",
-          "old": "00",
-          "new": "41",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E4",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E5",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E6",
-          "old": "00",
-          "new": "66",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E7",
-          "old": "00",
-          "new": "04",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E8",
-          "old": "00",
-          "new": "93",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06E9",
-          "old": "00",
-          "new": "6D",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06EA",
-          "old": "00",
-          "new": "00",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06EB",
-          "old": "00",
-          "new": "78",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06EC",
-          "old": "00",
-          "new": "22",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06ED",
-          "old": "00",
-          "new": "17",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
-        },
-        {
-          "addr": "0x1A06EE",
-          "old": "00",
+          "addr": "0x015BEC",
+          "old": "4E",
           "new": "4E",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x1A06EF",
-          "old": "00",
+          "addr": "0x015BED",
+          "old": "75",
           "new": "75",
-          "nota": "la rutina del daño al cruzar (en el hueco libre $1A06AE)"
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x019ED4",
+          "addr": "0x015BEE",
+          "old": "0C",
+          "new": "0C",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BEF",
+          "old": "6D",
+          "new": "2D",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BF0",
+          "old": "01",
+          "new": "00",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BF1",
+          "old": "30",
+          "new": "30",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BF2",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BF3",
+          "old": "9C",
+          "new": "9C",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BF4",
+          "old": "66",
+          "new": "66",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BF5",
+          "old": "06",
+          "new": "10",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BF6",
           "old": "08",
           "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "nota": "la rutina del plano reescrita"
         },
         {
-          "addr": "0x019ED5",
+          "addr": "0x015BF7",
           "old": "F8",
           "new": "B9",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BF8",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BF9",
+          "old": "01",
+          "new": "1A",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BFA",
+          "old": "A0",
+          "new": "06",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BFB",
+          "old": "42",
+          "new": "F0",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BFC",
+          "old": "4E",
+          "new": "08",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BFD",
+          "old": "75",
+          "new": "F8",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BFE",
+          "old": "4E",
+          "new": "00",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015BFF",
+          "old": "B9",
+          "new": "00",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015C00",
+          "old": "00",
+          "new": "A0",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015C01",
+          "old": "00",
+          "new": "42",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015C02",
+          "old": "39",
+          "new": "4E",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x015C03",
+          "old": "82",
+          "new": "75",
+          "nota": "la rutina del plano reescrita"
+        },
+        {
+          "addr": "0x019E12",
+          "old": "00",
+          "new": "00",
+          "nota": "bset.b #$1 (ATRAS) -> #$0: el flag del plano, bit 0 = ATRAS"
+        },
+        {
+          "addr": "0x019E32",
+          "old": "00",
+          "new": "01",
+          "nota": "bset.b #$0 (DELANTE) -> #$1: el flag del plano, bit 1 = DELANTE"
         },
         {
           "addr": "0x019ED6",
           "old": "00",
           "new": "00",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "nota": "bset.b #$1 (ATRAS) -> #$0"
         },
         {
-          "addr": "0x019ED7",
-          "old": "01",
-          "new": "1A",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "addr": "0x019EF6",
+          "old": "00",
+          "new": "01",
+          "nota": "bset.b #$0 (DELANTE) -> #$1"
         },
         {
-          "addr": "0x019ED8",
-          "old": "A0",
-          "new": "06",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "addr": "0x0186DC",
+          "old": "00",
+          "new": "01",
+          "nota": "btst.b #$0 (DELANTE) -> #$1: el lector del flag"
         },
         {
-          "addr": "0x019ED9",
-          "old": "42",
-          "new": "AE",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "addr": "0x018724",
+          "old": "00",
+          "new": "00",
+          "nota": "btst.b #$1 (ATRAS) -> #$0: el lector del flag"
         },
         {
-          "addr": "0x019EDA",
-          "old": "04",
-          "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "addr": "0x1A06F0",
+          "old": "00",
+          "new": "2F",
+          "nota": "la rutina que quita 1 de vida"
         },
         {
-          "addr": "0x019EDB",
-          "old": "AD",
-          "new": "71",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "addr": "0x1A06F1",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina que quita 1 de vida"
         },
         {
-          "addr": "0x019EDC",
+          "addr": "0x1A06F2",
+          "old": "00",
+          "new": "32",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06F3",
+          "old": "00",
+          "new": "2D",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06F4",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06F5",
+          "old": "00",
+          "new": "78",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06F6",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06F7",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06F8",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06F9",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06FA",
+          "old": "00",
+          "new": "0C",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06FB",
+          "old": "00",
+          "new": "40",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06FC",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06FD",
+          "old": "00",
+          "new": "01",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06FE",
+          "old": "00",
+          "new": "66",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A06FF",
+          "old": "00",
+          "new": "04",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A0700",
+          "old": "00",
+          "new": "52",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A0701",
+          "old": "00",
+          "new": "40",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A0702",
+          "old": "00",
+          "new": "93",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A0703",
+          "old": "00",
+          "new": "6D",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A0704",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A0705",
+          "old": "00",
+          "new": "78",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A0706",
+          "old": "00",
+          "new": "22",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A0707",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina que quita 1 de vida"
+        },
+        {
+          "addr": "0x1A0708",
           "old": "00",
           "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "nota": "la rutina que quita 1 de vida"
         },
         {
-          "addr": "0x019EDD",
+          "addr": "0x1A0709",
           "old": "00",
-          "new": "71",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EDE",
-          "old": "50",
-          "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EDF",
-          "old": "00",
-          "new": "71",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE0",
-          "old": "00",
-          "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE1",
-          "old": "9C",
-          "new": "71",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE2",
-          "old": "06",
-          "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE3",
-          "old": "2D",
-          "new": "71",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE4",
-          "old": "00",
-          "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE5",
-          "old": "02",
-          "new": "71",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE6",
-          "old": "00",
-          "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE7",
-          "old": "26",
-          "new": "71",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE8",
-          "old": "53",
-          "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EE9",
-          "old": "6D",
-          "new": "71",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EEA",
-          "old": "00",
-          "new": "4E",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
-        },
-        {
-          "addr": "0x019EEB",
-          "old": "3E",
-          "new": "71",
-          "nota": "el bloque de la IDA (estado $0B, move $0F): 'jsr.l' a la rutina del daño + nops"
+          "new": "75",
+          "nota": "la rutina que quita 1 de vida"
         }
       ]
     }

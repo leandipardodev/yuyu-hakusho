@@ -380,3 +380,41 @@ biseccion.
 
 **Pendiente del usuario:** probar la `22_china_DANO_al_cruzar.bin` (el
 cruce con el dano) y la `24` (biseccion del "2 cuerpos").
+
+<a name="s-2024-10-21q"></a>
+
+## S-2024-10-21q: el "cambio de plano" es el FLAG $A042 (el usuario lo dijo)
+
+**El usuario:** *"algo estas haciendo mal pero ninguno de los dos andan,
+seguro estas modificando un valor distinto que el cambio de plano"*.
+**Tenia razon.** El "plano" no lo dice el suelo (`$9C`) sino el **flag global
+`$A042`** (bit 0 = "delante", bit 1 = "atras"), que esta en la RAM del Z80
+(por eso la sonda no lo podia leer). Todo lo anterior (el suelo, la escala
+`$3E`) es el suelo fisico.
+
+**EL "2 CUERPOS POR DETRAS":** los 6 escritores del flag son `bset.b`, que
+solo ponen bits y **nunca limpian el otro** ⇒ al pasar de un plano al otro
+el flag se queda con **los dos bits a 1** ⇒ el juego cree que el personaje
+esta en los dos planos a la vez y **dibuja 2 siluetas**.
+
+**El fix (grupo `plano_y_dano`, 76 bytes):** intercambiar los bits en los 6
+escritores y en los 2 lectores (`btst.b` de `$0186DA` y `$018722`) ⇒ los dos
+bits no pueden coexistir nunca.
+
+**El dano al cruzar:** la misma rutina `$015BD8` (la que actualiza el plano
+cada frame, la llama `$015A2E`) se reescribe con 6 bytes mas: al llegar al
+plano de atras (`$9C` = 304) llama a una rutina nueva (`$1A06F0`) que quita
+**1 de vida** (2 si el HP era 1, para que quede **NEGATIVO** y el juego
+haga el KO: si el HP llegara a 0 en ese punto nadie lo vigilantia y la ronda
+no acabaria ⇒ **el juego se colgaria**, que es lo que rompia el intento
+antiguo).
+
+**Nota:** el cruce es un EVENTO (1 frame), no una duracion ⇒ el dano es **1
+vida por cruce**, no "1 cada 3 frames".
+
+**Excluyentes:** `un_plano` (un solo plano) y `plano_y_dano` (el cruce con
+dano) no se pueden usar a la vez.
+
+**Pendiente:** probar `22_china_PLANO_Y_DANO.bin` (el cruce con dano y sin
+"2 cuerpos") y `24_china_UNIFICADA_sin_hoja.bin` (biseccion del "2
+cuerpos", por si el parche de la hoja de Kuwabara es el culpable).
