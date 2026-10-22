@@ -53,8 +53,14 @@ local OFF_HP     = 0x78
 --   bit 0 = "plano de delante (320)"   bit 1 = "plano de atras (304)"
 local FLAG_PLANO = 0xA042
 
-local EST_CRUCE  = 0x0A      -- el estado del CRUCE
-local MOVE_CRUCE = 0x0F      -- el move del cruce
+local EST_CRUCE  = 0x0A      -- el estado de la VUELTA del cruce
+local EST_CAIDA  = 0x0B      -- el estado de la CAIDA (la ida al otro plano)
+local MOVE_CRUCE = 0x0F      -- el move de la ida
+local MOVE_VUELTA = 0x10     -- el move de la vuelta
+
+-- los floors (suelos) de los dos planos: 320 = el de delante, 304 = el de atras
+local PLANO_DELANTE = 320
+local PLANO_ATRAS   = 304
 
 -- los moves que son "cambio de plano" (los que lanza el atajo de mando)
 local MOVES_CRUCE = { [0x0F] = true, [0xAA] = true, [0xA8] = true }
@@ -69,9 +75,10 @@ local NOMBRE_MOVE = {
   [0x84] = "atajo(bot 4 + ABAJO+DER)",
   [0x85] = "atajo(?)",
   [0x86] = "atajo(bot 6 + ABAJO+DER)",
-  [0x0A] = "el CRUCE (move)",
-  [0x0F] = "el CRUCE (frame de ida)",
-  [0x10] = "la VUELTA del cruce",
+  [0x0A] = "el CRUCE (el estado de la VUELTA)",
+  [0x0B] = "el CRUCE (el estado de la CAIDA)",
+  [0x0F] = "el CRUCE (move de la IDA)",
+  [0x10] = "el CRUCE (move de la VUELTA)",
 }
 
 local function nombre_move(m)
@@ -251,9 +258,11 @@ local function linea()
 
   -- el historial
   local s = string.format(
-    "   f %5d | botones=$%02X %-8s (maint. $%02X %-8s) dirs=$%02X %-12s | estado=$%s move=$%s %-32s | suelo=%7.2f",
+    "   f %5d | botones=$%02X %-8s (maint. $%02X %-8s) dirs=$%02X %-12s | estado=$%s move=$%s %-30s | suelo=%7.2f %s",
     f, b, botones(b), bm, botones(bm), d, direcciones(d),
-    hex8(est), hex8(mov), nombre_move(mov), sx(rd32(P1 + OFF_PLANO)))
+    hex8(est), hex8(mov), nombre_move(mov), sx(rd32(P1 + OFF_PLANO)),
+    (sx(rd32(P1 + OFF_PLANO)) > 315 and "el plano de DELANTE"
+      or (sx(rd32(P1 + OFF_PLANO)) < 310 and "el plano de ATRAS" or "")))
   table.insert(HIST, s)
   while #HIST > NHIST do table.remove(HIST, 1) end
 
@@ -266,37 +275,48 @@ local function linea()
     ultimo_bot = b
   end
 
-  -- 2) el CRUCE: lo detectamos por el estado $0A, por los moves de cruce
-  --    ($0F, $AA, $A8) o por un cambio del suelo del plano ($9C)
+  -- 2) el CRUCE: lo detectamos por el estado+move del cruce (la CAIDA $0B
+  --    con el move $0F, y la VUELTA $0A con el move $10), o por un cambio
+  --    de PLANO (el suelo pasa de 320 a 304 o al reves).
   local suelo = rd32(P1 + OFF_PLANO)
-  local en_cruce = (est == EST_CRUCE) or (mov == MOVE_CRUCE)
-                    or MOVES_CRUCE[mov]
-                    or (suelo ~= ultimo_suelo and suelo < 0xFFFF0000
-                        and ultimo_suelo >= 0 and ultimo_suelo < 0xFFFF0000)
-  if en_cruce then
-    if not viendo then
-      viendo = true
-      ncruces = ncruces + 1
-      cola = 0
-      print("")
-      print(string.format("=== CRUCE n%02d en el frame %d (estado $%s move $%s %s) ===",
-                          ncruces, f, hex8(est), hex8(mov), nombre_move(mov)))
-      print(string.format("    >>> EN ESE FRAME: botones=$%02X (%s)  dirs=$%02X (%s)",
-                          b, botones(b), d, direcciones(d)))
-      print("    --- HISTORIAL (los frames previos: aqui esta el boton) ---")
-      for _, h in ipairs(HIST) do print(h) end
-      print("    --- DETALLE ---")
-      detalle(f, "inicio ")
-    else
-      cola = cola + 1
-      if cola <= 12 then
-        detalle(f, "sigue  ")
-      end
-    end
-  elseif viendo then
-    viendo = false
-    print(string.format("=== CRUCE n%02d termina en el frame %d ===", ncruces, f))
+  local suelo_num = sx(suelo)
+  local suelo_ant = sx(ultimo_suelo)
+  local es_plano = (suelo_num > 295 and suelo_num < 325)
+  local en_cruce = (est == EST_CRUCE and mov == MOVE_VUELTA)
+                    or (est == EST_CAIDA and mov == MOVE_CRUCE)
+  -- un CAMBIO DE PLANO que no viene del estado del cruce (lo ajusta el juego
+  -- solo cuando los peleadores se separan)
+  if es_plano and ultimo_suelo >= 0 and suelo_ant > 295 and suelo_ant < 325
+     and math.abs(suelo_num - suelo_ant) > 4 then
+    print(string.format("[f %5d] *** CAMBIO DE PLANO: el suelo pasa de %.2f a %.2f  (estado $%s move $%s, botones $%02X) ***",
+                        f, suelo_ant, suelo_num, hex8(est), hex8(mov), b))
+  end
+  if en_cruce and not viendo then
+    viendo = true
+    ncruces = ncruces + 1
+    cola = 0
     print("")
+    print(string.format("=== CRUCE n%02d en el frame %d (estado $%s move $%s %s) ===",
+                        ncruces, f, hex8(est), hex8(mov), nombre_move(mov)))
+    print(string.format("    >>> EN ESE FRAME: botones=$%02X (%s)  dirs=$%02X (%s)  suelo=%.2f",
+                        b, botones(b), d, direcciones(d), suelo_num))
+    print("    --- HISTORIAL (los frames previos: aqui esta el boton) ---")
+    for _, h in ipairs(HIST) do print(h) end
+    print("    --- DETALLE ---")
+    detalle(f, "inicio ")
+  elseif not en_cruce and viendo then
+    cola = cola + 1
+    if cola > 4 then
+      viendo = false
+      print(string.format("=== CRUCE n%02d termina en el frame %d ===", ncruces, f))
+      print("")
+    end
+  end
+  if en_cruce then
+    cola = cola + 1
+    if cola <= 12 then
+      detalle(f, "sigue  ")
+    end
   end
   ultimo_suelo = suelo
 
