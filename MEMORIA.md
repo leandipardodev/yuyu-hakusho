@@ -1579,3 +1579,27 @@ Para encajar en pocos bytes: `moveq #$1, d0` (2 bytes) en vez de
 `move.w #$1, d0` (4). Y **`subq.w #1, <ea>` no existe** con el EA
 `(d8,An)` (el SUBQ con memoria solo es byte o long): para restar 1 de un
 word, `moveq #$1, d0` + `sub.w d0, <ea>`.
+
+### LAS TABLAS DE COMANDOS: LOS OFFSETS SON SIN SIGNO
+Las tablas del juego son `lea.l base(pc,d0.w),a0` + `adda.w (a0),a0` +
+`jmp (a0)`: las entradas son **OFFSETS RELATIVOS** y el destino de la
+entrada `k` es `base + 2*k + word(base+2*k)`. Hay **62** tablas.
+
+**TRAMPA: el offset es de 16 bits SIN SIGNO**, asi que una entrada **no
+puede apuntar a una direccion menor que la de la tabla**. Y **el destino
+no puede ser una funcion que otro parche mueva** (el `doble_salto`
+reescribe `$018440` y lo mueve 2 bytes -> el destino quedaria a mitad de
+instruccion).
+
+### EL CRUCE DE PLANOS Y SUS DOS ATAJOS
+El cruce es el **estado `$0A` con el frame id `$0F`**; su funcion es
+**`$0186BE`** (-> `$018722` -> `$01873A`). Esa funcion **solo aparece en
+la tabla GLOBAL de comandos `$15C20`** (la usa `$015C18`), en **dos
+entradas: la +80 (el atajo de arriba+C, global) y la +89 (el de abajo+Y)**.
+
+Las tablas **por personaje** ($16042, $16132, ...) apuntan a `$1886A` /
+`$018880` (el estado `$03` con los frames `$84`/`$86`): son **las
+tecnicas**, NO el cruce. No confundir.
+
+**Para desactivar el cruce** basta con que esas dos entradas dejen de
+apuntar a `$0186BE` (4 bytes).

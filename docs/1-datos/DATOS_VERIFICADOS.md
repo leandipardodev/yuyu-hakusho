@@ -3445,3 +3445,60 @@ cruce se hace INLINE, en el propio handler.
 
 **El ROM son 3 MB** (3145728 bytes) y **el juego acaba en `$021A32`**: de
 ahi al final, todo es `$FF`.
+
+## LAS TABLAS DE COMANDOS (el input)
+
+**Fuente: desensamblado con Capstone.** Verificado.
+
+Las tablas del juego son del tipo `lea.l base(pc, d0.w), a0` +
+`adda.w (a0), a0` + `jmp (a0)`: **las entradas son OFFSETS RELATIVOS** y
+el destino de la entrada `k` es `base + 2*k + word(base + 2*k)`. Hay **62**
+tablas asi en el ROM.
+
+### La tabla GLOBAL de comandos ($15c20)
+
+La usa `$015C18` (dentro del dispatcher global `$015A18`) con el indice
+`$58(a5)`. Las 16 primeras entradas apuntan a los dispatchers **por
+personaje**:
+
+| Entrada | Destino | | Entrada | Destino |
+|---|---|---|---|---|
+| +0 | `$015F4A` | | +8 | `$017A5C` |
+| +1 | `$01637E` | | +9 | `$017D80` |
+| +2 | `$016694` | | +10 | `$0180F6` |
+| +3 | `$0169C0` | | +11 | `$0168A3` |
+| +4 | `$016D06` | | +12 | `$015D17` |
+| +5 | `$016FEE` | | +13 | `$015CF2` |
+| +6 | `$01730C` | | +14 | `$01C85E` |
+| +7 | `$017722` | | +15 | `$01646B` |
+
+Y las dos entradas del **cruce**:
+
+| Entrada | Direccion | Destino | Que es |
+|---|---|---|---|
+| **+80** | `$015CC0` | `$0186BE` | el atajo **arriba + C** (global) |
+| **+89** | `$015CD2` | `$0186BE` | el atajo **abajo + Y** |
+
+La funcion `$0186BE` es la del cruce de planos:
+
+```
+$0186BE  jsr $1fce8.l
+$0186C4  move.l #$0, $10(a5)
+$0186CC  move.b #$0, $6c(a5)
+$0186D2  cmpi.w #$140, $9c(a5)    ; ¿el plano es 320 (el delantero)?
+$0186D8  beq.b $18722            ; si -> la funcion del atajo
+$0186DA  btst.b #$0, $a042.w     ; el flag del plano
+$0186E0  bne.b $186f2            ; -> la vuelta
+$0186E2  move.b #$b, $5d(a5)     ; el estado $0B
+```
+
+y `$018722` -> `$01873A` pone el estado `$0A` + el frame `$0F` = **el
+cruce de planos**.
+
+### Las tablas POR PERSONAJE (16 entradas)
+
+Las usa `$016030` (y las de los demas personajes): el indice es
+`$71(a5) & $0F` (las 4 direcciones, 16 combinaciones). Cada entrada
+apunta a una funcion de comando. Las que apuntan a `$1886A` / `$018880`
+ponen el estado `$03` con los frames `$84` / `$86`: **son las tecnicas de
+cada personaje, NO el cruce**.

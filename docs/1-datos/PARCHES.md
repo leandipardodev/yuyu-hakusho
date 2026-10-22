@@ -1199,3 +1199,70 @@ Para que el cruce **mate** de verdad habria que replicar al resolver:
 cuando el HP llegue a 0, poner `move.b #$4, $5d(a5)` y
 `move.b #$2c, $5f(a5)` (el frame del golpe) y ademas `$1f786` (el efecto).
 Eso esta pendiente de hacer y probar.
+
+## 17. `sin_cruce_atajo` (desactiva los dos atajos del cruce)
+
+**Pedido:** *"agarra la rom original del yuyu y desactiva el cruzar
+enfrente. quita el atajo arriba + c global que permite cruzar y el atajo Y.
+que no apunten a su funcion, solo eso"*.
+
+**Que hace:** **no se puede cruzar al otro plano**. Los dos atajos (el de
+**arriba+C**, global, y el de **abajo+Y**) dejan de apuntar a la funcion
+del cruce. **4 bytes**, y no se toca la funcion del cruce ni nada mas.
+
+### Donde estan los atajos
+
+El cruce de planos es el **estado `$0A` con el frame id `$0F`**, y la
+funcion que lo pone es **`$0186BE`** (-> `$018722` -> `$01873A`).
+
+Las tablas de comandos del juego son del tipo
+
+```
+lea.l  base(pc, d0.w), a0
+adda.w (a0), a0
+jmp    (a0)
+```
+
+o sea que **las entradas son OFFSETS RELATIVOS**: el destino de la entrada
+`k` de la tabla `base` es `base + 2*k + word(base + 2*k)`.
+
+Hay 62 tablas asi. La funcion del cruce `$0186BE` **solo aparece en la
+TABLA GLOBAL** (`$15C20`, la usa `$015C18` con el indice `$58(a5)`), y en
+**dos entradas**:
+
+| Entrada | Direccion | Apuntaba a | Que atajo es |
+|---|---|---|---|
+| **+80** | `$015CC0` | `$0186BE` | el de **arriba + C** (global) |
+| **+89** | `$015CD2` | `$0186BE` | el de **abajo + Y** |
+
+### El cambio
+
+Las dos entradas dejan de apuntar a `$0186BE` y apuntan a **`$019D62`**, que
+es un `bra.w $15afc` (el final del frame): el atajo no hace NADA y el
+personaje se queda en su estado.
+
+| Direccion | Antes (offset) | Despues (offset) |
+|---|---|---|
+| `$015CC0` | `$29FE` -> `$0186BE` | `$40A2` -> `$019D62` |
+| `$015CD2` | `$29EC` -> `$0186BE` | `$4090` -> `$019D62` |
+
+**Por que `$019D62` y no otras cosas:**
+
+- **No `$018440`** (la funcion "reset"): el parche `doble_salto` reescribe
+  esa rutina y **la mueve 2 bytes**, asi que en la version unificada el
+  destino quedaria a mitad de instruccion.
+- **No `$015AFC`** (el final del handler): el offset de la tabla es de **16
+  bits SIN SIGNO**, asi que una entrada no puede apuntar hacia atras (a
+  una direccion menor que la de la tabla).
+
+### Lo que NO se toca (a proposito)
+
+Las tablas **por personaje** (`$16042`, `$16132`, `$16464`, ... 16
+entradas cada una) apuntan a `$1886A` / `$018880`, que ponen el **estado
+`$03` con los frames `$84` / `$86`**: eso son las **tecnicas** de cada
+personaje, **no el cruce**. Y `$18854` (`$018854`, el estado `$03` con el
+frame `$83`) tambien es una tecnica.
+
+La cadena del cruce (`$0186BE` -> `$018722` -> `$01873A`, y la vuelta
+`$0186F2`) cuelga **enteramente** de la entrada de la tabla, asi que
+apagando las dos entradas no hay ni cruce ni vuelta.

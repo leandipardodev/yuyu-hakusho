@@ -24,7 +24,8 @@
     "13_itsuki_teleport_40mas_rapido",
     "15_itsuki_teleport_colocacion_rapida",
     "16_mash_aturdimiento_x15",
-    "17_cruzar_hace_perder_vida"
+    "17_cruzar_hace_perder_vida",
+    "18_sin_atajos_de_cruce"
   ],
   "cambios": [
     {
@@ -199,6 +200,15 @@
       "que_hade": "",
       "que_hace": "Mientras un personaje esta en el cruce (el estado $0A con el frame id $0F) pierde 1 de vida cada 3 frames, hasta quedarse en 1 de vida (el cruce no mata: el juego solo detecta el KO en el estado normal). Afecta a los 11 personajes, jugador y rival. 44 bytes.",
       "bytes": 44
+    },
+    {
+      "id": "18_sin_atajos_de_cruce",
+      "titulo": "Desactiva los dos atajos del cruce (arriba+C y abajo+Y)",
+      "grupos": [
+        "sin_cruce_atajo"
+      ],
+      "que_hace": "No se puede cruzar al otro plano: las dos entradas de la tabla global de comandos ($15c20, la +80 y la +89) dejan de apuntar a la funcion del cruce ($0186BE) y apuntan a la funcion 'reset' ($018440). 4 bytes.",
+      "bytes": 4
     }
   ],
   "combinaciones": [

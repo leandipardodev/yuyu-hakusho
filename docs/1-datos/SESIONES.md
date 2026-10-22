@@ -363,3 +363,52 @@ funciona. **Las dos ROMs (la individual y la unificada) hacen lo mismo.**
   `0C 6D 00 02 00 78`.
 - **El dispatcher de estados llama al handler DESPUES** de `$19C96` (el
   `++tick`), asi que el tick va 0,1,2... durante el cruce ✓.
+
+
+<a name="s-2024-10-21f"></a>
+
+## S-2024-10-21f: desactivar los dos atajos del cruce
+
+**Pedido:** *"agarra la rom original del yuyu y desactiva el cruzar
+enfrente. quita el atajo arriba + c global que permite cruzar y el atajo Y.
+que no apunten a su funcion, solo eso"*.
+
+**Como se localizo (lo que mas costo):**
+
+1. **Las tablas de comandos** son del tipo `lea.l base(pc,d0.w), a0` +
+   `adda.w (a0),a0` + `jmp (a0)`: **las entradas son OFFSETS RELATIVOS**
+   y el destino de la entrada `k` es `base + 2*k + word(base+2*k)`. Hay
+   **62** tablas.
+
+2. **El cruce de planos es el estado `$0A` con el frame id `$0F`**, y su
+   funcion es **`$0186BE`** (-> `$018722` -> `$01873A`, que pone el estado
+   `$0A`, el frame `$0F` y el plano 319).
+
+3. La funcion `$0186BE` **solo aparece en la TABLA GLOBAL** (`$15c20`, la
+   usa `$015C18` con el indice `$58(a5)`), en **dos entradas: la +80 (el
+   atajo de arriba+C, global) y la +89 (el de abajo+Y)**. Las dos
+   apuntaban al mismo sitio.
+
+4. **Las tablas por personaje** ($16042, $16132, ... 16 entradas) apuntan
+   a `$1886A` / `$018880` (el estado `$03` con los frames `$84`/`$86`):
+   son **las tecnicas**, no el cruce. No se tocan.
+
+**Que se hizo:** grupo `sin_cruce_atajo`, **4 bytes**: los offsets de las
+entradas +80 y +89 de `$15C20` pasan a apuntar a `$019D62` (un
+`bra.w $15afc`: el final del frame) en vez de a `$0186BE`. El atajo no hace
+nada y la funcion del cruce no se toca.
+
+**Dos trampas:**
+
+- **El offset de la tabla es de 16 bits SIN SIGNO**: una entrada no puede
+  apuntar a una direccion **menor** que la de la tabla. Por eso no se
+  puede apuntar a `$015AFC` (el final del handler, que esta por debajo).
+- **El destino no puede ser una funcion que se mueva**: el parche
+  `doble_salto` reescribe `$018440` y lo mueve 2 bytes, asi que en la
+  version unificada un destino ahi quedaria a mitad de instruccion. Por
+  eso el destino es `$019D62` (que no lo mueve nadie).
+
+**Estado:** implementado, reconstruido y verificado. La individual son 4
+bytes (checksum `$60C3`) y la unificada 85 bytes (checksum `$52A4`).
+Falta que lo pruebes en el emulador: **el atajo de arriba+C y el de abajo+Y
+no deberian hacer nada** (y el resto del juego igual).

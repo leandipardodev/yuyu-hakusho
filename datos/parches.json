@@ -1775,6 +1775,36 @@
           "nota": "$019E27: el dano del cruce, INLINE. El bloque original (bajar el plano y la escala) se sustituye por el dano; el estado del cruce se mantiene (el plano deja de bajar, que es lo que queria 'un_plano')."
         }
       ]
+    },
+    "sin_cruce_atajo": {
+      "desc": "DESACTIVA LOS DOS ATAJOS DEL CRUCE DE PLANOS: el de 'arriba + C' (global) y el de 'abajo + Y'. No se puede cruzar al otro plano. EL CRUCE es el estado $0A con el frame id $0F, y la funcion que lo pone es $0186BE (-> $018722 -> $01873A). Esa funcion solo aparece en la TABLA GLOBAL de comandos $15c20 (la usa $015C18 con el indice $58(a5)), en DOS entradas: la +80 (el atajo 'arriba + C') y la +89 (el atajo 'abajo + Y'). Las dos entradas son OFFSETS RELATIVOS: el destino es (direccion_de_la_entrada + offset). Con este parche las dos dejan de apuntar a $0186BE y apuntan a $019D62, que es un 'bra.w $15afc' (el final del frame): el atajo no hace NADA y el personaje se queda en su estado. Se elige $019D62 y no $018440 (el 'reset') porque el parche 'doble_salto' reescribe $01840 y lo mueve 2 bytes (el destino quedaria a mitad de instruccion en la version unificada), y no $015AFC (el final del handler) porque el offset de la tabla es de 16 bits SIN SIGNO y no puede apuntar hacia atras. SOLO se cambian esas 4 bytes: no se toca la funcion del cruce ni ningun otro sitio. OJO: las tablas POR PERSONAJE ($16042, $16132, ...) apuntan a $1886A/$188880 (el estado $03 con los frames $84/$86), que son las TECNICAS de cada personaje, no el cruce: esas no se tocan. 4 bytes en total.",
+      "confianza": "CODIGO (la tabla global de comandos es $15c20, usada en $015C18; el cruce es el estado $0A + el frame $0F y su funcion es $0186BE; las entradas +80 y +89 son las dos que la apuntan) + CAPSTONE (todo desensamblado)",
+      "bytes": [
+        {
+          "addr": "0x015CC0",
+          "old": "29",
+          "new": "40",
+          "nota": "$015CC0: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $019D62 (un 'bra.w $15afc': el final del frame), o sea que el atajo no hace NADA. Es el atajo de arriba+C (global) y el de abajo+Y."
+        },
+        {
+          "addr": "0x015CC1",
+          "old": "FE",
+          "new": "A2",
+          "nota": "$015CC1: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $019D62 (un 'bra.w $15afc': el final del frame), o sea que el atajo no hace NADA. Es el atajo de arriba+C (global) y el de abajo+Y."
+        },
+        {
+          "addr": "0x015CD2",
+          "old": "29",
+          "new": "40",
+          "nota": "$015CD2: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $019D62 (un 'bra.w $15afc': el final del frame), o sea que el atajo no hace NADA. Es el atajo de arriba+C (global) y el de abajo+Y."
+        },
+        {
+          "addr": "0x015CD3",
+          "old": "EC",
+          "new": "90",
+          "nota": "$015CD3: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $019D62 (un 'bra.w $15afc': el final del frame), o sea que el atajo no hace NADA. Es el atajo de arriba+C (global) y el de abajo+Y."
+        }
+      ]
     }
   },
   "instrumentacion": {
