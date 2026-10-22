@@ -1,4 +1,4 @@
-﻿# Informe de Reverse Engineering
+# Informe de Reverse Engineering
 ## Yu Yu Hakusho: Makyou Toitsusen (Japan) - Sega Mega Drive / Genesis
 
 **Archivo analizado:** `Yuu Yuu Hakusho - Makyou Toitsusen (J).bin`

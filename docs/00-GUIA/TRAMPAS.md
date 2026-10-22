@@ -48,6 +48,30 @@ instruccion dos bytes antes de donde esta; la de la base es
 crudos de la ROM** antes de concluir que el doc esta mal (o al reves).
 `herramientas/docs/verificar_docs.py` lo hace por ti.
 
+### El BOM rompe los Lua
+
+**Lua 5.1 (el de FBNeo) NO acepta el BOM UTF-8.** Un fichero guardado con
+BOM da:
+
+```
+a:1: '=' expected near 'x'
+```
+
+(el BOM se interpreta como un identificador). Lo produce el
+`Set-Content -Encoding UTF8` de Windows PowerShell 5.1.
+
+**Regla:** los `.lua` se escriben **sin BOM y con LF**. Para comprobarlo:
+
+```bash
+python -c "d=open('herramientas/lua/sonda_plano.lua','rb').read(3); print('BOM' if d[:3]==b'\xef\xbb\xbf' else 'ok')"
+```
+
+Y para comprobar que **todos** los Lua cargan:
+
+```bash
+python -c "import glob,subprocess;[print(f, subprocess.run(['luajit','-e','local f,e=loadfile([[%s]]); print(f and "OK" or e)'%f.replace(chr(92),'/')],capture_output=True,text=True).stdout.strip()) for f in glob.glob('herramientas/lua/**/*.lua',recursive=True)]"
+```
+
 ### Los operadores que no existen en Lua 5.1
 
 FBNeo usa Lua 5.1 (LuaJIT): **`~`, `<<`, `>>` y `&` no existen** como

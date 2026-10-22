@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Escanea el ROM del Mega Drive buscando bloques de tiles 4bpp linear que
