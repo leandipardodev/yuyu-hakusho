@@ -196,7 +196,7 @@
       "grupos": [
         "sin_atajo_cruce"
       ],
-      "que_hace": "El boton C y el boton Y dejan de lanzar su movimiento en el cruce, y el atajo global C+B+Y tambien. No se toca ningun salto: los movimientos por direccion (los saltos de los personajes) siguen intactos. 23 bytes.",
+      "que_hace": "Los atajos de mando del cruce (el boton A y el boton B en el input por personaje) dejan de dispararse, y el atajo global C+B+Y tambien. No se toca ningun salto ni las mascaras de los botones: los ataques con A y B siguen igual. 23 bytes.",
       "bytes": 23
     }
   ],

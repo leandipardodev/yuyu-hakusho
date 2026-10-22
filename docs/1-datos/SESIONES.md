@@ -219,3 +219,39 @@ anterior, por si acaso.
 
 **Las ROMs de la china:** `19_china_sin_cruce.bin` (la china + `un_plano` +
 los 23 bytes) y `20_china_UNIFICADA.bin` (la china + todo el proyecto).
+
+
+<a name="s-2024-10-21m"></a>
+
+## S-2024-10-21m: el numero de bit del btst (el ataque con A se rompio)
+
+**Sintoma del usuario:** *"no anda ninguna combinacion con el boton abajo, si
+apreto abajo + A o B no golpea, solo se agacha"*.
+
+**El error mio (v1 de la receta 19):** el inmediato de 16 bits del `btst` va en
+**DOS** bytes:
+
+```
+08 2D 00 04 00 72   =   btst.b #$4, $72(a5)
+        ^  ^
+        |  +-- el byte BAJO = la MASCARA (los bits que se prueban): $04 = el bit 2
+        +----- el byte ALTO = el NUMERO DE BIT (bits 8-11): $00 = el bit 0
+```
+
+Yo cambie **el byte de la mascara** (en salto - 3): `$04` -> `$03` (los bits
+2,1 -> el bit 0) ⇒ **el atajo paso a mirar el boton A** ⇒ se rompieron los
+ataques con A y B (el bit 0 = A, el bit 1 = B) y el atajo dejo de
+dispararse con C.
+
+**El fix (v2):** cambiar **el byte ALTO** (el numero de bit, en **salto - 4**)
+de `$00` (bit 0) o `$01` (bit 1) a **`$07`** (el bit 7). Ese bit **no lo
+escribe ni lo prueba ninguna instruccion del juego** (0 usos), asi que el
+btst es siempre falso y el atajo nunca se dispara. **La mascara no se
+toca**, asi que los ataques con A, B y C siguen exactamente igual.
+
+**El mapa de los botones** (deducido): bit 0 = A (ataque fuerte), bit 1 = B
+(ataque debil), bit 2 = C (defensa), bit 3 = X, bit 4 = Y (linea), bit 5 = Z
+(dash), bit 7 = nunca se usa.
+
+**Los tres atajos del cruce:** el movimiento `$84` (el boton C), el `$86` (B+C)
+y el `$AA` (el global C+B+Y, en `$015DEE`). Los tres quedan desactivados.

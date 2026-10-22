@@ -1089,14 +1089,51 @@ $016110  btst.b     #$6, $72(a5)    ; el boton Y
 $016116  bne.w      $18880          -> el MOVIMIENTO $86
 ```
 
-El inmediato de 16 bits del `btst` va en **dos bytes** y **el byte ALTO** es
-el que dice que bit se prueba (bits 8-11). Se cambia ese byte, que esta en
-**(salto - 3)**: de `0x04` (bit 4 = C) o `0x06` (bit 6 = Y) a **`0x03`**
-(bit 3).
+### !!! EL INMEDIATO DEL 'btst': DOS BYTES, Y CUAL ES CADA !!!
 
-**El bit 3 del campo `$72` NO LO PRUEBA NINGUNA instruccion del juego**
-(0 usos en todo el ROM), asi que el atajo solo puede dispararse con ese
-boton. (Es el boton X/Z del mando de 6 botones: el "dash".)
+```
+08 2D 00 04 00 72   =   btst.b #$4, $72(a5)
+    ^  ^  ^  ^  ^
+    |  |  |  |  +-- el desplazamiento ($72)
+    |  |  |  +----- el byte BAJO del inmediato = la MASCARA ($04 = el bit 2)
+    |  |  +-------- el byte ALTO del inmediato = el NUMERO DE BIT ($00 = el bit 0)
+    |  +----------- el modo/registro ($2D = (d0,An) con An=a5)
+    +-------------- el opcode (BTST)
+```
+
+**La v1 de este parche cambio el byte equivocado** (el de la mascara, en
+salto - 3): `$04` -> `$03` (los bits 2,1 -> el bit 0) → **el atajo paso a
+mirar el boton A** y **los ataques con A y B dejaron de funcionar** ("abajo + A
+o B no golpea, solo se agacha"). La mascara **NO** se toca nunca.
+
+**El fix correcto** es cambiar **el byte ALTO** (el numero de bit, en
+**salto - 4**): de `$00` (bit 0) o `$01` (bit 1) a **`$07`** (el bit 7).
+
+**El bit 7 del campo `$72`**:
+- **NO lo prueba** ninguna instruccion del juego (0 usos en todo el ROM).
+- **NO lo escribe** ninguna instruccion del juego (los `move.b #imm, $72(a5)`
+  usan `$00`-`$60`, nunca nada con el bit 7).
+
+=> el `btst` es **siempre falso** => el atajo **NUNCA** se dispara, y **los
+ataques con A, B y C no se tocan** (solo cambia el bit que se mira, no la
+mascara).
+
+### El mapa de los botones (deducido del codigo)
+
+| Bit de `$72` | Boton | Para que sirve |
+|---|---|---|
+| 0 | **A** | ataque fuerte |
+| 1 | **B** | ataque debil |
+| 2 | **C** | defensa / "atajo de arriba+C" (el movimiento `$84`) |
+| 3 | X | (el que se mira ahora: nunca esta a 1) |
+| 4 | Y | linea |
+| 5 | Z | dash |
+| 6 | ? | |
+| 7 | ? | **nunca se escribe ni se prueba** |
+
+Los "atajos" del cruce son: el **movimiento `$84`** (el boton C: la mascara
+`$04` = el bit 2), el **movimiento `$86`** (B+C: la mascara `$06` = los bits
+1 y 2) y el **movimiento `$AA`** (el atajo global C+B+Y, en `$015DEE`).
 
 El atajo global esta en `$015DEE`: `cmpi.b #$70, d0` / `beq.w $18764` (el
 **MOVIMIENTO `$AA`**, el cambio de plano/linea). Su inmediato `$70` esta en
@@ -1118,7 +1155,7 @@ le falta el grupo `un_plano` (el que desactiva el cruce de planos).
 
 | ROM | Que es | Bytes | Checksum |
 |---|---|---|---|
-| `rom/cambios/19_china_sin_cruce.bin` | **la china + `un_plano` + los 23 de los atajos** | 33 | `$4C27` |
-| `rom/cambios/20_china_UNIFICADA.bin` | la china + todo el proyecto | 57 | `$FD09` |
+| `rom/cambios/19_china_sin_cruce.bin` | **la china + `un_plano` + los 23 de los atajos** | 33 | `$E651` |
+| `rom/cambios/20_china_UNIFICADA.bin` | la china + todo el proyecto | 57 | `$9733` |
 | `rom/cambios/19_sin_atajos_de_cruce.bin` | la base del proyecto + los 23 bytes | 23 | — |
 | `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la unificada del proyecto | 84 | `$DD4A` |

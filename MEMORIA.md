@@ -1494,3 +1494,22 @@ distancia": el `$83` dura 4-8 frames).
 El inmediato del `btst` va en 2 bytes (`08 2D 00 04 00 72` = `btst.b #$4,
 $72(a5)`) y **el byte ALTO** es el bit que se prueba (bits 8-11). El **bit 3**
 del campo `$72` **no lo prueba ninguna instruccion del juego** (0 usos).
+
+### !!! EL INMEDIATO DEL 'btst': EL BYTE ALTO ES EL NUMERO DE BIT !!!
+```
+08 2D 00 04 00 72   =   btst.b #$4, $72(a5)
+    ^  ^  ^  ^
+    |  |  |  +-- el byte BAJO = la MASCARA (los bits que se prueban)
+    |  |  +----- el byte ALTO = el NUMERO DE BIT (bits 8-11)
+    |  +-------- el modo/registro
+    +----------- el opcode
+```
+
+**CAMBIAR LA MASCARA ROMPE LOS ATAQUES** (el bit 0 = el boton A, el bit 1 =
+el B). Para desactivar un atajo hay que cambiar **el numero de bit** (el byte
+ALTO, en **salto - 4**) a un bit que el juego no use: **el bit 7** del campo
+`$72` no lo escribe ni lo prueba nadie (0 usos en todo el ROM).
+
+**MAPA DE LOS BOTONES ($72):** bit 0 = A (ataque fuerte), bit 1 = B (ataque
+debil), bit 2 = C (defensa), bit 3 = X, bit 4 = Y (linea), bit 5 = Z (dash),
+bit 7 = nunca se usa.
