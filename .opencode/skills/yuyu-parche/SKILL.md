@@ -25,6 +25,11 @@ description: Flujo completo para un cambio en la ROM de Yu Yu Hakusho (manifiest
 
 - La base es `rom/base/yuyu_makyou_base.bin` (la china, checksum $337B). Source de verdad
   para parchear. El `.asm` en `datos/` es de la ROM **J**: SOLO referencia.
+- **Toda instruccion 68K escrita a mano se valida con capstone ANTES de entrar al parche**:
+  decodificar los bytes del payload y comparar contra la intencion (leccio: `30 5D`
+  no era `move.w d0,$78(a5)`, era `movea.w (a5)+,a0` y tildaba el juego; el correcto es
+  `3B40 0078`). Encoding de `MOVE`: destino = reg en bits 11-9 + mode en bits 8-6,
+  fuente = mode en bits 5-3 + reg en bits 2-0.
 - El patcher **reescribe el checksum SIEMPRE al final** y **aborta sin escribir nada** si el
   byte "old" del manifiesto no cuadra. `--force` solo si la ROM ya tenía el parche aplicado.
 - Nunca tocar `rom/original/` ni `rom/fuentes/`. Nunca escribir rutas absolutas: usar

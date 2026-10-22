@@ -1243,10 +1243,20 @@ quedaba esperando a que el caido tocara el suelo para escribirle el
 signo del HP en 1: `move.w #$fc00, $78(a5)`) — y como el envenenado esta
 parado, nunca toca el suelo. Ese era el colgado.
 
-**La v8 escribe el `$FC00` directamente** en el momento en que el veneno
+**La v8b escribe el `$FC00` directamente** en el momento en que el veneno
 queda sin vida: las dos rutinas pasan al toque, la secuencia de KO arranca
 (`$A032 = 1` y el contador `$A03A` en `$F49E`, el mensaje y el festejo del
 ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
+
+> **EL BUG DE LA v8 (y por eso se tildaba al cruzar)**: la escritura del HP
+> drenado (`move.w d0, $78(a5)`) la codifique a mano como `30 5D 00 78` — 
+> que **NO es esa instruccion** (con capstone resulta ser `movea.w (a5)+, a0`):
+> el stream se desincronizaba, el `a0` del frame processing quedaba pisado con
+> los bytes del slot y **el juego se rompia** la primera vez que el hook
+> corria con vida baja. La codificacion correcta es **`3B40 0078`** (destino:
+> reg a5 en los bits 11-9 + mode `(d16,An)` en los bits 8-6; fuente `d0` en
+> los bits 5-0). **Regla nueva: toda instruccion escrita a mano se valida con
+> capstone ANTES de entrar al parche.**
 
 > **Los detalles**: el HP `$FC00` (-1024) es el mismo valor que usa `$F8C8`
 > para calcular el delay del mensaje de KO (saltea los `$FC00`, asi que no
@@ -1262,8 +1272,8 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 
 | fichero | que es | SHA1 |
 |---|---|---|
-| `rom/cambios/29_china_VENENO_P1_P2_muere.bin` | la **china** + `veneno_plano` (la **v8**, el marcador de cadaver `$FC00`) | `4A51649C1AFDA7C4D30BB76ED59DF5C66DD8E975` |
-| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno **v8** | `6BA8EBA5EEC88AF02AC0A58B48879893ADD43593` |
+| `rom/cambios/29_china_VENENO_P1_P2_muere.bin` | la **china** + `veneno_plano` (la **v8b**, el marcador de cadaver `$FC00`, con la escritura del HP corregida) | `BC355A7AF307C326B9284EAA6DA8640AEE1AE50F` |
+| `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno **v8b** | `80818566B752053733BD46F56B515C9EA36AE49C` |
 | `rom/cambios/28_china_VENENO_P1_P2_muere.bin` | la v7 (HP -1 + estado de reposo: **no muere, la ronda no acaba**) | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
 | `rom/cambios/27_china_VENENO_P1_P2.bin` | la v6 (el veneno sin el final sin vida) | `068F02B61D3981FCD84C718F270C75169179CF3E` |
 | `rom/cambios/24_china_VENENO_P1_referencia.bin` | la **v1** (solo P1), la que se probo primero | `7385066ADA220E0CED09EDAACCC2F2C3BB2059A3` |
@@ -1283,7 +1293,8 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 | v5 | + el final sin vida (suelo a 320 y estado de reposo) | se rompia: **el suelo a 320** es lo que rompia la partida |
 | v6 | el veneno de la v1 para todos los slots, sin el final sin vida | **funciona para el P1 y el P2** |
 | v7 | la v6 + el estado de reposo al llegar a 0 (sin tocar el suelo) | **NO muere**: el HP queda en -1 y la ronda no acaba (el escape: el `$F88C` sigue contandolo como vivo) |
-| **v8 (esta)** | la v6 + el marcador de cadaver `$FC00` al llegar a 0 o menos | SEA LO QUE SEA: la secuencia de KO arranca sola |
+| v8 | el marcador de cadaver `$FC00` al llegar a 0 o menos | **se tildaba al cruzar**: la escritura del HP estaba mal codificada (`30 5D` no era `move.w d0,$78(a5)`) |
+| **v8b (esta)** | la v8 con la escritura corregida (`3B40 0078`, validada con capstone) | SEA LO QUE SEA: la secuencia de KO arranca sola |
 
 ### Que esta verificado y que no
 

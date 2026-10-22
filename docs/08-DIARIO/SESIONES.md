@@ -832,3 +832,40 @@ suelo ni el estado. Muere parado, donde esta.
 - la v7 queda como `28` (el anti-ejemplo: no muere).
 
 Verificador de desensamblado: OK en las dos. Pendiente: probar en juego.
+
+## S-2024-10-22i: el tildo de la v8 (una codificacion mala en el payload)
+
+### El reporte
+
+La v28 (v7) drena toda la vida y anda bien, pero el pj no muere. La v29
+(v8 del marcador de cadaver) **se tilda el juego cuando uno cruza enfrente**.
+
+### El bug
+
+El payload nuevo tenia UNA instruccion mal codificada. Yo escribi la
+instruccion de volver el HP drenado al slot como `30 5D 00 78` creyendo que
+era `move.w d0, $78(a5)`. **No lo era**: con capstone, `30 5D` es
+`movea.w (a5)+, a0` — el stream quedaba listo mal: el `a0` del frame
+processing se pisa con los bytes del slot (la firma `$00012668`) y el HP ni
+se escribe. Se rompe en la PRIMERA vez que el hook corre con vida baja, o
+sea, al cruzar. La v7 no lo tenia porque usaba `sub.w d1, $78(a5)`
+(`93 6D`), que viene del juego.
+
+Un detalle humillante: el verificador de desensamblado dio **OK listo** con
+el payload roto, porque desensambla las zonas y no compara SEMANTICAS con la
+intencion del parche. La unica red es verificar a mano las instrucciones
+escritas a mano.
+
+### El fix (v8b)
+
+Un byte: `30 5D` -> `3B 40` en `$1A06FA`. Regla del encoding de los M68K
+`MOVE.W`: destino = reg en bits 11-9 + mode en bits 8-6, fuente = mode en
+bits 5-3 + reg en bits 2-0; para `move.w d0, $78(a5)` da `3B40 0078`.
+
+### ROMs rearmadas
+
+- `rom/cambios/29_china_VENENO_P1_P2_muere.bin`: SHA1 `BC355A7A...`
+- `rom/cambios/23_china_UNIFICADA_con_VENENO.bin`: SHA1 `80818566...`
+
+**Regla nueva para las skills**: instruccion escrita a mano = CAPSTONE OBLIGATORIO
+antes de meterla en el parche.
