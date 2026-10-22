@@ -472,3 +472,40 @@ el final del frame), **no** un `rts` suelto ni un trozo de codigo.
 **Ademas:** el usuario dejo su ROM original en `rom/original/` (es
 **identica** a `rom/fuentes/yuyu_makyou_ingles.bin`). El parche se le
 aplica **sin tocar el original**.
+
+
+<a name="s-2024-10-21i"></a>
+
+## S-2024-10-21i: el cruce se desactiva en 1 byte (y 4 versiones que rompieron el juego)
+
+**Sintomas:** *"sin atajos cruce ingles arranca rota"*, luego *"toda la
+pantalla en rojo"*, y luego *"volvio a fallar"*.
+
+**Lo que se descarto:** el checksum (los dos ROMs lo tienen correcto y el
+juego no lo tiene como constante) y la version china (el codigo es
+identico: los mismos bytes fallarian igual).
+
+**EL HALLAZGO:** la tabla global de comandos `$15C20` (la usa `$015C18`) se
+indexa con **`$58(a5)`**, y **`$58` es el "tipo de move" de los OBJETOS**,
+no el modo de move del cruce. **En todo el ROM `$58` nunca vale 80 ni 89**,
+asi que las entradas +80 y +89 **no son los atajos del cruce**. Y
+ademas **el juego usa esa tabla al arrancar** (intro, menu) → **cualquier
+cambio ahi rompe el arranque**.
+
+**Ademas, el "atajo" no es una tabla:** el cruce se LANZA en `$01873A`
+(`move.b #$a, $5d(a5)` = el estado `$0A`) + `$018748` (el frame `$0F`),
+dentro de `$018722` (que elige cruzar o volver segun el plano) y esa dentro
+de `$0186BE`.
+
+**LA SOLUCION (v5): 1 byte.** En `$01873D`, el immediate de
+`move.b #$a, $5d(a5)` pasa a `#$0`: el estado se queda en el normal y **el
+cruce no se lanza nunca**. El codigo sigue siendo valido, asi que no se
+rompe el arranque (lo unico que cambia es que en la intro el personaje no
+cruza).
+
+**La regla que sale de todo esto:** para desactivar una mecanica, se
+toca **el punto donde se lanza**, no una tabla de funciones que el juego
+usa en varios contextos. Y si hay que tocar una tabla, el destino tiene
+que ser **una funcion real** que el juego ya use para "no hacer nada" (un
+`rts` suelto hace pop de la pila y un `bra.w` al final del frame salta a
+mitad de una rutina).

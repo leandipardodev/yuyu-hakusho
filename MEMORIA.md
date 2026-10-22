@@ -1647,3 +1647,26 @@ no solo con los atajos.** Por eso el destino tiene que ser valido siempre.
 **Y EL CHECKSUM:** los dos ROMs (base $337B, inglesa $BE4F) lo tienen
 correcto y **el juego no lo tiene como constante en el codigo** (0
 apariciones). El patcher lo reescribe bien.
+
+### $58(a5) ES EL "TIPO DE MOVE" DE LOS OBJETOS (NO EL DEL CRUCE)
+La tabla global de comandos `$15C20` (la usa `$015C18`) se indexa con
+**`$58(a5)`**, y **`$58` es el "tipo de move" de los OBJETOS** (se escribe
+en `$01F7FE`-`$01FCF2` y `$020xxx`, con los valores 0-8, `$10`, `$14`,
+`$15`, `$18`-`$1d`, `$20`...). **En todo el ROM `$58` NUNCA vale 80 ni 89**,
+asi que las entradas +80 y +89 de esa tabla **no son los atajos del cruce**
+(son de otros objetos) y **tocarlas rompe el arranque** (el juego usa esa
+tabla al arrancar).
+
+**=> PARA DESACTIVAR UNA MECANICA, SE TOCA EL PUNTO DONDE SE LANZA, NO
+UNA TABLA.** El cruce se lanza en `$01873A` (`move.b #$a, $5d(a5)` = el
+estado `$0A`) y `$018748` (el frame `$0F`).
+
+### LOS SALTOS DE 16 BITS TIENEN VARIOS FORMATOS
+- 2 bytes: opcode + disp8 con signo (destino = off+2 + disp8).
+- 3 bytes: opcode + disp16 con signo (destino = off+2 + disp16).
+- 4 bytes: opcode de 2 bytes (`61 00`) + disp16 con signo (destino =
+  off+2 + disp16). **Este ultimo es el que usan los `bsr` del ROM** (p.ej.
+  `61 00 E6 9E` en `$019EC4` -> `$18564`).
+
+**Al buscar quien llama a una funcion hay que probar los tres**: con solo
+uno se conclude (mal) que nadie la llama.

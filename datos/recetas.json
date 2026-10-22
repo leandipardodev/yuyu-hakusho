@@ -203,12 +203,12 @@
     },
     {
       "id": "18_sin_atajos_de_cruce",
-      "titulo": "Desactiva los dos atajos del cruce (arriba+C y abajo+Y)",
+      "titulo": "Desactiva el cruce de planos (no se puede cruzar)",
       "grupos": [
         "sin_cruce_atajo"
       ],
-      "que_hace": "No se puede cruzar al otro plano: las dos entradas de la tabla global de comandos ($15c20, la +80 y la +89) dejan de apuntar a la funcion del cruce ($0186BE) y apuntan a la funcion 'reset' ($018440). 4 bytes.",
-      "bytes": 4
+      "que_hace": "No se puede cruzar al otro plano: el immediate de $01873D ('move.b #$a, $5d(a5)') pasa a ser #$0, asi que el estado $0A (el cruce) no se lanza. 1 byte.",
+      "bytes": 1
     }
   ],
   "combinaciones": [

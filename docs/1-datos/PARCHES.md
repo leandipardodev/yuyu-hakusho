@@ -1200,119 +1200,72 @@ cuando el HP llegue a 0, poner `move.b #$4, $5d(a5)` y
 `move.b #$2c, $5f(a5)` (el frame del golpe) y ademas `$1f786` (el efecto).
 Eso esta pendiente de hacer y probar.
 
-## 17. `sin_cruce_atajo` (desactiva los dos atajos del cruce)
+## 17. `sin_cruce_atajo` (no se puede cruzar de planos)
 
 **Pedido:** *"agarra la rom original del yuyu y desactiva el cruzar
 enfrente. quita el atajo arriba + c global que permite cruzar y el atajo Y.
 que no apunten a su funcion, solo eso"*.
 
-**Que hace:** **no se puede cruzar al otro plano**. Los dos atajos (el de
-**arriba+C**, global, y el de **abajo+Y**) dejan de apuntar a la funcion
-del cruce. **4 bytes**, y no se toca la funcion del cruce ni nada mas.
-
-### Donde estan los atajos
-
-El cruce de planos es el **estado `$0A` con el frame id `$0F`**, y la
-funcion que lo pone es **`$0186BE`** (-> `$018722` -> `$01873A`).
-
-Las tablas de comandos del juego son del tipo
-
-```
-lea.l  base(pc, d0.w), a0
-adda.w (a0), a0
-jmp    (a0)
-```
-
-o sea que **las entradas son OFFSETS RELATIVOS**: el destino de la entrada
-`k` de la tabla `base` es `base + 2*k + word(base + 2*k)`.
-
-Hay 62 tablas asi. La funcion del cruce `$0186BE` **solo aparece en la
-TABLA GLOBAL** (`$15C20`, la usa `$015C18` con el indice `$58(a5)`), y en
-**dos entradas**:
-
-| Entrada | Direccion | Apuntaba a | Que atajo es |
-|---|---|---|---|
-| **+80** | `$015CC0` | `$0186BE` | el de **arriba + C** (global) |
-| **+89** | `$015CD2` | `$0186BE` | el de **abajo + Y** |
+**Que hace:** **no se puede cruzar al otro plano**. **1 byte**.
 
 ### El cambio
 
-Las dos entradas dejan de apuntar a `$0186BE` y apuntan a **`$019D5E`**,
-que es una **funcion de verdad**:
+El cruce de planos es el **estado `$0A` con el frame id `$0F`**, y se
+lanza en dos sitios:
 
-```
-$019D5E  bsr.w $18440      ; el 'reset': estado $00, frame $00
-$019D62  bra.w $15afc      ; el final del frame
-```
-
-Es **exactamente lo que hace el juego cuando un comando no dispara
-nada**: el personaje vuelve a su estado normal. No toca la pila (termina
-en el `bra.w $15afc` del final del frame) y el flujo queda intacto.
-
-| Direccion | Antes (offset) | Despues (offset) |
+| Direccion | Instruccion | Que hace |
 |---|---|---|
-| `$015CC0` | `$29FE` -> `$0186BE` | `$409E` -> `$019D5E` |
-| `$015CD2` | `$29EC` -> `$0186BE` | `$408C` -> `$019D5E` |
+| `$01873A` | `move.b #$a, $5d(a5)` | **el estado = `$0A`** (el cruce) |
+| `$018748` | `move.b #$f, $5f(a5)` | el frame id = `$0F` |
 
-**Por que el destino hay que elegirlo con cuidado (dos versiones
-previas rompieron el arranque):** la tabla global se indexa con
-`$58(a5)`, y **`$58` puede valer 80 o 89 en otros contextos** (al
-arrancar, en la intro, en el menu), no solo cuando se pulsa el atajo.
-Asi que el destino tiene que ser algo que **no rompa nada** pase lo que
-pase:
+Estan dentro de `$018722` (la funcion que elige **cruzar o volver** segun
+el plano en el que estas) y esa dentro de `$0186BE`.
 
-| Version | Destino | Que pasaba |
+**Con este parche, el immediate de `$01873D` pasa de `#$a` a `#$0`**:
+
+| Direccion | Antes | Despues |
 |---|---|---|
-| v2 | `$019D62` (`bra.w $15afc`) | el juego saltaba ahi **a mitad de una rutina** al arrancar -> **ARRANCA ROTA** |
-| v3 | `$01668A` (un `rts` suelto) | el `jmp (a0)` + el `rts` hace **pop de la pila** -> **PANTALLA ROJA** |
-| **v4** | **`$019D5E`** | **bien** |
+| `$01873D` | `$0A` (`#$a`) | `$00` (`#$0`) |
 
-**Por que no otras cosas:**
+El estado se queda en el normal (`$00`) y **el cruce no se lanza nunca**.
+El codigo sigue siendo valido, asi que **no se rompe nada mas**: lo
+unico que cambia es que en la intro el personaje no cruza.
 
-- **No `$018440`** (la funcion "reset" en si): el parche `doble_salto`
-  reescribe esa rutina y **la mueve 2 bytes**, asi que en la version
-  unificada el destino quedaria a mitad de instruccion. (Con `$019D5E` no
-  hay problema: el `bsr.w $18440` sigue apuntando al inicio de la
-  rutina, que no se mueve.)
-- **No `$015AFC`** (el final del handler): el offset de la tabla es de
-  **16 bits SIN SIGNO**, asi que una entrada no puede apuntar hacia atras
-  (a una direccion menor que la de la tabla).
+### OJO: las entradas de la tabla global NO se tocan (y por que)
 
-**El checksum NO era el problema:** los dos ROMs (base `$337B`, inglesa
-`$BE4F`) lo tienen correcto (coincide con la suma de los datos desde
-`$200`) y **el juego no lo tiene como constante en el codigo**.
+La tabla global de comandos `$15C20` (la usa `$015C18`) tiene dos entradas
+(+80 y +89) que apuntan a `$0186BE`. **Parecian los "atajos", pero NO lo
+son**, y tocarlas **rompe el arranque** (pantalla roja):
 
-### Lo que NO se toca (a proposito)
+1. La tabla se indexa con **`$58(a5)`**, y **`$58` es el "tipo de move" de
+   los OBJETOS** (se pone en `$01F7FE`-`$01FCF2` y `$020xxx`, con los
+   valores 0-8, `$10`, `$14`, `$15`, `$18`-`$1d`, `$20`...). **En todo el
+   ROM `$58` NUNCA vale 80 ni 89**, asi que esas entradas no son las del
+   cruce.
+2. **El juego usa esa tabla al arrancar** (intro, menu), asi que cambiar
+   una entrada puede dejar el juego saltando a un sitio que no toca.
 
-Las tablas **por personaje** (`$16042`, `$16132`, `$16464`, ... 16
-entradas cada una) apuntan a `$1886A` / `$018880`, que ponen el **estado
-`$03` con los frames `$84` / `$86`**: eso son las **tecnicas** de cada
-personaje, **no el cruce**. Y `$18854` (`$018854`, el estado `$03` con el
-frame `$83`) tambien es una tecnica.
+**Por eso el cruce se desactiva en el punto donde se LANZA**, no en la
+tabla.
 
-La cadena del cruce (`$0186BE` -> `$018722` -> `$01873A`, y la vuelta
-`$0186F2`) cuelga **enteramente** de la entrada de la tabla, asi que
-apagando las dos entradas no hay ni cruce ni vuelta.
+### Las cuatro versiones que rompieron el juego (y por que)
 
-### Sobre que ROM es la "original"
+| Version | Que hacia | Por que rompia |
+|---|---|---|
+| v2 | las entradas +80/+89 -> `$019D62` (`bra.w $15afc`) | el juego saltaba ahi **a mitad de una rutina** al arrancar -> **arranca rota** |
+| v3 | las entradas +80/+89 -> `$01668A` (un `rts` suelto) | el `jmp (a0)` + el `rts` hace **pop de la pila** -> **pantalla roja** |
+| v4 | las entradas +80/+89 -> `$019D5E` (el reset) | el destino es una funcion real, pero **la tabla se usa al arrancar** y el atajo **debe** hacer el cruce ahi |
+| **v5** | **`$01873D`: `#$a` -> `#$0`** | **bien**: 1 byte, el codigo sigue valido |
 
-| Que | Que es |
-|---|---|
-| **`rom/base/yuyu_makyou_base.bin`** | **la ROM original** (la del proyecto, con el checksum al dia). **Verificado: NO tiene ningun parche del proyecto puesto** (en `$018751` esta el byte "old" `3F`, en `$018443` el "old" `00`, en `$01A29A` el "old" `55`...). |
-| `rom/fuentes/yuyu_makyou_ingles.bin` | **otra version** del juego (ingles / dual_language, son **identicas entre si**): **113 280 bytes** distintos de la base (la traduccion y los vectores de interrupcion). |
-| `rom/fuentes/usuario_ROMA_MODIFICAR.bin` | la base **con 60 bytes** de parches del proyecto (la "unificada" de antes). |
-| `rom/fuentes/yuyu_makyou_HIEI_DRAGON.bin` | la base + el parche del dragon de Hiei. |
-| `rom/fuentes/usuario_HIEI_DRAGON_LENTO_ROTO.bin` | la base + el dragon de Hiei lento. |
-| `rom/fuentes/usuario_HIEI_v3_ITSUKI_KAGE_14f-7f.bin` | la base + los parches del dragón y el kage de Itsuki. |
+### El checksum NO era el problema
+Los dos ROMs (la base `$337B` y la inglesa `$BE4F`) lo tienen **correcto**
+(coincide con la suma de los datos desde `$200`) y **el juego no lo tiene
+como constante en el codigo** (0 apariciones de `$337B` y de `$BE4F`).
 
-**Las dos ROMs que hay con este parche:**
+### Las ROMs
 
 | ROM | Base | Bytes | Checksum |
 |---|---|---|---|
-| `rom/cambios/18_sin_atajos_de_cruce.bin` | la base (la del proyecto) | 4 (+2 del checksum) | `$60C3` |
-| `rom/cambios/18_sin_atajos_de_cruce_ingles.bin` | la version inglesa | 4 (+2 del checksum) | `$EB97` |
-
-**En las dos ROMs la estructura del cruce es IGUAL**: la tabla global de
-comandos en `$15C20` (las 256 entradas byte a byte iguales) y las entradas
-+80 y +89 apuntando a `$0186BE` ✓. Por eso el mismo parche sirve para las
-dos.
+| `rom/cambios/18_sin_atajos_de_cruce_ingles.bin` | **la del usuario** (`rom/original/`) | 1 (+2) | `$BE45` |
+| `rom/cambios/18_sin_atajos_de_cruce.bin` | la base del proyecto | 1 (+2) | `$3371` |
+| `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la base + todos los cambios | 82 | `$2552` |
