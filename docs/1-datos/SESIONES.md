@@ -412,3 +412,30 @@ nada y la funcion del cruce no se toca.
 bytes (checksum `$60C3`) y la unificada 85 bytes (checksum `$52A4`).
 Falta que lo pruebes en el emulador: **el atajo de arriba+C y el de abajo+Y
 no deberian hacer nada** (y el resto del juego igual).
+
+
+<a name="s-2024-10-21g"></a>
+
+## S-2024-10-21g: el destino del atajo (la v2 ARRANCA ROTA)
+
+**Sintoma:** con la v2 (las entradas de la tabla global apuntando a
+`$019D62`, un `bra.w $15afc` = el final del frame) la ROM **arranca rota**.
+
+**La causa (importante):** la tabla global `$15C20` se indexa con
+**`$58(a5)`**, y **`$58` puede valer 80 o 89 en otros contextos** (al
+arrancar, en la intro, en el menu) — no solo cuando se pulsa el atajo. Con
+un destino que no sea un "nada" real, el juego saltaba ahi **a mitad de
+una rutina** y se rompia.
+
+**El arreglo:** el destino es ahora **`$01668A`, un `rts` suelto** (hay un
+bloque de `rts` en `$016688-$016692`). La tabla salta con `jmp (a0)`, asi
+que el `rts` saca la direccion de retorno del `bsr $15c10` y vuelve al
+dispatcher de estados: **no hace nada y el flujo queda intacto** pase lo
+que pase.
+
+**Ademas:** el usuario dejo su ROM original en **`rom/original/`**
+("yuu yuu hakusho - makyou toitsusen (english translation).bin"). Se
+comprobo que es **identica** a `rom/fuentes/yuyu_makyou_ingles.bin` (y a
+`dual_language.bin`). El parche se le aplica **sin tocar el original**
+(el parcheador escribe en otro fichero):
+`rom/cambios/18_sin_atajos_de_cruce_ingles.bin`.

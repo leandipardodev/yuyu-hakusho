@@ -1237,16 +1237,29 @@ TABLA GLOBAL** (`$15C20`, la usa `$015C18` con el indice `$58(a5)`), y en
 
 ### El cambio
 
-Las dos entradas dejan de apuntar a `$0186BE` y apuntan a **`$019D62`**, que
-es un `bra.w $15afc` (el final del frame): el atajo no hace NADA y el
-personaje se queda en su estado.
+Las dos entradas dejan de apuntar a `$0186BE` y apuntan a **`$01668A`**, que
+es un **`rts` suelto** (hay un bloque de ellos en `$016688-$016692`): el
+atajo no hace NADA y el flujo queda intacto.
 
 | Direccion | Antes (offset) | Despues (offset) |
 |---|---|---|
-| `$015CC0` | `$29FE` -> `$0186BE` | `$40A2` -> `$019D62` |
-| `$015CD2` | `$29EC` -> `$0186BE` | `$4090` -> `$019D62` |
+| `$015CC0` | `$29FE` -> `$0186BE` | `$09CA` -> `$01668A` |
+| `$015CD2` | `$29EC` -> `$0186BE` | `$09B8` -> `$01668A` |
 
-**Por que `$019D62` y no otras cosas:**
+**Por que un `rts` (¡y no cualquier cosa!):** la tabla global se indexa
+con `$58(a5)`, y **`$58` puede valer 80 o 89 en otros contextos** (al
+arrancar, en la intro, en el menu), no solo con los atajos. Por eso el
+destino tiene que ser algo que **no rompa el flujo** pase lo que pase.
+
+La tabla salta con `jmp (a0)`, asi que un `rts` saca la direccion de
+retorno del `bsr $15c10` y vuelve al dispatcher de estados: **no hace nada
+y el flujo queda perfecto**.
+
+**La v2 de este parche apuntando a `$019D62` (`bra.w $15afc`, el final
+del frame) ARRANCA ROTA**: con ese destino, al arrancar el juego saltaba
+ahi a mitad de una rutina.
+
+**Por que no otras cosas:**
 
 - **No `$018440`** (la funcion "reset"): el parche `doble_salto` reescribe
   esa rutina y **la mueve 2 bytes**, asi que en la version unificada el

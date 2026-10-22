@@ -1616,3 +1616,15 @@ apuntar a `$0186BE` (4 bytes).
 - **`rom/fuentes/usuario_ROMA_MODIFICAR.bin` = la base + 60 bytes** de
   parches del proyecto (la "unificada" de antes).
 - `yuyu_makyou_HIEI_DRAGON.bin` = la base + el dragón de Hiei.
+
+### EL DESTINO DE UNA ENTRADA DE TABLA TIENE QUE SER UN "NADA" REAL
+Las tablas de comandos se indexan con un campo del struct (en la global
+`$15C20` es `$58(a5)`), y **ese campo puede tomar los mismos valores en
+contextos distintos** (al arrancar, en la intro, en el menu). Por eso, si
+cambias el destino de una entrada para "desactivar" algo, **ese destino
+tiene que ser un `rts`**: la tabla salta con `jmp (a0)` y el `rts` saca la
+direccion de retorno del `bsr` y devuelve el control al sitio correcto.
+
+**Con un destino que no sea un "nada" (por ejemplo un `bra.w $15afc`, el
+final del frame) el juego ARRANCA ROTA**, porque salta ahi a mitad de una
+rutina. Le pasó con la v2 del parche `sin_cruce_atajo`.
