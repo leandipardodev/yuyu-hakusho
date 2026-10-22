@@ -519,3 +519,27 @@ relativo a los planos: mapea la RAM del Z80, busca la bandera del plano
 ($A042 = el offset $0042 del Z80), avisa cuando tiene los DOS bits a 1 (el
 "2 cuerpos") y tiene modos para **forzar** la bandera (1, 2 o 3) o **quitar
 vida** desde el Lua, sin tocar la ROM.
+
+<a name="s-2024-10-22b"></a>
+
+## S-2024-10-22b: el repo de GitHub
+
+**Peticion del usuario:** *"quiero que crees un repo en github"*.
+
+**Hecho:** `https://github.com/leandipardodev/yuyu-hakusho` (**PRIVADO**),
+creado con `gh repo create ... --private --source=. --remote=origin --push`.
+237 ficheros, 4,4 MB, rama `main`.
+
+**Lo que se sube:** `docs/` (las nueve areas), `datos/` (el manifiesto de
+parches, las recetas y el desensamblado), `herramientas/` (el desensamblado,
+las sondas de Lua y los verificadores), `assets/`, `.github/` (las plantillas
+de issue) y el `README.md`.
+
+**Lo que NO se sube:** `rom/` (los dumps y las ROMs parcheadas) y `notas/`
+(el otro repo del usuario, el diario de investigacion). El `.gitignore` ya
+excluia las dos carpetas.
+
+**POR QUE PRIVADO:** el juego es de Treasure, con licencia de Toei Animation
+y Shueisha. En `assets/imagenes/` hay volcados de la VRAM/CRAM y capturas
+del juego, y `datos/desensamblado_68000.asm` (1,5 MB) es el volcado del
+ROM: **si este repo se hace publico, hay que sacar todo eso.**
