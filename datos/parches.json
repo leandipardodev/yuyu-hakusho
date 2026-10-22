@@ -1779,464 +1779,590 @@
       ]
     },
     "plano_y_dano": {
-      "desc": "EL PLANO Y EL DANO AL CRUZAR. (1) EL FLAG DEL PLANO ES $A042 (NO el suelo $9c): el bit 0 = 'delante' y el bit 1 = 'atras'. Lo escriben SEIS sitios con 'bset.b' ($015BE7, $015BF7, $019E10, $019E30, $019ED4, $019EF4) y lo leen dos con 'btst.b' ($0186DA y $018722). COMO EL 'bset' SOLO PONE BITS Y NUNCA LIMPIA EL OTRO, cuando el personaje pasa de un plano al otro el flag se queda CON LOS DOS BITS A 1 (3): el juego cree que esta en los dos planos a la vez y DIBUJA DOS CUERPOS (el '2 cuerpos por detras' durante 1 frame). EL FIX: INTERCAMBIAR LOS BITS (el bit 1 = 'delante' y el bit 0 = 'atras') en los seis escritores y en los dos lectores, de modo que los dos bits NUNCA puedan coexistir. (2) EL DANO AL CRUZAR: la rutina de $015BD8 (la que actualiza el plano cada frame: si el suelo $9c es 320 pone 'delante' y si es 304 pone 'atras') se reescribe con 6 bytes mas: al llegar al plano de atras llama a una rutina nueva ($1A06F0, 26 bytes) que quita 1 de vida del HP ($78(a5)). Si el HP era 1 se quitan 2, para que quede NEGATIVO: el juego solo detecta el KO con el HP negativo ('btst.b #$7, $78(a5)' en $019CFC, el handler del estado $00) y si el HP llegara a 0 en este punto nadie lo vigilantia, la ronda no acabaria y el juego se colgaria. OJO: el 'move.w $78(a5), d0' deja un byte pendiente ($00) que la CPU consume como parte de la instruccion; el 'ori.b #$0, d0' de $1A06F6 es ese byte (no hace nada, solo consume). 76 bytes en total.",
-      "confianza": "CODIGO (los seis escritores y los dos lectores del flag $A042, la rutina del plano $015BD8 y el KO del juego en $019CFC) + CAPSTONE (la rutina revisada instruccion a instruccion; el 'ori.b' y el 'move.w' los lee Capstone con otro tamano, pero la CPU los ejecuta bien)",
+      "desc": "EL PLANO Y EL DANO AL CRUZAR. (1) EL 'CAMBIO DE PLANO' NO ES EL SUELO ($9c) SINO EL FLAG GLOBAL $A042: el bit 0 = 'en el plano de DELANTE' y el bit 1 = 'en el plano de ATRAS'. Lo escriben SEIS 'bset.b' ($015BE6, $015BF6, $019E10, $019E30, $019ED4, $019EF4) y lo leen dos 'btst.b' ($0186DA y $018722). COMO EL 'bset' SOLO PONE BITS Y NUNCA LIMPIA EL OTRO, al pasar de un plano al otro el flag se queda CON LOS DOS BITS A 1 (3) y el juego cree que el personaje esta en los dos planos a la vez: DIBUJA DOS CUERPOS (el '2 cuerpos por detras' de 1 frame). EL FIX: INTERCAMBIAR LOS BITS (el bit 1 = 'delante' y el bit 0 = 'atras') en los cuatro escritores que quedan y en los dos lectores, de modo que los dos bits NUNCA puedan coexistir. OJO: el byte del numero de bit de estas instrucciones es el CUARTO (offset +3): '08 F8 00 <n> A0 42'. Ademas, la rutina que actualiza el plano cada frame ($015BD8, la llama $015A2E con 'bsr.w') ahora pone el flag con dos rutinas nuevas en el hueco libre $1A06F0 que PRIMERO lo limpian ('clr.b $a042.w'), y la rutina 'atras' quita 1 de vida del HP. LA RUTINA NO CRECE: los 'bset.b' (6 bytes) se sustituyen por 'jsr.l' (6 bytes) y el 'bra.b' sustituye al 'rts'. (2) EL DANO AL CRUZAR: la rutina 'atras' ($1A06FC) quita 1 de vida del HP ($78(a5)). Si el HP era 1 se quitan 2, para que quede NEGATIVO: el juego solo detecta el KO con el HP negativo ('btst.b #$7, $78(a5)' en $019CFC, el handler del estado $00) y si el HP llegara a 0 en este punto nadie lo vigilantia, la ronda no acabaria y EL JUEGO SE COLGARIA. El cruce es un EVENTO (un frame), asi que el dano es 1 vida por cruce.",
+      "confianza": "CODIGO (los seis escritores y los dos lectores del flag $A042, la rutina del plano $015BD8 y el KO del juego en $019CFC) + CAPSTONE (todo revisado instruccion a instruccion; el 'move.w', el 'sub.w' y el 'ori.b' los lee Capstone con otro tamano, pero la CPU los ejecuta bien)",
       "bytes": [
         {
           "addr": "0x015BD8",
           "old": "4A",
           "new": "4A",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BD9",
           "old": "6D",
           "new": "78",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BDA",
           "old": "00",
           "new": "00",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BDB",
           "old": "78",
           "new": "78",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BDC",
           "old": "6B",
           "new": "66",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BDD",
           "old": "1E",
-          "new": "28",
-          "nota": "la rutina del plano reescrita"
+          "new": "1E",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BDE",
           "old": "0C",
           "new": "0C",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BDF",
           "old": "6D",
           "new": "2D",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE0",
           "old": "01",
           "new": "00",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE1",
           "old": "40",
           "new": "40",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE2",
           "old": "00",
           "new": "00",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE3",
           "old": "9C",
           "new": "9C",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE4",
           "old": "66",
           "new": "66",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE5",
           "old": "08",
           "new": "08",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE6",
           "old": "08",
-          "new": "08",
-          "nota": "la rutina del plano reescrita"
+          "new": "4E",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE7",
           "old": "F8",
-          "new": "F8",
-          "nota": "la rutina del plano reescrita"
+          "new": "B9",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE8",
           "old": "00",
           "new": "00",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BE9",
           "old": "00",
-          "new": "01",
-          "nota": "la rutina del plano reescrita"
+          "new": "1A",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BEA",
           "old": "A0",
-          "new": "A0",
-          "nota": "la rutina del plano reescrita"
+          "new": "06",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BEB",
           "old": "42",
-          "new": "42",
-          "nota": "la rutina del plano reescrita"
+          "new": "F0",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BEC",
           "old": "4E",
-          "new": "4E",
-          "nota": "la rutina del plano reescrita"
+          "new": "60",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BED",
           "old": "75",
-          "new": "75",
-          "nota": "la rutina del plano reescrita"
+          "new": "0E",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BEE",
           "old": "0C",
           "new": "0C",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BEF",
           "old": "6D",
           "new": "2D",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF0",
           "old": "01",
           "new": "00",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF1",
           "old": "30",
           "new": "30",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF2",
           "old": "00",
           "new": "00",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF3",
           "old": "9C",
           "new": "9C",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF4",
           "old": "66",
           "new": "66",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF5",
           "old": "06",
-          "new": "10",
-          "nota": "la rutina del plano reescrita"
+          "new": "06",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF6",
           "old": "08",
           "new": "4E",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF7",
           "old": "F8",
           "new": "B9",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF8",
           "old": "00",
           "new": "00",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BF9",
           "old": "01",
           "new": "1A",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BFA",
           "old": "A0",
           "new": "06",
-          "nota": "la rutina del plano reescrita"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BFB",
           "old": "42",
-          "new": "F0",
-          "nota": "la rutina del plano reescrita"
+          "new": "FC",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BFC",
           "old": "4E",
-          "new": "08",
-          "nota": "la rutina del plano reescrita"
+          "new": "4E",
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x015BFD",
           "old": "75",
-          "new": "F8",
-          "nota": "la rutina del plano reescrita"
-        },
-        {
-          "addr": "0x015BFE",
-          "old": "4E",
-          "new": "00",
-          "nota": "la rutina del plano reescrita"
-        },
-        {
-          "addr": "0x015BFF",
-          "old": "B9",
-          "new": "00",
-          "nota": "la rutina del plano reescrita"
-        },
-        {
-          "addr": "0x015C00",
-          "old": "00",
-          "new": "A0",
-          "nota": "la rutina del plano reescrita"
-        },
-        {
-          "addr": "0x015C01",
-          "old": "00",
-          "new": "42",
-          "nota": "la rutina del plano reescrita"
-        },
-        {
-          "addr": "0x015C02",
-          "old": "39",
-          "new": "4E",
-          "nota": "la rutina del plano reescrita"
-        },
-        {
-          "addr": "0x015C03",
-          "old": "82",
           "new": "75",
-          "nota": "la rutina del plano reescrita"
-        },
-        {
-          "addr": "0x019E12",
-          "old": "00",
-          "new": "00",
-          "nota": "bset.b #$1 (ATRAS) -> #$0: el flag del plano, bit 0 = ATRAS"
-        },
-        {
-          "addr": "0x019E32",
-          "old": "00",
-          "new": "01",
-          "nota": "bset.b #$0 (DELANTE) -> #$1: el flag del plano, bit 1 = DELANTE"
-        },
-        {
-          "addr": "0x019ED6",
-          "old": "00",
-          "new": "00",
-          "nota": "bset.b #$1 (ATRAS) -> #$0"
-        },
-        {
-          "addr": "0x019EF6",
-          "old": "00",
-          "new": "01",
-          "nota": "bset.b #$0 (DELANTE) -> #$1"
-        },
-        {
-          "addr": "0x0186DC",
-          "old": "00",
-          "new": "01",
-          "nota": "btst.b #$0 (DELANTE) -> #$1: el lector del flag"
-        },
-        {
-          "addr": "0x018724",
-          "old": "00",
-          "new": "00",
-          "nota": "btst.b #$1 (ATRAS) -> #$0: el lector del flag"
+          "nota": "la rutina del plano: 'jsr.l' a las rutinas 'delante'/'atras'"
         },
         {
           "addr": "0x1A06F0",
           "old": "00",
-          "new": "2F",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "42",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06F1",
           "old": "00",
-          "new": "00",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "38",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06F2",
           "old": "00",
-          "new": "32",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "A0",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06F3",
           "old": "00",
-          "new": "2D",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "42",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06F4",
           "old": "00",
-          "new": "00",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "08",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06F5",
           "old": "00",
-          "new": "78",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "F8",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06F6",
           "old": "00",
           "new": "00",
-          "nota": "la rutina que quita 1 de vida"
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06F7",
           "old": "00",
-          "new": "00",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "01",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06F8",
           "old": "00",
-          "new": "00",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "A0",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06F9",
           "old": "00",
-          "new": "00",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "42",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06FA",
           "old": "00",
-          "new": "0C",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "4E",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06FB",
           "old": "00",
-          "new": "40",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "75",
+          "nota": "la rutina 'delante': limpia el flag $A042 y pone el bit 1"
         },
         {
           "addr": "0x1A06FC",
           "old": "00",
-          "new": "00",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "2F",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A06FD",
           "old": "00",
-          "new": "01",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A06FE",
           "old": "00",
-          "new": "66",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "32",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A06FF",
           "old": "00",
-          "new": "04",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "2D",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0700",
           "old": "00",
-          "new": "52",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0701",
           "old": "00",
-          "new": "40",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "78",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0702",
           "old": "00",
-          "new": "93",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0703",
           "old": "00",
-          "new": "6D",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0704",
           "old": "00",
           "new": "00",
-          "nota": "la rutina que quita 1 de vida"
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0705",
           "old": "00",
-          "new": "78",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0706",
           "old": "00",
-          "new": "22",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "0C",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0707",
           "old": "00",
-          "new": "00",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "40",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0708",
           "old": "00",
-          "new": "4E",
-          "nota": "la rutina que quita 1 de vida"
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
         },
         {
           "addr": "0x1A0709",
           "old": "00",
+          "new": "01",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A070A",
+          "old": "00",
+          "new": "66",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A070B",
+          "old": "00",
+          "new": "04",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A070C",
+          "old": "00",
+          "new": "52",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A070D",
+          "old": "00",
+          "new": "40",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A070E",
+          "old": "00",
+          "new": "60",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A070F",
+          "old": "00",
+          "new": "02",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0710",
+          "old": "00",
+          "new": "53",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0711",
+          "old": "00",
+          "new": "40",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0712",
+          "old": "00",
+          "new": "93",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0713",
+          "old": "00",
+          "new": "2D",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0714",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0715",
+          "old": "00",
+          "new": "78",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0716",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0717",
+          "old": "00",
+          "new": "22",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0718",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0719",
+          "old": "00",
+          "new": "42",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A071A",
+          "old": "00",
+          "new": "38",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A071B",
+          "old": "00",
+          "new": "A0",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A071C",
+          "old": "00",
+          "new": "42",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A071D",
+          "old": "00",
+          "new": "08",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A071E",
+          "old": "00",
+          "new": "F8",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A071F",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0720",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0721",
+          "old": "00",
+          "new": "A0",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0722",
+          "old": "00",
+          "new": "42",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0723",
+          "old": "00",
+          "new": "4E",
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x1A0724",
+          "old": "00",
           "new": "75",
-          "nota": "la rutina que quita 1 de vida"
+          "nota": "la rutina 'atras': quita 1 de vida, limpia el flag y pone el bit 0"
+        },
+        {
+          "addr": "0x019E13",
+          "old": "01",
+          "new": "00",
+          "nota": "bset.b #$1 (ATRAS) -> #$0: el bit del flag, intercambiado"
+        },
+        {
+          "addr": "0x019E33",
+          "old": "00",
+          "new": "01",
+          "nota": "bset.b #$0 (DELANTE) -> #$1: el bit del flag, intercambiado"
+        },
+        {
+          "addr": "0x019ED7",
+          "old": "01",
+          "new": "00",
+          "nota": "bset.b #$1 (ATRAS) -> #$0: el bit del flag, intercambiado"
+        },
+        {
+          "addr": "0x019EF7",
+          "old": "00",
+          "new": "01",
+          "nota": "bset.b #$0 (DELANTE) -> #$1: el bit del flag, intercambiado"
+        },
+        {
+          "addr": "0x0186DD",
+          "old": "00",
+          "new": "01",
+          "nota": "btst.b #$0 (DELANTE) -> #$1: el lector del flag, intercambiado"
+        },
+        {
+          "addr": "0x018725",
+          "old": "01",
+          "new": "00",
+          "nota": "btst.b #$1 (ATRAS) -> #$0: el lector del flag, intercambiado"
         }
       ]
     }

@@ -418,3 +418,43 @@ dano) no se pueden usar a la vez.
 **Pendiente:** probar `22_china_PLANO_Y_DANO.bin` (el cruce con dano y sin
 "2 cuerpos") y `24_china_UNIFICADA_sin_hoja.bin` (biseccion del "2
 cuerpos", por si el parche de la hoja de Kuwabara es el culpable).
+
+<a name="s-2024-10-21r"></a>
+
+## S-2024-10-21r: la ROM 22/23 no arrancaba (mis bytes del flag iban +1)
+
+**Sintoma del usuario:** *"22 y 23 al entrar en combate se ve todo negro no
+carga"*.
+
+**Los DOS errores mio:**
+1. **El byte del numero de bit de `bset.b #n, $a042.w` es el CUARTO**
+   (offset +3), no el tercero: `08 F8 00 <n> A0 42`. Yo cambiaba el byte
+   +1 ⇒ **los seis `bset.b` y los dos `btst.b` del flag del plano quedaban
+   rotos** (el flag recibia un numero de bit al azar) ⇒ el juego se colgaba
+   al entrar en combate.
+2. La rutina del plano (`$015BD8`) **crecia 6 bytes** y se comia el codigo
+   de `$015C04`. Ahora los `bset.b` (6 bytes) se sustituyen por `jsr.l`
+   (6 bytes) y el `bra.b` sustituye al `rts`: **la rutina sigue midiendo
+   38 bytes**.
+
+**Ademas se ha descubierto la codificacion de las operaciones con un EA y un
+registro:** el byte del registro va **al final** (`move.w $78(a5), d0` =
+`32 2D 00 78 00`), y Capstone no lo cuenta ⇒ el verificador los marca
+como reescritos aunque la CPU los ejecuta bien.
+
+**El grupo `plano_y_dano` (97 bytes) queda asi:**
+- La rutina del plano `$015BD8` (38 bytes, sin crecer) llama a dos rutinas
+  nuevas en el hueco libre `$1A06F0`:
+  - **'delante'** (12 bytes): `clr.b $a042.w` + `bset.b #$1` + `rts`.
+  - **'atras'** (41 bytes): **quita 1 de vida** (2 si el HP era 1, para que
+    quede NEGATIVO y el juego haga el KO sin colgarse) + `clr.b $a042.w` +
+    `bset.b #$0` + `rts`.
+- Los 4 `bset.b` que quedan en los handlers y los 2 `btst.b` (los lectores):
+  **intercambian los bits**, para que los dos bits del flag nunca coexistan
+  (era el "2 cuerpos por detras": el flag se quedaba con los dos bits a 1
+  y el juego creia que el personaje estaba en los dos planos a la vez).
+
+**ROMs para probar:** `22_china_PLANO_Y_DANO.bin` (la minima), la
+`23_china_UNIFICADA_PLANO_Y_DANO.bin` (la unificada con el fix) y la
+`24_china_UNIFICADA_sin_hoja.bin` (la biseccion del "2 cuerpos" por si es
+el parche de la hoja de Kuwabara).

@@ -3665,3 +3665,34 @@ plano nunca cambia y el daño no se aplica**. O sea:
 | `rom/cambios/22_china_PLANO_Y_DANO.bin` | la base + `plano_y_dano` (78 bytes) = **el cruce con dano y sin "2 cuerpos"** |
 | `rom/cambios/23_china_UNIFICADA_PLANO_Y_DANO.bin` | la unificada (sin `un_plano`) + `plano_y_dano` (152 bytes) |
 | `rom/cambios/24_china_UNIFICADA_sin_hoja.bin` | la unificada sin la hoja de Kuwabara (81 bytes) = biseccion |
+
+### EL ERROR QUE ROMPIA LA ROM (y el "2 cuerpos")
+
+**La codificacion del numero de bit de estas instrucciones es el CUARTO
+byte (offset +3), NO el tercero:**
+```
+bset.b #n, $a042.w   =  08 F8 00 <n> A0 42     (6 bytes)
+btst.b #n, $a042.w   =  08 38 00 <n> A0 42     (6 bytes)
+```
+Yo habia cambiado el byte **+1** (el primero de la direccion) ⇒ **los seis
+`bset.b` y los dos `btst.b` del flag se rompian** (el flag receiveia un
+numero de bit al azar) ⇒ el juego se colgaba al entrar en combate (pantalla
+negra) y el "2 cuerpos" no se arreglaba.
+
+Ademas, la primera version de la rutina del plano **crecia 6 bytes** y se
+comia el codigo de `$015C04` (`mulu.w $c4(a5),d0`): la rutina tiene que
+mantener **exactamente 38 bytes**. El fix: los `bset.b` (6 bytes) se
+sustituyen por `jsr.l` (6 bytes) y el `bra.b` sustituye al `rts`.
+
+### La codificacion de las operaciones con un EA y un registro
+
+En la 68000 el **byte del registro va AL FINAL** (como en el MOVE):
+```
+move.w $78(a5), d0   =  32 2D 00 78 00    (5 bytes; el ultimo $00 = d0)
+sub.w  d0, $78(a5)   =  93 2D 00 78 00    (5 bytes; el ultimo $00 = d0)
+move.l (a7), d0      =  22 00              (2 bytes; el $00 = d0)
+```
+Capstone **no cuenta** ese ultimo byte (lee 4 en vez de 5), asi que el
+verificador los marca como "reescritos"; la CPU los ejecuta bien. Por eso
+la rutina del dano mete un `ori.b #$0, d0` (`00 00 00`) justo despues del
+`move.w`: ese es el byte que Capstone se deja sin contar.
