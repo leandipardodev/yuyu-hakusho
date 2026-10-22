@@ -23,7 +23,8 @@
     "14_itsuki_teleport_pisa_el_suelo",
     "13_itsuki_teleport_40mas_rapido",
     "15_itsuki_teleport_colocacion_rapida",
-    "16_mash_aturdimiento_x15"
+    "16_mash_aturdimiento_x15",
+    "19_sin_atajos_de_cruce"
   ],
   "cambios": [
     {
@@ -188,6 +189,15 @@
       ],
       "que_hace": "Cada tecla mashada baja 3 frames el contador de aturdimiento en vez de 2 (y alarga el frame proporcionalmente). Salir del aturdimiento post-knockdown es 1,5 veces mas facil. 2 bytes.",
       "bytes": 2
+    },
+    {
+      "id": "19_sin_atajos_de_cruce",
+      "titulo": "Desactiva los atajos de mando del cruce (C, Y y el global)",
+      "grupos": [
+        "sin_atajo_cruce"
+      ],
+      "que_hace": "El boton C y el boton Y dejan de lanzar su movimiento en el cruce, y el atajo global C+B+Y tambien. No se toca ningun salto: los movimientos por direccion (los saltos de los personajes) siguen intactos. 23 bytes.",
+      "bytes": 23
     }
   ],
   "combinaciones": [

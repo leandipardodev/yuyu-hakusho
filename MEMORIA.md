@@ -1473,3 +1473,24 @@ El rival de la CPU arranca en el **plano de atras** (304) y **mas pequeno**
 (plano 320, escala 256) y el usuario lo pidio revirter: forma parte del
 juego.** No lo volvemos a poner. Lo que si se queda es `un_plano` (que
 impide el CRUCE a la otra arena) y `sin_cruce`.
+
+### LA CHINA YA TIENE EL PROYECTO APLICADO
+La ROM china (`rom/original/...chinese.bin`, que es `temp/opencode/control.bin`)
+**ya tiene todos los parches del proyecto** (los mismos bytes que la
+unificada). Por eso:
+- Al parchar la unificada completa sobre ella, el patcher **aborta** (los
+  bytes "old" no coinciden porque ya estan en su valor final). Para eso esta
+  la opcion `--force`.
+- **Lo que le falta es el grupo `un_plano`** (el que desactiva el cruce de
+  planos), que es justo lo que el usuario veia.
+
+### !!! LOS 22 'bne.w $1886a/$18880' NO SON LOS ATAJOS !!!
+Son **el MOVIMIENTO con C y con Y en cada direccion** (el "adelante A" usaba
+el `$84`). Cambiar sus destinos **mueve todos los golpes de todos los
+personajes** (el "adelante A se hace con abajo A", "hiei salta muy poca
+distancia": el `$83` dura 4-8 frames).
+
+**Para desactivar un atajo hay que tocar el `btst` del boton, NO el salto.**
+El inmediato del `btst` va en 2 bytes (`08 2D 00 04 00 72` = `btst.b #$4,
+$72(a5)`) y **el byte ALTO** es el bit que se prueba (bits 8-11). El **bit 3**
+del campo `$72` **no lo prueba ninguna instruccion del juego** (0 usos).

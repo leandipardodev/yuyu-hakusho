@@ -103,6 +103,7 @@ def main():
         "doble_salto",     # reescribe la rutina $18440 a proposito (y crece 2 bytes)
         "un_plano",        # los bloques de cruce y el filtro, a proposito
         "sin_cruce",       # lo mismo
+        "sin_atajo_cruce",  # los btst de los botones C e Y (cambia el bit)
         "kage_proj",       # refactor del proyectil
         "rival_delante",   # las inicializaciones
         "kage_dur",        # duraciones a 0

@@ -182,3 +182,40 @@ iguales que la base, y las 4 instrucciones vuelven a ser
 **Ojo:** esto **no** toca `un_plano` ni `sin_cruce`, que son otra cosa (el
 cruce de planos durante la partida). El usuario quiere que el rival nazca en
 su arena, pero el juego sigue sin dos arenas.
+
+
+<a name="s-2024-10-21l"></a>
+
+## S-2024-10-21l: el proyecto restaurado y los atajos, sin tocar los saltos
+
+**Lo que paso:** el usuario probo la receta 18 y el juego se rompio
+("moviste todos los golpes, el adelante A se hace con abajo A, hiei salta
+muy poca distancia").
+
+**El error mio:** los 22 `bne.w $1886a` / `bne.w $18880` que cambie **no
+son los atajos**: son **el MOVIMIENTO con C y con Y en cada direccion** (el
+"adelante A" usaba el `$84`). Al mandarlos todos al `$83` (4-8 frames) se
+rompieron todos los saltos.
+
+**Ademas se descubrio que la ROM china YA TIENE EL PROYECTO APLICADO** (los
+mismos bytes que la unificada): por eso al parchar la unificada completa
+sobre ella el patcher aborta ("29 bytes no coinciden con lo esperado",
+porque ya estan en su valor final). Y por eso **a la china le falta el
+grupo `un_plano`** (el que desactiva el cruce de planos) — que es
+justamente lo que el usuario veia ("en la china si se puede cruzar
+enfrente").
+
+**El estado del proyecto se restauro** (reset a `75ef120`, el commit previo
+a esta sesion; las ROMs se reconstruyeron; las ROMs `18*`/`19*` de las
+versiones rotas se borraron). Quedo una rama `desastre-cruce` con el estado
+anterior, por si acaso.
+
+**La receta 19 (23 bytes) hace el cambio donde toca:**
+- Los 12 `btst.b #$4, $72(a5)` (el boton C) y los 10 `btst.b #$6, $72(a5)`
+  (el boton Y) del bloque "C o Y": se cambia **el byte alto del inmediato**
+  (el bit que se prueba) del 4 o del 6 al **3**, un bit que **el juego no
+  prueba en ninguna instruccion de todo el ROM**. Los saltos no se tocan.
+- `$015DF1`: el inmediato del atajo global C+B+Y (`$70` -> `$71`).
+
+**Las ROMs de la china:** `19_china_sin_cruce.bin` (la china + `un_plano` +
+los 23 bytes) y `20_china_UNIFICADA.bin` (la china + todo el proyecto).

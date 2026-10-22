@@ -1631,6 +1631,150 @@
           "nota": "$01A2A6: 'addq.b #$2, $5b(a5)' -> 'addq.b #$3, $5b(a5)'. Cada tecla mashada alarga 3 ticks el frame actual en vez de 2, para que el mash se note proporcionalmente."
         }
       ]
+    },
+    "sin_atajo_cruce": {
+      "desc": "DESACTIVA LOS ATAJOS DE MANDO DEL CRUCE: el boton C (el 'atajo' de arriba+C) y el boton Y, mas el atajo global C+B+Y a la vez. COMO: en el input por personaje (los 11 dispatchers, $016030-$017F8A) el bloque 'C o Y' hace 'btst.b #$4, $72(a5)' (el boton C) y 'btst.b #$6, $72(a5)' (el boton Y), cada uno justo antes de su salto ('bne.w $1886a' = el MOVIMIENTO $84 y 'bne.w $18880' = el MOVIMIENTO $86). El inmediato de 16 bits del btst va en 2 bytes y el byte ALTO es el que dice que bit se prueba (bits 8-11): aqui ese byte pasa de 0x04 o 0x06 a 0x03, o sea que ahora se prueba el BIT 3 del campo $72. Ese bit NO LO PRUEBA NINGUNA instruccion del juego (0 usos en todo el ROM), asi que el atajo solo puede dispararse con ese boton. OJO: los 22 'bne.w' NO SE TOCAN: son el MOVIMIENTO con C y con Y en cada direccion (el 'adelante A' usaba el $84), no el atajo. Tocarlos era lo que rompia los saltos de todos los personajes. ADEMAS, el atajo global (C+B+Y a la vez) esta en $015DEE: 'cmpi.b #$70, d0' / 'beq.w $18764' (el MOVIMIENTO $AA, el cambio de plano/linea). Su inmediato $70 esta en $015DF1 y pasa a ser $71. 23 bytes en total.",
+      "confianza": "CODIGO (el input por personaje: 11 dispatchers, el bloque 'C o Y' con los 'btst' de los botones C y Y; el bit 3 de $72 no lo prueba nadie en el ROM) + NOTAS del usuario ('arriba + C' = cambio de plano/linea, 'Y' = linea) + CAPSTONE",
+      "bytes": [
+        {
+          "addr": "0x015DF1",
+          "old": "70",
+          "new": "71",
+          "nota": "$015DF1: el inmediato de 'cmpi.b #$70, d0' (el atajo global: C+B+Y a la vez, que salta a $18764 y lanza el MOVIMIENTO $AA, el cambio de plano/linea) pasa a ser $71: la condicion nunca se cumple y ese atajo no hace nada."
+        },
+        {
+          "addr": "0x016109",
+          "old": "04",
+          "new": "03",
+          "nota": "$016109: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x016113",
+          "old": "06",
+          "new": "03",
+          "nota": "$016113: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x01652B",
+          "old": "04",
+          "new": "03",
+          "nota": "$01652B: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x016535",
+          "old": "06",
+          "new": "03",
+          "nota": "$016535: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x016841",
+          "old": "04",
+          "new": "03",
+          "nota": "$016841: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x01684B",
+          "old": "06",
+          "new": "03",
+          "nota": "$01684B: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x016B6D",
+          "old": "04",
+          "new": "03",
+          "nota": "$016B6D: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x016B77",
+          "old": "06",
+          "new": "03",
+          "nota": "$016B77: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x016EB3",
+          "old": "04",
+          "new": "03",
+          "nota": "$016EB3: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x016EBD",
+          "old": "06",
+          "new": "03",
+          "nota": "$016EBD: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x017189",
+          "old": "04",
+          "new": "03",
+          "nota": "$017189: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x017193",
+          "old": "06",
+          "new": "03",
+          "nota": "$017193: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x0174B9",
+          "old": "04",
+          "new": "03",
+          "nota": "$0174B9: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x0178BD",
+          "old": "04",
+          "new": "03",
+          "nota": "$0178BD: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x0178C7",
+          "old": "06",
+          "new": "03",
+          "nota": "$0178C7: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x0178D5",
+          "old": "04",
+          "new": "03",
+          "nota": "$0178D5: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x017C09",
+          "old": "04",
+          "new": "03",
+          "nota": "$017C09: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x017C13",
+          "old": "06",
+          "new": "03",
+          "nota": "$017C13: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x017F3F",
+          "old": "04",
+          "new": "03",
+          "nota": "$017F3F: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x017F49",
+          "old": "06",
+          "new": "03",
+          "nota": "$017F49: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x018291",
+          "old": "04",
+          "new": "03",
+          "nota": "$018291: el byte alto del inmediato del 'btst.b' que comprueba el boton C (que precede al salto 'bne.w $1886a', el MOVIMIENTO $84) pasa de $04 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con C. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        },
+        {
+          "addr": "0x01829B",
+          "old": "06",
+          "new": "03",
+          "nota": "$01829B: el byte alto del inmediato del 'btst.b' que comprueba el boton Y (que precede al salto 'bne.w $18880', el MOVIMIENTO $86) pasa de $06 a $03: ahora prueba el bit 3 del campo $72, un bit que el juego NO prueba en ninguna instruccion de todo el ROM. El atajo deja de dispararse con Y. El salto NO se toca: el movimiento de cada direccion (el salto de los personajes) sigue igual."
+        }
+      ]
     }
   },
   "instrumentacion": {

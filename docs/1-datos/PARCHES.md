@@ -1068,3 +1068,57 @@ personaje a otro plano, el dash y los 4 filtros de plano) y
 **OJO:** `un_plano` y `rival_delante` son cosas distintas. `un_plano` evita
 que el CRUCE (C+arriba / abajo+Y) te mande a la otra arena; `rival_delante`
 era solo donde nace el rival. Revertir el segundo **no** toca el primero.
+
+## 16. `sin_atajo_cruce` (desactiva los atajos de mando del cruce)
+
+**Receta 19** (la 18 fue la que rompio los saltos: ver MASABAJO).
+
+**Que hace:** el boton **C** (el "atajo" de arriba+C) y el boton **Y** dejan de
+lanzar su movimiento en el cruce, y el atajo **global C+B+Y** a la vez
+tambien. **23 bytes. No se toca ni un solo salto.**
+
+### Como
+
+En el input por personaje (los **11 dispatchers**, `$016030`-`$017F8A`), el
+bloque "C o Y" hace:
+
+```
+$016106  btst.b     #$4, $72(a5)    ; el boton C
+$01610C  bne.w      $1886a          -> el MOVIMIENTO $84
+$016110  btst.b     #$6, $72(a5)    ; el boton Y
+$016116  bne.w      $18880          -> el MOVIMIENTO $86
+```
+
+El inmediato de 16 bits del `btst` va en **dos bytes** y **el byte ALTO** es
+el que dice que bit se prueba (bits 8-11). Se cambia ese byte, que esta en
+**(salto - 3)**: de `0x04` (bit 4 = C) o `0x06` (bit 6 = Y) a **`0x03`**
+(bit 3).
+
+**El bit 3 del campo `$72` NO LO PRUEBA NINGUNA instruccion del juego**
+(0 usos en todo el ROM), asi que el atajo solo puede dispararse con ese
+boton. (Es el boton X/Z del mando de 6 botones: el "dash".)
+
+El atajo global esta en `$015DEE`: `cmpi.b #$70, d0` / `beq.w $18764` (el
+**MOVIMIENTO `$AA`**, el cambio de plano/linea). Su inmediato `$70` esta en
+**`$015DF1`** y pasa a ser `$71`.
+
+### !!! NO TOCAR LOS 22 SALTOS !!!
+
+**Los 22 `bne.w $1886a` / `bne.w $18880` NO son el atajo**: son **el
+MOVIMIENTO con C y con Y en cada direccion** (el "adelante A" usaba el
+`$84`). Cambiarlos fue lo que **movio todos los golpes de todos los
+personajes** (el "adelante A se hace con abajo A", "hiei salta muy poca
+distancia"): al mandarlos todos al `$83` (4-8 frames) se rompian.
+
+### LAS ROMs DE LA CHINA
+
+La ROM china (`rom/original/...chinese.bin` = la de `temp/opencode/control.bin`)
+**ya tiene el proyecto aplicado** (los mismos bytes que la unificada), asi que
+le falta el grupo `un_plano` (el que desactiva el cruce de planos).
+
+| ROM | Que es | Bytes | Checksum |
+|---|---|---|---|
+| `rom/cambios/19_china_sin_cruce.bin` | **la china + `un_plano` + los 23 de los atajos** | 33 | `$4C27` |
+| `rom/cambios/20_china_UNIFICADA.bin` | la china + todo el proyecto | 57 | `$FD09` |
+| `rom/cambios/19_sin_atajos_de_cruce.bin` | la base del proyecto + los 23 bytes | 23 | — |
+| `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la unificada del proyecto | 84 | `$DD4A` |
