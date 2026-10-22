@@ -1779,8 +1779,8 @@
       ]
     },
     "veneno_plano": {
-      "desc": "EL VENENO DEL PLANO: cruzar al otro plano ENVENENA al personaje. El HP baja 1 por frame (60 por segundo) mientras este en el plano de atras, y deja de bajar en cuanto vuelve al plano principal. Es un veneno, no un golpe: el dano es continuo y acumulativo. SE APLICA A CUALQUIER PERSONAJE (P1, P2 o el rival de la CPU): da igual en que slot este, porque el slot del P2 no siempre es el mismo ($FF8800 desde el select, $FF9000 con un savestate, stride $C00). SI SE QUEDA SIN VIDA: cuando el HP llega a 0 se resta otro 1 (para que quede NEGATIVO, que es como el juego detecta el KO) y ademas se pone el suelo a 320 (vuelve al plano principal) y el estado a reposo ($5D = 0), que es donde el juego mira el HP negativo ('btst.b #$7, $78(a5)' en $019CFC): o sea, vuelve al plano principal Y muere. DONDE: la rutina $015BD8, la que actualiza el flag del plano $A042 cada frame (la llama $015A2E con 'bsr.w'). Mira el suelo ($9c(a5)): si es 320 (el plano de delante) pone el bit 0 del flag, y si es 304 (el plano de atras) pone el bit 1. El suelo solo vale exactamente 304 cuando el personaje esta PARADO en el plano de atras (durante la caida va por intermedios: 319.9, 319.6...), asi que el veneno empieza al aterrizar y para al volver. EL ENGANCHE: en $015BF6, el 'bset.b #$1, $a042.w' (6 bytes) se sustituye por un 'jsr.l' a una rutina nueva en el hueco libre $1A0720 (14 bytes) que hace lo mismo que el bset (poner el bit 1 del flag) y ademas aplica el veneno. El 'jsr.l' son 6 bytes por 6: el tamano no cambia y lo que viene detras no se desalinea. EL VENENO (38 bytes en $1A06F0): 'moveq #$1,d1' + 'sub.w d1,$78(a5)' (el HP - 1) + 'move.w $78(a5),d0' + 'tst.b d0' + 'bne' + 'sub.w d1,$78(a5)' (-1 mas) + 'move.l #$1400000,$9c(a5)' (el suelo = 320) + 'move.b #$00,$5d(a5)' (el estado = reposo) + 'move.l (a7)+,d0' + 'rts'. Si al restar el HP queda en 0 se resta OTRO 1, para que quede NEGATIVO: el juego solo detecta el KO con el HP negativo y si el HP llegara a 0 en este punto nadie lo vigilaria, la ronda no acabaria y EL JUEGO SE COLGARIA. VERIFICADO: el usuario probo la version 1 (el veneno solo para el P1) y funciona: al cruzar le baja la vida y al volver deja de bajar. La version 2 (con el 'cmpi.w' para comprobar el HP y el P2 en $FF8800) se rompia al cruzar el P1: el 'cmpi.w' con un registro no compara el word como se espera y disparaba el final sin vida en cada frame. Aqui se ha vuelto al 'tst.b' de la version 1 (que el usuario probo) y se ha quitado la comparacion de slot (el P2 no siempre esta en $FF8800). Con Unicorn se ha ejecutado la rutina del veneno (HP 223->222, 5->4, 2->1, 1->-1) y el 'move.l a5,d0'. 58 bytes en total.",
-      "confianza": "CODIGO (la rutina del plano $015BD8, el engancho $015BF6, el HP en $78(a5), el suelo en $9c(a5), el estado en $5d(a5) y el KO del juego en $019CFC) + MEDIDO (con la sonda: el suelo baja 0.3125 px por frame desde 320 hasta 304 al cruzar y solo vale exactamente 304 al aterrizar) + PROBADO POR EL USUARIO (la version 1: el veneno funciona) + EJECUTADO (Unicorn: la rutina del veneno y el 'move.l a5,d0')",
+      "desc": "EL VENENO DEL PLANO: cruzar al otro plano ENVENENA al jugador. El HP baja 1 por frame (60 por segundo) mientras este en el plano de atras, y deja de bajar en cuanto vuelve al plano principal. Es un veneno, no un golpe: el dano es continuo y acumulativo. DONDE: la rutina $015BD8, la que actualiza el flag del plano $A042 cada frame (la llama $015A2E con 'bsr.w'). Mira el suelo ($9c(a5)): si es 320 (el plano de delante) pone el bit 0 del flag, y si es 304 (el plano de atras) pone el bit 1. El suelo solo vale exactamente 304 cuando el personaje esta PARADO en el plano de atras (durante la caida va por intermedios: 319.9, 319.6...), asi que el veneno empieza al aterrizar y para al volver. EL ENGANCHE: en $015BF6, el 'bset.b #$1, $a042.w' (6 bytes) se sustituye por un 'jsr.l' a una rutina nueva en el hueco libre del banco 1, que hace lo mismo que el bset (poner el bit 1 del flag) y ademas aplica el veneno. El 'jsr.l' son 6 bytes por 6: el tamano no cambia y lo que viene detras no se desalinea. EL VENENO: 'moveq #$1,d1' + 'sub.w d1,$78(a5)' (el HP - 1) + 'move.w $78(a5),d0' + 'tst.b d0' + 'bne' + 'sub.w d1,$78(a5)' (-1 mas) + 'move.l (a7)+,d0' + 'rts'. Si al restar el HP queda en 0 se resta OTRO 1, para que quede NEGATIVO: el juego solo detecta el KO con el HP negativo ('btst.b #$7, $78(a5)' en $019CFC) y si el HP llegara a 0 en este punto nadie lo vigilaria, la ronda no acabaria y EL JUEGO SE COLGARIA. SI SE QUEDA SIN VIDA: ademas de dejar el HP NEGATIVO, se pone el suelo a 320 (vuelve al plano principal) y el estado a reposo ($5D = 0), que es donde el juego mira el HP negativo ($019CFC): o sea, vuelve al plano principal Y muere. A QUIEN: a los slots $FF8400 (P1), $FF9000 y $FF8C00 (el P2: el material externo dice 'P2, stride $C00'). NO al $FF8800: ese es el del rival de la CPU en el 1v1, que esta en el plano de atras desde el principio y se envenenaria solo (la partida se rompia).",
+      "confianza": "CODIGO (la rutina del plano $015BD8, el engancho $015BF6, el HP en $78(a5), el suelo en $9c(a5), el estado en $5d(a5) y el KO del juego en $019CFC) + MEDIDO (con la sonda: el suelo baja 0.3125 px por frame desde 320 hasta 304 al cruzar y solo vale exactamente 304 al aterrizar) + PROBADO POR EL USUARIO (el veneno para el P1 funciona) + EJECUTADO (Unicorn: la rutina del veneno y el 'move.l a5,d0') *** (el slot del P2: $9000/$8C00, segun el material externo; el usuario tiene que confirmar cual es)",
       "bytes": [
         {
           "addr": "0x015BF6",
@@ -1857,47 +1857,179 @@
         {
           "addr": "0x1A0726",
           "old": "00",
-          "new": "4E",
+          "new": "20",
           "nota": "la rutina del plano: el flag + el veneno"
         },
         {
           "addr": "0x1A0727",
           "old": "00",
-          "new": "B9",
+          "new": "0D",
           "nota": "la rutina del plano: el flag + el veneno"
         },
         {
           "addr": "0x1A0728",
           "old": "00",
-          "new": "00",
+          "new": "0C",
           "nota": "la rutina del plano: el flag + el veneno"
         },
         {
           "addr": "0x1A0729",
           "old": "00",
-          "new": "1A",
+          "new": "40",
           "nota": "la rutina del plano: el flag + el veneno"
         },
         {
           "addr": "0x1A072A",
           "old": "00",
-          "new": "06",
+          "new": "84",
           "nota": "la rutina del plano: el flag + el veneno"
         },
         {
           "addr": "0x1A072B",
           "old": "00",
-          "new": "F0",
+          "new": "00",
           "nota": "la rutina del plano: el flag + el veneno"
         },
         {
           "addr": "0x1A072C",
           "old": "00",
-          "new": "4E",
+          "new": "67",
           "nota": "la rutina del plano: el flag + el veneno"
         },
         {
           "addr": "0x1A072D",
+          "old": "00",
+          "new": "0E",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A072E",
+          "old": "00",
+          "new": "0C",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A072F",
+          "old": "00",
+          "new": "40",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0730",
+          "old": "00",
+          "new": "90",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0731",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0732",
+          "old": "00",
+          "new": "67",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0733",
+          "old": "00",
+          "new": "08",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0734",
+          "old": "00",
+          "new": "0C",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0735",
+          "old": "00",
+          "new": "40",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0736",
+          "old": "00",
+          "new": "8C",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0737",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0738",
+          "old": "00",
+          "new": "67",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0739",
+          "old": "00",
+          "new": "02",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A073A",
+          "old": "00",
+          "new": "4E",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A073B",
+          "old": "00",
+          "new": "75",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A073C",
+          "old": "00",
+          "new": "4E",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A073D",
+          "old": "00",
+          "new": "B9",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A073E",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A073F",
+          "old": "00",
+          "new": "1A",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0740",
+          "old": "00",
+          "new": "06",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0741",
+          "old": "00",
+          "new": "F0",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0742",
+          "old": "00",
+          "new": "4E",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0743",
           "old": "00",
           "new": "75",
           "nota": "la rutina del plano: el flag + el veneno"
@@ -1906,229 +2038,949 @@
           "addr": "0x1A06F0",
           "old": "00",
           "new": "2F",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06F1",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06F2",
           "old": "00",
           "new": "72",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06F3",
           "old": "00",
           "new": "01",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06F4",
           "old": "00",
           "new": "93",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06F5",
           "old": "00",
           "new": "6D",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06F6",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06F7",
           "old": "00",
           "new": "78",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06F8",
           "old": "00",
           "new": "30",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06F9",
           "old": "00",
           "new": "2D",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06FA",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06FB",
           "old": "00",
           "new": "78",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06FC",
           "old": "00",
           "new": "4A",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06FD",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06FE",
           "old": "00",
           "new": "66",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A06FF",
           "old": "00",
           "new": "14",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0700",
           "old": "00",
           "new": "93",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0701",
           "old": "00",
           "new": "6D",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0702",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0703",
           "old": "00",
           "new": "78",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0704",
           "old": "00",
           "new": "2B",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0705",
           "old": "00",
           "new": "7C",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0706",
           "old": "00",
           "new": "01",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0707",
           "old": "00",
           "new": "40",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0708",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0709",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A070A",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A070B",
           "old": "00",
           "new": "9C",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A070C",
           "old": "00",
           "new": "1B",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A070D",
           "old": "00",
           "new": "7C",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A070E",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A070F",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0710",
           "old": "00",
           "new": "00",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0711",
           "old": "00",
           "new": "5D",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0712",
           "old": "00",
           "new": "20",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0713",
           "old": "00",
           "new": "1F",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0714",
           "old": "00",
           "new": "4E",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
         },
         {
           "addr": "0x1A0715",
           "old": "00",
           "new": "75",
-          "nota": "el veneno: HP - 1 por frame; al llegar a 0, -1 mas, vuelve al plano principal y al estado de reposo"
+          "nota": "el veneno"
+        }
+      ]
+    },
+    "veneno_p1_ref": {
+      "desc": "EL VENENO DEL PLANO: cruzar al otro plano ENVENENA al jugador. El HP baja 1 por frame (60 por segundo) mientras este en el plano de atras, y deja de bajar en cuanto vuelve al plano principal. Es un veneno, no un golpe: el dano es continuo y acumulativo. DONDE: la rutina $015BD8, la que actualiza el flag del plano $A042 cada frame (la llama $015A2E con 'bsr.w'). Mira el suelo ($9c(a5)): si es 320 (el plano de delante) pone el bit 0 del flag, y si es 304 (el plano de atras) pone el bit 1. El suelo solo vale exactamente 304 cuando el personaje esta PARADO en el plano de atras (durante la caida va por intermedios: 319.9, 319.6...), asi que el veneno empieza al aterrizar y para al volver. EL ENGANCHE: en $015BF6, el 'bset.b #$1, $a042.w' (6 bytes) se sustituye por un 'jsr.l' a una rutina nueva en el hueco libre del banco 1, que hace lo mismo que el bset (poner el bit 1 del flag) y ademas aplica el veneno. El 'jsr.l' son 6 bytes por 6: el tamano no cambia y lo que viene detras no se desalinea. EL VENENO: 'moveq #$1,d1' + 'sub.w d1,$78(a5)' (el HP - 1) + 'move.w $78(a5),d0' + 'tst.b d0' + 'bne' + 'sub.w d1,$78(a5)' (-1 mas) + 'move.l (a7)+,d0' + 'rts'. Si al restar el HP queda en 0 se resta OTRO 1, para que quede NEGATIVO: el juego solo detecta el KO con el HP negativo ('btst.b #$7, $78(a5)' en $019CFC) y si el HP llegara a 0 en este punto nadie lo vigilaria, la ronda no acabaria y EL JUEGO SE COLGARIA. ESTA ES LA VERSION 1, LA QUE EL USUARIO PROBO Y FUNCIONA: el veneno SOLO para el P1 (el slot $FF8400) y SIN el final sin vida. Se deja como referencia para aislar los cambios.",
+      "confianza": "CODIGO (la rutina del plano $015BD8, el engancho $015BF6, el HP en $78(a5), el suelo en $9c(a5), el estado en $5d(a5) y el KO del juego en $019CFC) + MEDIDO (con la sonda: el suelo baja 0.3125 px por frame desde 320 hasta 304 al cruzar y solo vale exactamente 304 al aterrizar) + PROBADO POR EL USUARIO (el veneno para el P1 funciona) + EJECUTADO (Unicorn: la rutina del veneno y el 'move.l a5,d0')",
+      "bytes": [
+        {
+          "addr": "0x015BF6",
+          "old": "08",
+          "new": "4E",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BF7",
+          "old": "F8",
+          "new": "B9",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BF8",
+          "old": "00",
+          "new": "00",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BF9",
+          "old": "01",
+          "new": "1A",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BFA",
+          "old": "A0",
+          "new": "07",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BFB",
+          "old": "42",
+          "new": "10",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x1A0710",
+          "old": "00",
+          "new": "08",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0711",
+          "old": "00",
+          "new": "F8",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0712",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0713",
+          "old": "00",
+          "new": "01",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0714",
+          "old": "00",
+          "new": "A0",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0715",
+          "old": "00",
+          "new": "42",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0716",
+          "old": "00",
+          "new": "20",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0717",
+          "old": "00",
+          "new": "0D",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0718",
+          "old": "00",
+          "new": "0C",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0719",
+          "old": "00",
+          "new": "40",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A071A",
+          "old": "00",
+          "new": "84",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A071B",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A071C",
+          "old": "00",
+          "new": "66",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A071D",
+          "old": "00",
+          "new": "06",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A071E",
+          "old": "00",
+          "new": "4E",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A071F",
+          "old": "00",
+          "new": "B9",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0720",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0721",
+          "old": "00",
+          "new": "1A",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0722",
+          "old": "00",
+          "new": "06",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0723",
+          "old": "00",
+          "new": "F0",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0724",
+          "old": "00",
+          "new": "4E",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0725",
+          "old": "00",
+          "new": "75",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A06F0",
+          "old": "00",
+          "new": "2F",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F1",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F2",
+          "old": "00",
+          "new": "72",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F3",
+          "old": "00",
+          "new": "01",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F4",
+          "old": "00",
+          "new": "93",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F5",
+          "old": "00",
+          "new": "6D",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F6",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F7",
+          "old": "00",
+          "new": "78",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F8",
+          "old": "00",
+          "new": "30",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F9",
+          "old": "00",
+          "new": "2D",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FA",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FB",
+          "old": "00",
+          "new": "78",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FC",
+          "old": "00",
+          "new": "4A",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FD",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FE",
+          "old": "00",
+          "new": "66",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FF",
+          "old": "00",
+          "new": "04",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0700",
+          "old": "00",
+          "new": "93",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0701",
+          "old": "00",
+          "new": "6D",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0702",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0703",
+          "old": "00",
+          "new": "78",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0704",
+          "old": "00",
+          "new": "20",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0705",
+          "old": "00",
+          "new": "1F",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0706",
+          "old": "00",
+          "new": "4E",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0707",
+          "old": "00",
+          "new": "75",
+          "nota": "el veneno"
+        }
+      ]
+    },
+    "veneno_p1": {
+      "desc": "EL VENENO DEL PLANO: cruzar al otro plano ENVENENA al jugador. El HP baja 1 por frame (60 por segundo) mientras este en el plano de atras, y deja de bajar en cuanto vuelve al plano principal. Es un veneno, no un golpe: el dano es continuo y acumulativo. DONDE: la rutina $015BD8, la que actualiza el flag del plano $A042 cada frame (la llama $015A2E con 'bsr.w'). Mira el suelo ($9c(a5)): si es 320 (el plano de delante) pone el bit 0 del flag, y si es 304 (el plano de atras) pone el bit 1. El suelo solo vale exactamente 304 cuando el personaje esta PARADO en el plano de atras (durante la caida va por intermedios: 319.9, 319.6...), asi que el veneno empieza al aterrizar y para al volver. EL ENGANCHE: en $015BF6, el 'bset.b #$1, $a042.w' (6 bytes) se sustituye por un 'jsr.l' a una rutina nueva en el hueco libre del banco 1, que hace lo mismo que el bset (poner el bit 1 del flag) y ademas aplica el veneno. El 'jsr.l' son 6 bytes por 6: el tamano no cambia y lo que viene detras no se desalinea. EL VENENO: 'moveq #$1,d1' + 'sub.w d1,$78(a5)' (el HP - 1) + 'move.w $78(a5),d0' + 'tst.b d0' + 'bne' + 'sub.w d1,$78(a5)' (-1 mas) + 'move.l (a7)+,d0' + 'rts'. Si al restar el HP queda en 0 se resta OTRO 1, para que quede NEGATIVO: el juego solo detecta el KO con el HP negativo ('btst.b #$7, $78(a5)' en $019CFC) y si el HP llegara a 0 en este punto nadie lo vigilaria, la ronda no acabaria y EL JUEGO SE COLGARIA. SI SE QUEDA SIN VIDA: ademas de dejar el HP NEGATIVO, se pone el suelo a 320 (vuelve al plano principal) y el estado a reposo ($5D = 0), que es donde el juego mira el HP negativo ($019CFC): o sea, vuelve al plano principal Y muere. El veneno SOLO para el P1 (el slot $FF8400).",
+      "confianza": "CODIGO (la rutina del plano $015BD8, el engancho $015BF6, el HP en $78(a5), el suelo en $9c(a5), el estado en $5d(a5) y el KO del juego en $019CFC) + MEDIDO (con la sonda: el suelo baja 0.3125 px por frame desde 320 hasta 304 al cruzar y solo vale exactamente 304 al aterrizar) + PROBADO POR EL USUARIO (el veneno para el P1 funciona) + EJECUTADO (Unicorn: la rutina del veneno y el 'move.l a5,d0')",
+      "bytes": [
+        {
+          "addr": "0x015BF6",
+          "old": "08",
+          "new": "4E",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BF7",
+          "old": "F8",
+          "new": "B9",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BF8",
+          "old": "00",
+          "new": "00",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BF9",
+          "old": "01",
+          "new": "1A",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BFA",
+          "old": "A0",
+          "new": "07",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x015BFB",
+          "old": "42",
+          "new": "20",
+          "nota": "el 'bset' del flag del plano -> un 'jsr.l' a la rutina del veneno"
+        },
+        {
+          "addr": "0x1A0720",
+          "old": "00",
+          "new": "08",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0721",
+          "old": "00",
+          "new": "F8",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0722",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0723",
+          "old": "00",
+          "new": "01",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0724",
+          "old": "00",
+          "new": "A0",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0725",
+          "old": "00",
+          "new": "42",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0726",
+          "old": "00",
+          "new": "20",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0727",
+          "old": "00",
+          "new": "0D",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0728",
+          "old": "00",
+          "new": "0C",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0729",
+          "old": "00",
+          "new": "40",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A072A",
+          "old": "00",
+          "new": "84",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A072B",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A072C",
+          "old": "00",
+          "new": "66",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A072D",
+          "old": "00",
+          "new": "06",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A072E",
+          "old": "00",
+          "new": "4E",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A072F",
+          "old": "00",
+          "new": "B9",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0730",
+          "old": "00",
+          "new": "00",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0731",
+          "old": "00",
+          "new": "1A",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0732",
+          "old": "00",
+          "new": "06",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0733",
+          "old": "00",
+          "new": "F0",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0734",
+          "old": "00",
+          "new": "4E",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A0735",
+          "old": "00",
+          "new": "75",
+          "nota": "la rutina del plano: el flag + el veneno"
+        },
+        {
+          "addr": "0x1A06F0",
+          "old": "00",
+          "new": "2F",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F1",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F2",
+          "old": "00",
+          "new": "72",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F3",
+          "old": "00",
+          "new": "01",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F4",
+          "old": "00",
+          "new": "93",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F5",
+          "old": "00",
+          "new": "6D",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F6",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F7",
+          "old": "00",
+          "new": "78",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F8",
+          "old": "00",
+          "new": "30",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06F9",
+          "old": "00",
+          "new": "2D",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FA",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FB",
+          "old": "00",
+          "new": "78",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FC",
+          "old": "00",
+          "new": "4A",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FD",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FE",
+          "old": "00",
+          "new": "66",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A06FF",
+          "old": "00",
+          "new": "14",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0700",
+          "old": "00",
+          "new": "93",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0701",
+          "old": "00",
+          "new": "6D",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0702",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0703",
+          "old": "00",
+          "new": "78",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0704",
+          "old": "00",
+          "new": "2B",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0705",
+          "old": "00",
+          "new": "7C",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0706",
+          "old": "00",
+          "new": "01",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0707",
+          "old": "00",
+          "new": "40",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0708",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0709",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A070A",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A070B",
+          "old": "00",
+          "new": "9C",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A070C",
+          "old": "00",
+          "new": "1B",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A070D",
+          "old": "00",
+          "new": "7C",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A070E",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A070F",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0710",
+          "old": "00",
+          "new": "00",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0711",
+          "old": "00",
+          "new": "5D",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0712",
+          "old": "00",
+          "new": "20",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0713",
+          "old": "00",
+          "new": "1F",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0714",
+          "old": "00",
+          "new": "4E",
+          "nota": "el veneno"
+        },
+        {
+          "addr": "0x1A0715",
+          "old": "00",
+          "new": "75",
+          "nota": "el veneno"
         }
       ]
     }
