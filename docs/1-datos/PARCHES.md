@@ -1237,36 +1237,50 @@ TABLA GLOBAL** (`$15C20`, la usa `$015C18` con el indice `$58(a5)`), y en
 
 ### El cambio
 
-Las dos entradas dejan de apuntar a `$0186BE` y apuntan a **`$01668A`**, que
-es un **`rts` suelto** (hay un bloque de ellos en `$016688-$016692`): el
-atajo no hace NADA y el flujo queda intacto.
+Las dos entradas dejan de apuntar a `$0186BE` y apuntan a **`$019D5E`**,
+que es una **funcion de verdad**:
+
+```
+$019D5E  bsr.w $18440      ; el 'reset': estado $00, frame $00
+$019D62  bra.w $15afc      ; el final del frame
+```
+
+Es **exactamente lo que hace el juego cuando un comando no dispara
+nada**: el personaje vuelve a su estado normal. No toca la pila (termina
+en el `bra.w $15afc` del final del frame) y el flujo queda intacto.
 
 | Direccion | Antes (offset) | Despues (offset) |
 |---|---|---|
-| `$015CC0` | `$29FE` -> `$0186BE` | `$09CA` -> `$01668A` |
-| `$015CD2` | `$29EC` -> `$0186BE` | `$09B8` -> `$01668A` |
+| `$015CC0` | `$29FE` -> `$0186BE` | `$409E` -> `$019D5E` |
+| `$015CD2` | `$29EC` -> `$0186BE` | `$408C` -> `$019D5E` |
 
-**Por que un `rts` (¡y no cualquier cosa!):** la tabla global se indexa
-con `$58(a5)`, y **`$58` puede valer 80 o 89 en otros contextos** (al
-arrancar, en la intro, en el menu), no solo con los atajos. Por eso el
-destino tiene que ser algo que **no rompa el flujo** pase lo que pase.
+**Por que el destino hay que elegirlo con cuidado (dos versiones
+previas rompieron el arranque):** la tabla global se indexa con
+`$58(a5)`, y **`$58` puede valer 80 o 89 en otros contextos** (al
+arrancar, en la intro, en el menu), no solo cuando se pulsa el atajo.
+Asi que el destino tiene que ser algo que **no rompa nada** pase lo que
+pase:
 
-La tabla salta con `jmp (a0)`, asi que un `rts` saca la direccion de
-retorno del `bsr $15c10` y vuelve al dispatcher de estados: **no hace nada
-y el flujo queda perfecto**.
-
-**La v2 de este parche apuntando a `$019D62` (`bra.w $15afc`, el final
-del frame) ARRANCA ROTA**: con ese destino, al arrancar el juego saltaba
-ahi a mitad de una rutina.
+| Version | Destino | Que pasaba |
+|---|---|---|
+| v2 | `$019D62` (`bra.w $15afc`) | el juego saltaba ahi **a mitad de una rutina** al arrancar -> **ARRANCA ROTA** |
+| v3 | `$01668A` (un `rts` suelto) | el `jmp (a0)` + el `rts` hace **pop de la pila** -> **PANTALLA ROJA** |
+| **v4** | **`$019D5E`** | **bien** |
 
 **Por que no otras cosas:**
 
-- **No `$018440`** (la funcion "reset"): el parche `doble_salto` reescribe
-  esa rutina y **la mueve 2 bytes**, asi que en la version unificada el
-  destino quedaria a mitad de instruccion.
-- **No `$015AFC`** (el final del handler): el offset de la tabla es de **16
-  bits SIN SIGNO**, asi que una entrada no puede apuntar hacia atras (a
-  una direccion menor que la de la tabla).
+- **No `$018440`** (la funcion "reset" en si): el parche `doble_salto`
+  reescribe esa rutina y **la mueve 2 bytes**, asi que en la version
+  unificada el destino quedaria a mitad de instruccion. (Con `$019D5E` no
+  hay problema: el `bsr.w $18440` sigue apuntando al inicio de la
+  rutina, que no se mueve.)
+- **No `$015AFC`** (el final del handler): el offset de la tabla es de
+  **16 bits SIN SIGNO**, asi que una entrada no puede apuntar hacia atras
+  (a una direccion menor que la de la tabla).
+
+**El checksum NO era el problema:** los dos ROMs (base `$337B`, inglesa
+`$BE4F`) lo tienen correcto (coincide con la suma de los datos desde
+`$200`) y **el juego no lo tiene como constante en el codigo**.
 
 ### Lo que NO se toca (a proposito)
 
