@@ -339,3 +339,44 @@ el biseccion.
 
 **Pendiente del usuario:** probar la unificada con el fix (el "2 cuerpos"
 debe desaparecer) y, si sigue, la `21` (sin `un_plano`) para el biseccion.
+
+<a name="s-2024-10-21p"></a>
+
+## S-2024-10-21p: el dao al cruzar (grupo `cruce_dano`)
+
+**Peticion del usuario:** *"mete dao al cruzar"* (1 de vida cada 3 frames,
+como se habia pedido al principio del proyecto).
+
+**Lo que se ha descubierto antes (con la sonda del cruce):** el cruce **no
+lo dispara ningun boton**. Es la **CAIDA** al otro plano: el estado **`$0B`**
+con el move **`$0F`** (el suelo baja de 320 hacia 304, 0.31 px por frame, y la
+escala baja 1 por frame) y luego la **VUELTA** (estado `$0A` con el move
+`$10`). En la salida de la sonda el cruce ocurrio **sin pulsar nada**
+(`botones=$00`): es el **ajuste automatico de plano** del juego.
+
+**El dao (grupo `cruce_dano`, 90 bytes):** el bloque de la CAIDA
+(`$019ED4-$019EEB`, 24 bytes) se sustituye por un `jsr.l` a una rutina
+nueva de 66 bytes en el hueco libre **`$1A06AE`** + 18 nops (no cambia ni el
+tamano ni el flujo). La rutina hace lo mismo que el bloque original y quita
+**1 de vida cada 3 frames** (el contador va en `d1`, se reinicia cuando el
+tick `$5B` es 0 y se decrementa cada frame; el dano llega en el tercer
+frame). Si el HP queda en 0 se resta **otro** 1 para que quede **NEGATIVO**:
+el juego solo detecta el KO con el HP negativo (`$019CFC`) y si el HP
+llegara a 0 en el estado `$0B` la ronda no acabaria y el juego se colgaria
+(por eso el intento antiguo, en la rama `desastre-cruce`, rompia el
+arranque).
+
+**OJO - CONFLICTO:** el grupo `un_plano` neutraliza `$019ECF` (el `cmpi.b`
+del handler del estado `$0B`) ⇒ con `un_plano` el bloque de la CAIDA no se
+ejecuta ⇒ **el cruce no ocurre y el dano no se aplica**. Son las dos
+opciones: `un_plano` = sin cruce; `cruce_dano` (sin `un_plano`) = el cruce
+cuesta vida.
+
+**El "2 cuerpos por detras" de Sensui SIGUE** con el `un_plano` arreglado, asi
+que no es (solo) el `un_plano`. Se ha generado la
+`24_china_UNIFICADA_sin_hoja.bin` (la unificada sin el parche de la hoja de
+Kuwabara, `$0C2EA2` = la duracion de un frame de su cadena) para la
+biseccion.
+
+**Pendiente del usuario:** probar la `22_china_DANO_al_cruzar.bin` (el
+cruce con el dano) y la `24` (biseccion del "2 cuerpos").

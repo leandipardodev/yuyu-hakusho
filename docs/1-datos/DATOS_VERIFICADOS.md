@@ -3522,3 +3522,63 @@ cambiar `bne` por `bra` no neutraliza el bloque, lo hace SIEMPRE.
 **OJO:** `rom/` esta en `.gitignore` (derechos de autor), asi que **las ROMs
 no estan en git y se pierden si se borran la carpeta**. La china esta
 tambien en `C:\Users\leand\AppData\Local\Temp\opencode\CHINA_ORIGINAL.bin`.
+
+## EL DAÑO AL CRUZAR (grupo `cruce_dano`, 90 bytes)
+
+### Los dos handlers del CRUCE
+
+| handler | donde | que hace |
+|---|---|---|
+| **estado `$0B`** (la CAIDA / la ida al otro plano) | **`$019ECC`** | el bloque `$019ED4-$019EE9`: `bset.b #$1, $a042.w` + `subi.l #$5000, $9c(a5)` (el suelo **-20 px** = -0.31 px/frame) + `addi.b #$2, $26(a5)` + `subq.w #$1, $3e(a5)` (la escala -1) |
+| **estado `$0A`** (la VUELTA) | **`$019E08`** | el bloque `$019E10-$019E27`: el suelo **-40 px** de golpe + la escala -3 |
+
+Los dos tienen ademas el bloque del "aterrizaje":
+
+| bloque | donde | que hace |
+|---|---|---|
+| **el aterrizaje en el otro plano** | **`$019F52`** (handler del `$0B`) | `move.l #$1300000, $9c(a5)` (el suelo = **304**) + `move.w #$d8, $3e(a5)` (la escala 216) + `move.b #$c0, $26(a5)` |
+| el aterrizaje en el plano de delante | `$019E8E` (handler del `$0A`) | `move.l #$1400000, $9c(a5)` (el suelo = **320**) + la escala 256 |
+
+**OJO: el `un_plano` NEUTRALIZA `$019ECF` (el `cmpi.b #$f` del handler del `$0B`),
+con lo que el bloque de la CAIDA no se ejecuta nunca: el suelo no baja, el
+personaje no llega al otro plano y el cruce NO ocurre. Por eso el grupo
+`cruce_dano` (que necesita ese bloque) SOLO funciona SIN `un_plano`.**
+
+### La rutina del daño
+
+El bloque de la CAIDA (`$019ED4-$019EEB`, 24 bytes) se sustituye por un
+`jsr.l` a una **rutina nueva de 66 bytes** en el **hueco libre `$1A06AE`**
+(377 bytes de ceros entre dos rutinas del banco 1) + 18 bytes de nops, de modo
+que no cambia ni el tamaño ni el flujo.
+
+La rutina hace **exactamente lo mismo** que el bloque original (el flag del
+plano de atras, el suelo, el `$26` y la escala) y ademas:
+
+| | |
+|---|---|
+| el contador | **d1** (guardado y restaurado con la pila: `move.l d1,-(a7)` / `move.l (a7),d1`) |
+| se reinicia | cuando el **tick `$5B` es 0** (`cmpi.b #$0, $5b(a5)`) = el primer frame del cruce |
+| se decrementa | cada frame (`subq.w #$1, d1`) |
+| el daño | cuando el contador llega a **-3** (`cmpi.w #$fffd, d1`) = **el tercer frame del cruce** ⇒ **1 de vida cada 3 frames** |
+| el HP | `$78(a5)` (un word): `sub.w d1, $78(a5)` |
+| si el HP queda en 0 | se resta **otro** 1, para que quede **NEGATIVO**: el juego solo detecta el KO con el HP negativo (`btst.b #$7, $78(a5)` en `$019CFC`, el handler del estado `$00`). Si el HP llegara a 0 en el estado `$0B` nadie lo vigilaria, la ronda no acabaria y **el juego se colgaria** |
+
+**El estado `$0B` con el move `$0F` es SOLO del cruce** (un salto normal usa
+el estado `$0E` con el move `$0B`, medido con la sonda), asi que **saltar no
+cuesta vida**.
+
+### Las ROMs
+
+| fichero | que es |
+|---|---|
+| `rom/cambios/22_china_DANO_al_cruzar.bin` | la base + `sin_atajo_cruce` + `cruce_dano` (99 bytes) = **el cruce con el dano** |
+| `rom/cambios/23_china_UNIFICADA_con_DANO.bin` | la unificada + el dano (158 bytes) |
+| `rom/cambios/24_china_UNIFICADA_sin_hoja.bin` | la unificada **sin** `kuwabara_hoja_2hits_doble` (81 bytes) = la **biseccion del "2 cuerpos"** |
+
+### Lo que falta por averiguar
+
+El "2 cuerpos por detras" **sigue con el `un_plano` arreglado**, asi que no
+es (solo) el `un_plano`. Los candidatos: el bloque del aterrizaje en 304
+(`$019F52`, que pone el suelo de golpe de 319.9 a 304 = un salto de 15 px y
+el cambio de escala) o el parche de la hoja de Kuwabara (`$0C2EA2`, la
+duracion de un frame de su cadena). La `24` aisla el segundo.
