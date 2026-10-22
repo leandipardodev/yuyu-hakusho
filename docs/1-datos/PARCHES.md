@@ -1266,3 +1266,26 @@ frame `$83`) tambien es una tecnica.
 La cadena del cruce (`$0186BE` -> `$018722` -> `$01873A`, y la vuelta
 `$0186F2`) cuelga **enteramente** de la entrada de la tabla, asi que
 apagando las dos entradas no hay ni cruce ni vuelta.
+
+### Sobre que ROM es la "original"
+
+| Que | Que es |
+|---|---|
+| **`rom/base/yuyu_makyou_base.bin`** | **la ROM original** (la del proyecto, con el checksum al dia). **Verificado: NO tiene ningun parche del proyecto puesto** (en `$018751` esta el byte "old" `3F`, en `$018443` el "old" `00`, en `$01A29A` el "old" `55`...). |
+| `rom/fuentes/yuyu_makyou_ingles.bin` | **otra version** del juego (ingles / dual_language, son **identicas entre si**): **113 280 bytes** distintos de la base (la traduccion y los vectores de interrupcion). |
+| `rom/fuentes/usuario_ROMA_MODIFICAR.bin` | la base **con 60 bytes** de parches del proyecto (la "unificada" de antes). |
+| `rom/fuentes/yuyu_makyou_HIEI_DRAGON.bin` | la base + el parche del dragon de Hiei. |
+| `rom/fuentes/usuario_HIEI_DRAGON_LENTO_ROTO.bin` | la base + el dragon de Hiei lento. |
+| `rom/fuentes/usuario_HIEI_v3_ITSUKI_KAGE_14f-7f.bin` | la base + los parches del dragón y el kage de Itsuki. |
+
+**Las dos ROMs que hay con este parche:**
+
+| ROM | Base | Bytes | Checksum |
+|---|---|---|---|
+| `rom/cambios/18_sin_atajos_de_cruce.bin` | la base (la del proyecto) | 4 (+2 del checksum) | `$60C3` |
+| `rom/cambios/18_sin_atajos_de_cruce_ingles.bin` | la version inglesa | 4 (+2 del checksum) | `$EB97` |
+
+**En las dos ROMs la estructura del cruce es IGUAL**: la tabla global de
+comandos en `$15C20` (las 256 entradas byte a byte iguales) y las entradas
++80 y +89 apuntando a `$0186BE` ✓. Por eso el mismo parche sirve para las
+dos.

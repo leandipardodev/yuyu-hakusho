@@ -1603,3 +1603,16 @@ tecnicas**, NO el cruce. No confundir.
 
 **Para desactivar el cruce** basta con que esas dos entradas dejen de
 apuntar a `$0186BE` (4 bytes).
+
+### CUAL ES LA ROM ORIGINAL (y cuales son las otras)
+- **`rom/base/yuyu_makyou_base.bin` = LA ROM ORIGINAL** (la del proyecto,
+  con el checksum al dia). **Verificado byte a byte: no tiene NINGUN parche
+  del proyecto puesto.** Todos los "cambios/" son la base + un solo grupo.
+- **`rom/fuentes/yuyu_makyou_ingles.bin` y `yuyu_makyou_dual_language.bin`
+  son IDENTICAS entre si** y son **otra version** del juego (113 280 bytes
+  distintos de la base: la traduccion y los vectores de interrupcion).
+  **La estructura del cruce es la misma** (tabla global en `$15C20`,
+  entradas +80/+89 -> `$0186BE`), asi que los parches valen para las dos.
+- **`rom/fuentes/usuario_ROMA_MODIFICAR.bin` = la base + 60 bytes** de
+  parches del proyecto (la "unificada" de antes).
+- `yuyu_makyou_HIEI_DRAGON.bin` = la base + el dragón de Hiei.
