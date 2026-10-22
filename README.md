@@ -23,6 +23,29 @@ cualquier documento con direcciones.
 
 ---
 
+
+---
+
+## La carpeta `rom/` NO está en este repo
+
+**A propósito.** *Yu Yu Hakusho: Makyou Toitsusen* (1994) es de Treasure, con
+licencia de Toei Animation y Shueisha: los dumps completos y las ROMs
+parcheadas son obra con derechos de autor, y subirlos expone la cuenta a un
+takedown. El `.gitignore` excluye `rom/` entero, y también `notas/` (que es
+otro repo, el diario de investigación).
+
+**Qué hacer al clonar:**
+
+| Qué | Cómo |
+|---|---|
+| la **base** (la china con el checksum reparado) | poner la ruta de tu ROM en el fichero `.rom_path`, o en la variable de entorno `YUYU_ROM`. La ruta **no se comparte** (es de cada máquina) |
+| las **ROMs parcheadas** | se construyen en local: `python herramientas/desensamblado/construir_roms.py --limpiar` |
+| el **desensamblado** | se genera en local (1,5 MB): sale de la base, no de la J |
+
+Lo que **sí** está en el repo: la documentación (por áreas), el manifiesto de
+parches (`datos/parches.json`), las recetas (`datos/recetas.json`) y las
+herramientas (el desensamblado, las sondas de Lua y los verificadores).
+
 ## 1. Por dónde empezar
 
 **Si vienes de fuera y no conoces el proyecto:**
