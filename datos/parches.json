@@ -2365,6 +2365,18 @@
           "nota": "btst.b #$1 (ATRAS) -> #$0: el lector del flag, intercambiado"
         }
       ]
+    },
+    "escala_suave": {
+      "desc": "LA ESCALA NO SALTA AL CAMBIAR DE PLANO. El bloque $019F52 (aterrizar en el plano de ATRAS: 'move.l #$1300000, $9c(a5)' + 'move.w #$d8, $3e(a5)' + 'move.b #$c0, $26(a5)') pone la escala a 216 de golpe, pero la escala ha llegado ahi en 208 (baja 2 por frame durante la caida): el sprite cambia de tamano en UN frame y se ve el '2 cuerpos por detras'. Aqui solo se cambia el inmediato de la escala por el valor por el que ya venia ($D0 = 208), de modo que no hay salto. El sprite del plano de atras queda un 4% mas pequeno de lo que deberia (208 en vez de 216). OJO: el $26 ($26 = $C0) tambien cambia de golpe; ese es el indice del frame del sprite, no se toca. 1 byte en total.",
+      "confianza": "CODIGO (el bloque $019F52 del handler del estado $0B, y la medida del salto de la escala con la sonda: 216->214->212->210->208 y luego 216 de golpe en el frame del aterrizaje)",
+      "bytes": [
+        {
+          "addr": "0x019F5D",
+          "old": "D8",
+          "new": "D0",
+          "nota": "el inmediato de 'move.w #$d8, $3e(a5)' (la escala): $D8 = 216 -> $D0 = 208, que es por donde venia (asi no salta)"
+        }
+      ]
     }
   },
   "instrumentacion": {
