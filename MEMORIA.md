@@ -1670,3 +1670,22 @@ estado `$0A`) y `$018748` (el frame `$0F`).
 
 **Al buscar quien llama a una funcion hay que probar los tres**: con solo
 uno se conclude (mal) que nadie la llama.
+
+### LOS TRES TIPOS DE TABLA DE COMANDOS (no confundirlos)
+1. **La global** `$15C20` (la usa `$015C18` con el indice **`$58`**, que es
+   el 'tipo de move' de los **OBJETOS**). **La usa el juego al arrancar**:
+   tocarla rompe el arranque (pantalla roja). Sus entradas +80 y +89
+   apuntan a `$0186BE` (la funcion del cruce de plano), pero **`$58` nunca
+   vale 80 ni 89** => no son los atajos.
+2. **Las por personaje** (16 entradas, indexadas por la direccion
+   `$71 & $0F`): `$016042`, `$016132`, `$16464`, ... (11 en total). **Aqui
+   estan los atajos de mando**: el boton C (`btst.b #$4, $72(a5)`) ->
+   `$1886A` (movimiento `$84`) y el boton Y (`btst.b #$6, $72(a5)`) ->
+   `$18880` (movimiento `$86`). El dispatcher empieza en `$016030`.
+3. **La de estados** `$15a68` (indexada por `$5D`).
+
+### EL CRUCE DE PLANO LO USA EL JUEGO AL ARRANCAR
+El cruce de plano de verdad es el **estado `$0A` + el frame id `$0F`** y lo
+lanza `$01873A` (`move.b #$a, $5d(a5)`), que solo se alcanza desde la
+tabla global (entradas +80/+89). **La intro lo usa**: si se neutraliza
+(`$01873D`: `#$a` -> `#$0`), **la ROM arranca rota** (pantalla roja).

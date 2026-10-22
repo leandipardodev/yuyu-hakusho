@@ -1777,14 +1777,278 @@
       ]
     },
     "sin_cruce_atajo": {
-      "desc": "DESACTIVA EL CRUCE DE PLANOS: no se puede cruzar al otro plano. 1 byte. EL CRUCE es el estado $0A con el frame id $0F. Se lanza en $01873A ('move.b #$a, $5d(a5)' = el estado $0A) + $018748 ('move.b #$f, $5f(a5)' = el frame $0F), que estan dentro de la funcion $018722 (que elige cruzar o volver segun el plano) y esa dentro de $0186BE. Con este parche el immediate de $01873D pasa de #$a a #$0: el estado se queda en el normal ($00) y el cruce no se lanza nunca. El codigo sigue siendo valido, asi que no se rompe nada mas (lo unico que cambia es que en la intro el personaje no cruza). OJO: NO se tocan las entradas +80 y +89 de la tabla global de comandos $15c20 (que apuntan a $0186BE): esa tabla se indexa con $58(a5), que es el 'tipo de move' de los OBJETOS, y el juego la usa al arrancar. Tocarla rompe el arranque (pantalla roja).",
-      "confianza": "CODIGO (el cruce = estado $0A + frame id $0F; se lanza en $01873A/$018748, dentro de $018722 y $0186BE) + CAPSTONE (todo desensamblado y validado)",
+      "desc": "DESACTIVA LOS ATAJOS DE COMANDO DEL CRUCE: el de 'arriba + C' (cambio de plano/linea) y el de 'Y' (linea), mas el atajo global 'C+B+Y' a la vez. En el ROM, los atajos de comando estan en el dispatcher de input POR PERSONAJE (11 dispatchers, $016030-$017F8A), que indexa una tabla de 16 entradas con la direccion ($71 & $0F). Las entradas que llegan al bloque 'C o Y' ($016106 y equivalentes) hacen: 'btst.b #$4, $72(a5)' (el boton C) -> 'bne.w $1886a' (el MOVIMIENTO $84) y 'btst.b #$6, $72(a5)' (el boton Y) -> 'bne.w $18880' (el MOVIMIENTO $86). Con este parche los dos saltos pasan a $18854 (el MOVIMIENTO $83, que existe en todos los personajes), asi que los atajos dejan de lanzar su movimiento. ADEMAS, el atajo GLOBAL (C+B+Y a la vez) esta en $015DEE ('cmpi.b #$70, d0' / 'beq.w $18764') y lanza el MOVIMIENTO $AA (el cambio de plano/linea): su inmediato pasa de $70 a $71 y la condicion nunca se cumple. POR QUE EN EL INPUT Y NO EN LA TABLA GLOBAL: la tabla global de comandos $15C20 (que usa $015C18 con el indice $58) la usa el juego AL ARRANCAR, y cambiarla rompe el arranque (pantalla roja). El input, no. OJO: el CRUCE de plano de verdad es el estado $0A con el frame id $0F (que lanza $01873A) y el juego lo usa en la intro, asi que NO se toca. 45 bytes en total.",
+      "confianza": "CODIGO (los atajos estan en el input por personaje: $016106 y equivalentes; el global en $015DEE) + NOTAS del usuario ('arriba + C' = cambio de plano/linea, 'Y' = linea) + CAPSTONE (validado)",
       "bytes": [
         {
-          "addr": "0x01873D",
-          "old": "0A",
-          "new": "00",
-          "nota": "$01873D: el immediate de 'move.b #$a, $5d(a5)'. Es aqui donde se lanza el CRUCE de planos (el estado $0A + el frame id $0F, que despues pone el plano en 319 y al aterrizar en 304 con la escala $D8). Con '#$0' el estado se queda en el normal ($00): el cruce no se puede lanzar. El codigo sigue siendo valido, asi que no se rompe nada mas."
+          "addr": "0x015DF1",
+          "old": "70",
+          "new": "71",
+          "nota": "$015DF1: el inmediato de 'cmpi.b #$70, d0' (el atajo global: C+B+Y a la vez, que lanza el movimiento $AA, el cambio de plano/linea) pasa a ser $71, de modo que la condicion nunca se cumple y ese atajo no hace nada."
+        },
+        {
+          "addr": "0x01610E",
+          "old": "27",
+          "new": "27",
+          "nota": "$01610E: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x01610F",
+          "old": "5C",
+          "new": "46",
+          "nota": "$01610F: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016118",
+          "old": "27",
+          "new": "27",
+          "nota": "$016118: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016119",
+          "old": "68",
+          "new": "3C",
+          "nota": "$016119: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016530",
+          "old": "23",
+          "new": "23",
+          "nota": "$016530: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016531",
+          "old": "3A",
+          "new": "24",
+          "nota": "$016531: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x01653A",
+          "old": "23",
+          "new": "23",
+          "nota": "$01653A: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x01653B",
+          "old": "46",
+          "new": "1A",
+          "nota": "$01653B: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016846",
+          "old": "20",
+          "new": "20",
+          "nota": "$016846: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016847",
+          "old": "24",
+          "new": "0E",
+          "nota": "$016847: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016850",
+          "old": "20",
+          "new": "20",
+          "nota": "$016850: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016851",
+          "old": "30",
+          "new": "04",
+          "nota": "$016851: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016B72",
+          "old": "1C",
+          "new": "1C",
+          "nota": "$016B72: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016B73",
+          "old": "F8",
+          "new": "E2",
+          "nota": "$016B73: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016B7C",
+          "old": "1D",
+          "new": "1C",
+          "nota": "$016B7C: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016B7D",
+          "old": "04",
+          "new": "D8",
+          "nota": "$016B7D: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016EB8",
+          "old": "19",
+          "new": "19",
+          "nota": "$016EB8: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016EB9",
+          "old": "B2",
+          "new": "9C",
+          "nota": "$016EB9: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016EC2",
+          "old": "19",
+          "new": "19",
+          "nota": "$016EC2: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x016EC3",
+          "old": "BE",
+          "new": "92",
+          "nota": "$016EC3: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x01718E",
+          "old": "16",
+          "new": "16",
+          "nota": "$01718E: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x01718F",
+          "old": "DC",
+          "new": "C6",
+          "nota": "$01718F: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017198",
+          "old": "16",
+          "new": "16",
+          "nota": "$017198: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017199",
+          "old": "E8",
+          "new": "BC",
+          "nota": "$017199: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0174BE",
+          "old": "13",
+          "new": "13",
+          "nota": "$0174BE: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0174BF",
+          "old": "AC",
+          "new": "96",
+          "nota": "$0174BF: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0178C2",
+          "old": "0F",
+          "new": "0F",
+          "nota": "$0178C2: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0178C3",
+          "old": "A8",
+          "new": "92",
+          "nota": "$0178C3: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0178CC",
+          "old": "0F",
+          "new": "0F",
+          "nota": "$0178CC: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0178CD",
+          "old": "B4",
+          "new": "88",
+          "nota": "$0178CD: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0178DA",
+          "old": "0F",
+          "new": "0F",
+          "nota": "$0178DA: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0178DB",
+          "old": "90",
+          "new": "7A",
+          "nota": "$0178DB: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017C0E",
+          "old": "0C",
+          "new": "0C",
+          "nota": "$017C0E: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017C0F",
+          "old": "5C",
+          "new": "46",
+          "nota": "$017C0F: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017C18",
+          "old": "0C",
+          "new": "0C",
+          "nota": "$017C18: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017C19",
+          "old": "68",
+          "new": "3C",
+          "nota": "$017C19: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017F44",
+          "old": "09",
+          "new": "09",
+          "nota": "$017F44: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017F45",
+          "old": "26",
+          "new": "10",
+          "nota": "$017F45: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017F4E",
+          "old": "09",
+          "new": "09",
+          "nota": "$017F4E: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x017F4F",
+          "old": "32",
+          "new": "06",
+          "nota": "$017F4F: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x018296",
+          "old": "05",
+          "new": "05",
+          "nota": "$018296: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x018297",
+          "old": "D4",
+          "new": "BE",
+          "nota": "$018297: el salto del atajo el atajo C (arriba+C) (bne.w $1886a) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0182A0",
+          "old": "05",
+          "new": "05",
+          "nota": "$0182A0: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
+        },
+        {
+          "addr": "0x0182A1",
+          "old": "E0",
+          "new": "B4",
+          "nota": "$0182A1: el salto del atajo el atajo Y (bne.w $18880) pasa a apuntar a $018854 (el movimiento $83), que es lo mismo para todos los personajes. Asi el atajo deja de lanzar su movimiento."
         }
       ]
     }

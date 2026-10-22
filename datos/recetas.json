@@ -203,12 +203,12 @@
     },
     {
       "id": "18_sin_atajos_de_cruce",
-      "titulo": "Desactiva el cruce de planos (no se puede cruzar)",
+      "titulo": "Desactiva los atajos de comando del cruce (arriba+C y Y)",
       "grupos": [
         "sin_cruce_atajo"
       ],
-      "que_hace": "No se puede cruzar al otro plano: el immediate de $01873D ('move.b #$a, $5d(a5)') pasa a ser #$0, asi que el estado $0A (el cruce) no se lanza. 1 byte.",
-      "bytes": 1
+      "que_hace": "Los atajos 'arriba + C' y 'Y' dejan de lanzar su movimiento (los dos saltos van al movimiento $83), y el atajo global 'C+B+Y' se neutraliza. Se toca el input, no la tabla global (que usa el juego al arrancar). 45 bytes.",
+      "bytes": 45
     }
   ],
   "combinaciones": [

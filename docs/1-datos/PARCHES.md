@@ -1200,72 +1200,85 @@ cuando el HP llegue a 0, poner `move.b #$4, $5d(a5)` y
 `move.b #$2c, $5f(a5)` (el frame del golpe) y ademas `$1f786` (el efecto).
 Eso esta pendiente de hacer y probar.
 
-## 17. `sin_cruce_atajo` (no se puede cruzar de planos)
+## 17. `sin_cruce_atajo` (desactiva los atajos del cruce)
 
 **Pedido:** *"agarra la rom original del yuyu y desactiva el cruzar
 enfrente. quita el atajo arriba + c global que permite cruzar y el atajo Y.
 que no apunten a su funcion, solo eso"*.
 
-**Que hace:** **no se puede cruzar al otro plano**. **1 byte**.
+**Que hace:** **45 bytes**. Los tres atajos de comando dejan de lanzar su
+movimiento, y con ellos se va el "cambio de plano/linea" por mando.
+
+### Los tres atajos (segun tus notas)
+
+De `docs/2-personajes/COMANDOS_MOVES_FUENTE.md` (*"Cambio de plano/linea
+| arriba + C"*) y `FRAME_DATA_Y_STATS.md` (*"Y = linea"*):
+
+| Atajo | Donde | Que lanzaba |
+|---|---|---|
+| **el boton C** (arriba+C) | los 11 dispatchers por personaje | `$1886A` -> **movimiento `$84`** (12 saltos) |
+| **el boton Y** | los 11 dispatchers por personaje | `$18880` -> **movimiento `$86`** (10 saltos) |
+| **el global C+B+Y** | `$015DEE` (`cmpi.b #$70, d0` / `beq.w $18764`) | `$18764` -> **movimiento `$AA`** (el cambio de plano/linea) |
+
+Los 11 dispatchers por personaje son los que empieza en `$016030`
+(para el ctx0), `$016120`, `$01645C`, ... Todos hacen lo mismo:
+
+```
+$016030  move.b $71(a5), d0      ; la direccion
+$016034  andi.w #$f, d0
+$016038  add.w d0, d0
+$01603A  lea.l <tabla de 16>(pc, d0.w), a0
+$01603E  adda.w (a0), a0
+$016040  jmp (a0)
+```
+
+y las entradas que llegan al bloque "C o Y" (`$016106`):
+
+```
+$016106  btst.b #$4, $72(a5)    ; el boton C
+$01610C  bne.w $1886a           -> el MOVIMIENTO $84
+$016110  btst.b #$6, $72(a5)    ; el boton Y
+$016116  bne.w $18880           -> el MOVIMIENTO $86
+```
 
 ### El cambio
 
-El cruce de planos es el **estado `$0A` con el frame id `$0F`**, y se
-lanza en dos sitios:
-
-| Direccion | Instruccion | Que hace |
+| Que | Antes | Despues |
 |---|---|---|
-| `$01873A` | `move.b #$a, $5d(a5)` | **el estado = `$0A`** (el cruce) |
-| `$018748` | `move.b #$f, $5f(a5)` | el frame id = `$0F` |
+| los **12** saltos `bne.w $1886a` (atajo C) | -> `$1886A` (movimiento `$84`) | -> **`$18854`** (movimiento `$83`) |
+| los **10** saltos `bne.w $18880` (atajo Y) | -> `$18880` (movimiento `$86`) | -> **`$18854`** (movimiento `$83`) |
+| el atajo global | `$015DF1`: `cmpi.b #$70, d0` | **`$71`** (la condicion nunca se cumple) |
 
-Estan dentro de `$018722` (la funcion que elige **cruzar o volver** segun
-el plano en el que estas) y esa dentro de `$0186BE`.
+El movimiento `$83` existe en los 10 personajes (4-8 frames), asi que
+el atajo sigue haciendo algo innocuous en vez de su movimiento.
 
-**Con este parche, el immediate de `$01873D` pasa de `#$a` a `#$0`**:
+### POR QUE EN EL INPUT Y NO EN LA TABLA GLOBAL
 
-| Direccion | Antes | Despues |
-|---|---|---|
-| `$01873D` | `$0A` (`#$a`) | `$00` (`#$0`) |
+La **tabla global de comandos `$15C20`** (la usa `$015C18` con el indice
+`$58`, que es el "tipo de move" de los OBJETOS) tiene dos entradas (+80 y
++89) que apuntan a `$0186BE`, y esa funcion es la que lanza el cruce de
+plano. **Tocarla rompe el arranque** (pantalla roja): el juego la usa al
+arrancar (la intro). Y **`$58` nunca vale 80 ni 89** en el codigo, asi que
+esas entradas no son los atajos: son de otros objetos.
 
-El estado se queda en el normal (`$00`) y **el cruce no se lanza nunca**.
-El codigo sigue siendo valido, asi que **no se rompe nada mas**: lo
-unico que cambia es que en la intro el personaje no cruza.
+**=> El atajo de verdad esta en el input, que el arranque no usa.**
 
-### OJO: las entradas de la tabla global NO se tocan (y por que)
+### OJO: el CRUCE de plano "de verdad" NO se toca
 
-La tabla global de comandos `$15C20` (la usa `$015C18`) tiene dos entradas
-(+80 y +89) que apuntan a `$0186BE`. **Parecian los "atajos", pero NO lo
-son**, y tocarlas **rompe el arranque** (pantalla roja):
+El cruce de plano de verdad es el **estado `$0A` con el frame id `$0F`**
+(1 frame de duracion 255), y lo lanza `$01873A`
+(`move.b #$a, $5d(a5)`), que solo se alcanza desde la tabla global
+(+80/+89). **El juego lo usa en la intro**, asi que **no se toca**: si se
+neutraliza (`$01873D`: `#$a` -> `#$0`), la ROM **arranca rota**.
 
-1. La tabla se indexa con **`$58(a5)`**, y **`$58` es el "tipo de move" de
-   los OBJETOS** (se pone en `$01F7FE`-`$01FCF2` y `$020xxx`, con los
-   valores 0-8, `$10`, `$14`, `$15`, `$18`-`$1d`, `$20`...). **En todo el
-   ROM `$58` NUNCA vale 80 ni 89**, asi que esas entradas no son las del
-   cruce.
-2. **El juego usa esa tabla al arrancar** (intro, menu), asi que cambiar
-   una entrada puede dejar el juego saltando a un sitio que no toca.
-
-**Por eso el cruce se desactiva en el punto donde se LANZA**, no en la
-tabla.
-
-### Las cuatro versiones que rompieron el juego (y por que)
-
-| Version | Que hacia | Por que rompia |
-|---|---|---|
-| v2 | las entradas +80/+89 -> `$019D62` (`bra.w $15afc`) | el juego saltaba ahi **a mitad de una rutina** al arrancar -> **arranca rota** |
-| v3 | las entradas +80/+89 -> `$01668A` (un `rts` suelto) | el `jmp (a0)` + el `rts` hace **pop de la pila** -> **pantalla roja** |
-| v4 | las entradas +80/+89 -> `$019D5E` (el reset) | el destino es una funcion real, pero **la tabla se usa al arrancar** y el atajo **debe** hacer el cruce ahi |
-| **v5** | **`$01873D`: `#$a` -> `#$0`** | **bien**: 1 byte, el codigo sigue valido |
-
-### El checksum NO era el problema
-Los dos ROMs (la base `$337B` y la inglesa `$BE4F`) lo tienen **correcto**
-(coincide con la suma de los datos desde `$200`) y **el juego no lo tiene
-como constante en el codigo** (0 apariciones de `$337B` y de `$BE4F`).
+Si lo que quieres quitar es *ese* cruce (y no los atajos de mando), habria
+que desactivarlo **solo durante el combate**, mirando alguna bandera del
+estado de la ronda.
 
 ### Las ROMs
 
 | ROM | Base | Bytes | Checksum |
 |---|---|---|---|
-| `rom/cambios/18_sin_atajos_de_cruce_ingles.bin` | **la del usuario** (`rom/original/`) | 1 (+2) | `$BE45` |
-| `rom/cambios/18_sin_atajos_de_cruce.bin` | la base del proyecto | 1 (+2) | `$3371` |
-| `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la base + todos los cambios | 82 | `$2552` |
+| `rom/cambios/18_sin_atajos_de_cruce_ingles.bin` | **la del usuario** (`rom/original/`) | 26 (+2) | `$BB90` |
+| `rom/cambios/18_sin_atajos_de_cruce.bin` | la base del proyecto | 26 (+2) | `$30BC` |
+| `rom/combinaciones/yuyu_makyou_UNIFICADA.bin` | la base + todos los cambios | 105 | `$229D` |

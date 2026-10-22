@@ -509,3 +509,47 @@ usa en varios contextos. Y si hay que tocar una tabla, el destino tiene
 que ser **una funcion real** que el juego ya use para "no hacer nada" (un
 `rts` suelto hace pop de la pila y un `bra.w` al final del frame salta a
 mitad de una rutina).
+
+
+<a name="s-2024-10-21j"></a>
+
+## S-2024-10-21j: los atajos del cruce, por fin (y por que las 5 versiones anteriores rompian el arranque)
+
+**Sintoma:** *"sin atajos cruce ingles arranca rota"*, *"toda la pantalla en
+rojo"*, *"volvio a fallar"*.
+
+**Lo que se descarto por el camino:**
+- El **checksum** de la cabecera: esta bien en las dos ROMs ($337B y $BE4F,
+  coinciden con la suma desde $200) y el juego **no lo tiene como
+  constante** en el codigo.
+- El **cifrado por bloques** (scramble) del Mega Drive: el codigo de
+  $010000-$02FFFF **desensambla tal cual**, no esta cifrado.
+- La **tabla global de comandos `$15C20`**: sus entradas +80 y +89 apuntan
+  a `$0186BE` (la funcion del cruce), PERO **la tabla se indexa con `$58`,
+  que es el 'tipo de move' de los OBJETOS, y `$58` NUNCA vale 80 ni 89**
+  => no son los atajos, y ademas **el juego la usa al arrancar**, asi que
+  tocarla rompe el arranque (pantalla roja).
+
+**LO QUE SI SON LOS ATAJOS (segun las notas del proyecto: 'arriba + C' =
+cambio de plano/linea, 'Y' = linea):**
+
+| Atajo | Donde | Lanzaba |
+|---|---|---|
+| el boton **C** | los 11 dispatchers por personaje | `$1886A` -> movimiento `$84` (12 saltos) |
+| el boton **Y** | los 11 dispatchers por personaje | `$18880` -> movimiento `$86` (10 saltos) |
+| el **global C+B+Y** | `$015DEE` (`cmpi.b #$70, d0`) | `$18764` -> movimiento `$AA` |
+
+**EL CAMBIO (45 bytes):** los 22 saltos van a `$18854` (el movimiento `$83`,
+que existe en todos los personajes) y el inmediato del atajo global pasa de
+`$70` a `$71`. Se toca **el input**, que el arranque no usa.
+
+**OJO:** el cruce de plano "de verdad" (el estado `$0A` + el frame `$0F`, que
+lo lanza `$01873A`) **no se toca**, porque **el juego lo usa en la intro**:
+neutralizarlo (`$01873D`) hacia arrancar la ROM rota. Si eso es
+justamente lo que hay que quitar, habria que desactivarlo solo en combate.
+
+**Aprendido:** las tablas de comandos del juego son de 3 tipos: la **global**
+(`$15C20`, indexada por `$58`, de OBJETOS, la usa el arranque), las **por
+personaje** (16 entradas, indexadas por la direccion, son las de los
+mandos) y la de **estados** (`$15a68`, indexada por `$5D`). Los atajos de
+mando estan en las por personaje, no en la global.
