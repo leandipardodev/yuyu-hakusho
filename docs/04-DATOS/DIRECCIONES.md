@@ -366,8 +366,35 @@ autodetecta por firma. [NOTAS]
 | Límites del stage | `$FFA010` / `$FFA012` | |
 | Puntero del task de colisión | `$FF8100` = `$1EDAC` | |
 | `$F558` | **cámara lenta de muerte** (159 → 0). Su **único** escritor es `0x1FA82: move.w #$a0` = 160 | |
-| `$F550` bit 7 | flag de modo desbloqueado / simulación suspendida | |
-| `$F55A` | modo completado | |
+| `$F550` bit 7 | es lo que `$01EDAC` mira para **suspender las tareas por frame** (el decremento del slow-mo y la cola de sonido `$A030`): `btst.b #$7, $f550.w` / `bne` | `$01EDAC` |
+| `$F550` bit 0 | se enciende con el reloj de la ronda `$F551 != 0` (el "TIME": `$F5F6` escribe `$F551 = $0F` y `bset #$0`) | `$F5F6`, `$F620` |
+| `$F55A` | **el frame congelado de la cámara lenta**: `$01EE10` lo pone a 1 cuando el contador `$F558` es impar (el slow-mo alterna frames) | `$01EE0A` |
+
+---
+
+## 8b. El FIN DE RONDA y el KO (2026-10-22, al resolver la v8 del veneno)
+
+**El juego NO chequea "HP negativo" por frame.** Esta es la cadena completa
+(está desarrollada en `docs/05-PARCHES/PARCHES.md` §El final sin vida):
+
+| Dato | Valor | Dirección | Fuente |
+|---|---|---|---|
+| El resolver de dano: HP negativo | `cmpi.w #$0, $78(a4)` / `blt` → `jsr $1FA70` | `$01F4CA`, `$01F4D0` | [ROM] |
+| `jsr $1FA70` | al morir de un golpe: escribe el sonido letal (`tabla $1FA8A`, indexada por `$58`) en `$A030` y la cámara lenta `$F558 = 160` | `$01FA70` | [ROM] |
+| **El marcador de cadaver** | el juego escribe **`move.w #$fc00, $78(a5)`** (HP = −1024) al CAER con HP negativo; hasta entonces el caido cuenta como vivo | `$01A1A4` | [ROM] |
+| **`$F852`** | detector de "quedo un solo bando" (lo llama la **fase de combate** `$00F476` cada frame): escanea los 4 slots (`$FF8400 + n*$400`, firma `$00012668` en el longword 0), saltea HP negativo, y devuelve 0 si entre los vivos hay **dos `$6F` distintos** | `$00F852` | [ROM] |
+| **`$F88C`** | el detector siguiente (fase `$00F490`): IGUAL que `$F852` pero saltea solo los HP **== `$FC00` exacto**; esperando el marcador de cadaver | `$00F88C` | [ROM] |
+| **`$F8C8` / `$F8F2`** | el delay del mensaje de KO: recogen el HP negativo (≠ `$FC00`) del caído y lo escriben en `$A074` (o `$8000` si no hay) | `$00F8C8`, `$00F8F2` | [ROM] |
+| La secuencia de KO | `$A096 = 0`, **`$A032 = 1`** (la pelea terminó), contador `$A03A` → `$40` → `$F8C8` → ... → `$200` | `$00F49E`-`$00F530` | [ROM] |
+| `$A032` | **flag de pelea terminada**: 1 en fin de ronda (`$00F4A2`), 0 al recomenzar (`$00F46E`) | | [ROM] |
+| `$A03A` / `$A03C` | contadores de fase del manager (fin de ronda / combate en curso) | `$00F4BC`, `$00F458` | [ROM] |
+| `$A030` | **el buzón de sonido**: se escribe un código de sonido y cada frame lo lee y consume el manager (`move.b $a030.w, d0` / `jsr $21960` / `clr $a030`) | `$00F5D6`, `$01ED9A` | [ROM] |
+| `$21960` | **el dispatcher de sonido** (d0 = el código). Códigos vistos: `$77`-`$7D` los golpes y caídas, `$A6`, `$05`, `$01` | `$0021960` | [ROM] |
+
+La trampa que resolvió la v8 del veneno: con HP = `$FFFF` (−1), `$F88C` sigue
+contándolo como vivo y la fase `$00F490` no avanza NUNCA — el `$FC00` hace que
+pase al toque.
+
 
 ---
 

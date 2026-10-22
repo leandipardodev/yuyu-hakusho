@@ -55,6 +55,7 @@ midiendo, no leyendo.
 | `$69` | hitpause (16 al recibir golpe, 28 en clash) |
 | `$75` | siempre `$69 + 1` |
 | `$78` | **HP actual** (word signed, **max 223**, llega a `-1024` al final) |
+| `$6F` | **el bando/equipo**: el byte que usan las rutinas del fin de ronda (`$F852`/`$F88C`/`$F8F2`) para saber si queda un solo bando vivo. Se copia a `$6E` al caer (`$01A1CA`). [ROM] |
 | `$7A` | **la BARRA ANIMADA**, no el HP: persigue a `$78` de a uno por frame |
 | `$7E` / `$80` | stun actual / stun maximo. `$7E` = **`$FF` (255)** es el **sentinel de proteccion** al levantarse (`0x1A282`), y cuenta hacia abajo |
 | `$84` | velocidad del knockdown (la calcula el resto de `$7E` en `0x1F4E2`) |
