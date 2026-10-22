@@ -1628,3 +1628,22 @@ direccion de retorno del `bsr` y devuelve el control al sitio correcto.
 **Con un destino que no sea un "nada" (por ejemplo un `bra.w $15afc`, el
 final del frame) el juego ARRANCA ROTA**, porque salta ahi a mitad de una
 rutina. Le pasó con la v2 del parche `sin_cruce_atajo`.
+
+### EL DESTINO DE UNA ENTRADA DE TABLA: QUE SEA UNA FUNCION REAL, NADA DE RTS
+Si cambias el destino de una entrada de tabla para "desactivar" algo:
+- **NO un `rts` suelto**: la tabla salta con `jmp (a0)` y el `rts` hace
+  **pop de la pila**. Si la tabla se usa en un contexto donde no hay un
+  `bsr` pendiente, se corrompe la pila -> **PANTALLA ROJA al arrancar**.
+- **NO un trozo de codigo** (un `bra.w $15afc`): el juego salta ahi **a
+  mitad de una rutina** -> **ARRANCA ROTA**.
+- **SI una funcion real** que el juego ya use para "no hacer nada" (aqui
+  `$019D5E` = `bsr.w $18440` (el reset) + `bra.w $15afc` (el final del
+  frame)).
+
+**Y OJO: la tabla global `$15C20` se indexa con `$58(a5)`, y `$58` puede
+valer 80 o 89 en OTROS contextos (al arrancar, en la intro, en el menu),
+no solo con los atajos.** Por eso el destino tiene que ser valido siempre.
+
+**Y EL CHECKSUM:** los dos ROMs (base $337B, inglesa $BE4F) lo tienen
+correcto y **el juego no lo tiene como constante en el codigo** (0
+apariciones). El patcher lo reescribe bien.

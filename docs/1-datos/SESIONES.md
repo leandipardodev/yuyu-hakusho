@@ -439,3 +439,36 @@ comprobo que es **identica** a `rom/fuentes/yuyu_makyou_ingles.bin` (y a
 `dual_language.bin`). El parche se le aplica **sin tocar el original**
 (el parcheador escribe en otro fichero):
 `rom/cambios/18_sin_atajos_de_cruce_ingles.bin`.
+
+
+<a name="s-2024-10-21h"></a>
+
+## S-2024-10-21h: el destino del atajo (dos versiones rompian el arranque)
+
+**Sintomas:** con la v2 *"arranca rota"* y con la v3 *"toda la pantalla en
+rojo"*.
+
+**Lo que se descarto primero:** el checksum de la cabecera. **Los dos ROMs
+(checksum $337B y $BE4F) lo tienen CORRECTO** (coincide con la suma de
+los datos desde $200) y **el juego no tiene el checksum como constante en
+el codigo** (0 apariciones de $337B y de $BE4F). O sea que no era eso.
+
+**La causa de fondo:** la tabla global `$15C20` se indexa con **`$58(a5)`**,
+y **`$58` puede valer 80 o 89 en otros contextos** (al arrancar, en la
+intro, en el menu), no solo cuando se pulsa el atajo. Por eso el destino
+tiene que ser algo que **no rompa nada** pase lo que pase.
+
+| Version | Destino | Que pasaba |
+|---|---|---|
+| v2 | `$019D62` (`bra.w $15afc`) | el juego saltaba ahi **a mitad de una rutina** -> **arranca rota** |
+| v3 | `$01668A` (un `rts` suelto) | el `jmp (a0)` + el `rts` hace **pop de la pila** -> **pantalla roja** |
+| **v4** | **`$019D5E`** (`bsr.w $18440` + `bra.w $15afc`) | **bien**: el "reset" + el final del frame |
+
+**La regla que sale de esto:** si cambias el destino de una entrada de
+tabla para "desactivar" algo, ese destino tiene que ser **una funcion
+real que el juego ya use para "no hacer nada"** (aqui: el `reset` +
+el final del frame), **no** un `rts` suelto ni un trozo de codigo.
+
+**Ademas:** el usuario dejo su ROM original en `rom/original/` (es
+**identica** a `rom/fuentes/yuyu_makyou_ingles.bin`). El parche se le
+aplica **sin tocar el original**.

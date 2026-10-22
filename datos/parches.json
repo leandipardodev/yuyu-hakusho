@@ -1777,32 +1777,32 @@
       ]
     },
     "sin_cruce_atajo": {
-      "desc": "DESACTIVA LOS DOS ATAJOS DEL CRUCE DE PLANOS: el de 'arriba + C' (global) y el de 'abajo + Y'. No se puede cruzar al otro plano. EL CRUCE es el estado $0A con el frame id $0F, y la funcion que lo pone es $0186BE (-> $018722 -> $01873A). Esa funcion solo aparece en la TABLA GLOBAL de comandos $15c20 (la usa $015C18 con el indice $58(a5)), en DOS entradas: la +80 (el atajo 'arriba + C') y la +89 (el atajo 'abajo + Y'). Las dos entradas son OFFSETS RELATIVOS: el destino es (direccion_de_la_entrada + offset). Con este parche las dos dejan de apuntar a $0186BE y apuntan a $01668A, que es un 'rts' suelto: el atajo no hace NADA. POR QUE un 'rts' y no otra cosa: la tabla se indexa con $58(a5) y $58 PUEDE VALER 80 O 89 en otros contextos (al arrancar, en la intro, en el menu), no solo con los atajos. Con un destino que no sea un 'rts' (por ejemplo el 'bra.w $15afc' del final del frame) el juego saltaba ahi a mitad de una rutina y ARRANCA ROTA. Un 'rts' hace nada y devuelve el control al dispatcher de estados, asi que el flujo queda intacto. El destino tiene que estar POR ENCIMA de la tabla porque el offset es de 16 bits SIN SIGNO, y no puede ser una funcion que otro parche mueva (el 'doble_salto' reescribe $018440 y lo mueve 2 bytes). SOLO se cambian esas 4 bytes: no se toca la funcion del cruce ni ningun otro sitio. OJO: las tablas POR PERSONAJE ($16042, $16132, ...) apuntan a $1886A/$018880 (el estado $03 con los frames $84/$86), que son las TECNICAS de cada personaje, no el cruce: esas no se tocan. 4 bytes en total.",
+      "desc": "DESACTIVA LOS DOS ATAJOS DEL CRUCE DE PLANOS: el de 'arriba + C' (global) y el de 'abajo + Y'. No se puede cruzar al otro plano. EL CRUCE es el estado $0A con el frame id $0F, y la funcion que lo pone es $0186BE (-> $018722 -> $01873A). Esa funcion solo aparece en la TABLA GLOBAL de comandos $15c20 (la usa $015C18 con el indice $58(a5)), en DOS entradas: la +80 (el atajo 'arriba + C') y la +89 (el atajo 'abajo + Y'). Las dos entradas son OFFSETS RELATIVOS: el destino es (direccion_de_la_entrada + offset). Con este parche las dos dejan de apuntar a $0186BE y apuntan a $019D5E, que es una FUNCION DE VERDAD: 'bsr.w $18440' (el reset: estado $00, frame $00) + 'bra.w $15afc' (el final del frame). Es lo que hace el juego cuando un comando no dispara nada: el personaje vuelve a su estado normal. No toca la pila y el flujo queda intacto. POR QUE NO OTRA COSA: la tabla se indexa con $58(a5) y $58 PUEDE VALER 80 O 89 en otros contextos (al arrancar, en la intro, en el menu), no solo con los atajos, asi que el destino tiene que ser algo que no rompa NADA pase lo que pase. Con un 'bra.w $15afc' (el final del frame) el juego saltaba ahi a mitad de una rutina y ARRANCA ROTA; con un 'rts' suelto hacia POP de la pila y salia la PANTALLA ROJA. El destino tiene que estar POR ENCIMA de la tabla (el offset es de 16 bits SIN SIGNO) y no puede ser una funcion que otro parche mueva (el 'doble_salto' reescribe $018440 y lo mueve 2 bytes). SOLO se cambian esas 4 bytes: no se toca la funcion del cruce ni ningun otro sitio. OJO: las tablas POR PERSONAJE ($16042, $16132, ...) apuntan a $1886A/$018880 (el estado $03 con los frames $84/$86), que son las TECNICAS de cada personaje, no el cruce: esas no se tocan. 4 bytes en total.",
       "confianza": "CODIGO (la tabla global de comandos es $15c20, usada en $015C18; el cruce es el estado $0A + el frame $0F y su funcion es $0186BE; las entradas +80 y +89 son las dos que la apuntan) + CAPSTONE (todo desensamblado)",
       "bytes": [
         {
           "addr": "0x015CC0",
           "old": "29",
-          "new": "09",
-          "nota": "$015CC0: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $01668A (un 'rts' suelto: el atajo no hace NADA y el flujo sigue bien). Es el atajo de arriba+C (global) y el de abajo+Y."
+          "new": "40",
+          "nota": "$015CC0: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $019D5E (el 'reset' + el final del frame: el atajo no hace NADA y el personaje se queda en su estado normal). Es el atajo de arriba+C (global) y el de abajo+Y."
         },
         {
           "addr": "0x015CC1",
           "old": "FE",
-          "new": "CA",
-          "nota": "$015CC1: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $01668A (un 'rts' suelto: el atajo no hace NADA y el flujo sigue bien). Es el atajo de arriba+C (global) y el de abajo+Y."
+          "new": "9E",
+          "nota": "$015CC1: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $019D5E (el 'reset' + el final del frame: el atajo no hace NADA y el personaje se queda en su estado normal). Es el atajo de arriba+C (global) y el de abajo+Y."
         },
         {
           "addr": "0x015CD2",
           "old": "29",
-          "new": "09",
-          "nota": "$015CD2: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $01668A (un 'rts' suelto: el atajo no hace NADA y el flujo sigue bien). Es el atajo de arriba+C (global) y el de abajo+Y."
+          "new": "40",
+          "nota": "$015CD2: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $019D5E (el 'reset' + el final del frame: el atajo no hace NADA y el personaje se queda en su estado normal). Es el atajo de arriba+C (global) y el de abajo+Y."
         },
         {
           "addr": "0x015CD3",
           "old": "EC",
-          "new": "B8",
-          "nota": "$015CD3: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $01668A (un 'rts' suelto: el atajo no hace NADA y el flujo sigue bien). Es el atajo de arriba+C (global) y el de abajo+Y."
+          "new": "8C",
+          "nota": "$015CD3: la entrada del atajo del cruce en la tabla global de comandos $15c20. Dejaba de apuntar a $0186BE (la funcion del cruce: el estado $0A + el frame $0F = el cambio de plano) y ahora apunta a $019D5E (el 'reset' + el final del frame: el atajo no hace NADA y el personaje se queda en su estado normal). Es el atajo de arriba+C (global) y el de abajo+Y."
         }
       ]
     }
