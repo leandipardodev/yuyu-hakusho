@@ -230,8 +230,8 @@ local function sigue(base)
     if sz ~= 0x0080 then
       table.remove(seguimiento, i)
     else
-      dice(string.format("[f %5d] SEGU slot %d (PALETA=%d): $24=$%04X  $6=$%04X  $3C=$%04X",
-        tick, s.slot, s.p, rw(s.slot + 0x24), rw(s.slot + 6), rw(s.slot + 0x3C)))
+      dice(string.format("[f %5d] SEGU slot %d (PALETA=%d): $6=$%04X  $3C=$%04X  $59=$%02X  $5B=$%02X  $5C=$%02X",
+        tick, s.slot, s.p, rw(s.slot + 6), rw(s.slot + 0x3C), rb(s.slot + 0x59), rb(s.slot + 0x5B), rb(s.slot + 0x5C)))
       s.frames = s.frames - 1
       if s.frames <= 0 then table.remove(seguimiento, i) end
     end
