@@ -215,6 +215,24 @@ end
 
 local slots_pj = { P1 = 0xFF8400, P2 = 0xFF8800 }
 
+-- seguimiento de clones: mirar si algo reescribe $24 despues del tiple
+local seguimiento = {}
+
+local function sigue(base)
+  for i = #seguimiento, 1, -1 do
+    local s = seguimiento[i]
+    local sz = rw(s.slot + 4)
+    if sz ~= 0x0080 then
+      table.remove(seguimiento, i)
+    else
+      dice(string.format("[f %5d] SEGU slot %d (PALETA=%d): $24=$%04X  $6=$%04X  $3C=$%04X",
+        tick, s.slot, s.p, rw(s.slot + 0x24), rw(s.slot + 6), rw(s.slot + 0x3C)))
+      s.frames = s.frames - 1
+      if s.frames <= 0 then table.remove(seguimiento, i) end
+    end
+  end
+end
+
 local aura_conto = AURA_CADA
 local aura_esperando_aviso = false
 local aura_paleta_n = 0
@@ -273,6 +291,8 @@ local function aura(base)
       local nuevo = ((v24 or 0) % 0x2000) + 0x2000 * p + prio
       wr(b + 0x24, nuevo)
       if AURA_CICLAR then aura_paleta_n = (aura_paleta_n + 1) % 4 end
+      -- seguimiento: 8 frames para ver si algo REESCRIBE el $24 del clon
+      seguimiento[#seguimiento + 1] = { slot = b, frames = 8, p = p, v24 = nuevo }
       dice(string.format("[f %5d] AURA (%s): clon del ID=$%02X (slot $%06X) sobre el pj pos=$%04X,%04X -> slot $%06X  PALETA=%d ($24 $%04X->$%04X)",
         tick, pj_inyectado.quien, AURA_ID, fuente, pj_inyectado.x, pj_inyectado.y, b, p, v24 or 0, nuevo))
       return
@@ -295,7 +315,7 @@ local function cada_frame()
   if base_detectada then
     vivo(base_detectada)
     if MODO == "clonar" then clona(base_detectada) end
-    if MODO == "aura"   then aura(base_detectada) end
+    if MODO == "aura"   then aura(base_detectada); sigue(base_detectada) end
   elseif tick % 180 == 1 then
     escanea()
   end
