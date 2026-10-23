@@ -38,8 +38,10 @@ local AURA_DY        = 0x0000   -- offset de Y sobre la posicion del pj
 local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
 local AURA_CICLAR    = false    -- cada clon sale con la paleta SIGUIENTE (0-3)
 local AURA_PALETA    = 1        -- si AURA_CICLAR es false: paleta fija (0-3)
-local AURA_PAREJA    = nil      -- cuadro de la animacion con que arranca el clon
+local AURA_PAREJA    = 1        -- cuadro de la animacion con que arranca el clon
                                 -- nil = normal ($FF, secuencia completa); 0..N = arranca en ese par
+local AURA_FIN       = 3        -- cortar el clon cuando $59 llegue a este par (mp3 del trail)
+                                -- nil = vida natural completa. trail = pares 0-3: 1..2 = 25%/75%
 local AURA_DUR       = nil      -- nil = duracion de cada par del juego; sino, ticks forzados
                                 -- (ej 0x20 = un solo cuadro colgado ~32 frames)
 
@@ -250,6 +252,12 @@ local function sigue(base)
     local sz = rw(s.slot + 4)
     if sz ~= 0x0080 then
       table.remove(seguimiento, i)
+    elseif s.corte and rb(s.slot + 0x59) >= s.corte then
+      -- fin anticipado: el clon entro a los cuadros del ultimo cuarto
+      wr(s.slot + 4, 0)
+      dice(string.format("[f %5d] CORTE slot %d: $59=$%02X >= $%02X (fin 25%% antes)",
+        tick, s.slot, rb(s.slot + 0x59), s.corte))
+      table.remove(seguimiento, i)
     else
       dice(string.format("[f %5d] SEGU slot %d (PALETA=%d): $6=$%04X  $3C=$%04X  $59=$%02X  $5B=$%02X  $5C=$%02X",
         tick, s.slot, s.p, rw(s.slot + 6), rw(s.slot + 0x3C), rb(s.slot + 0x59), rb(s.slot + 0x5B), rb(s.slot + 0x5C)))
@@ -338,8 +346,13 @@ local function aura(base)
       local nuevo = ((v24 or 0) % 0x2000) + 0x2000 * p + prio
       wr(b + 0x24, nuevo)
       if AURA_CICLAR then aura_paleta_n = (aura_paleta_n + 1) % 4 end
-      -- seguimiento: 8 frames para ver si algo REESCRIBE el $24 del clon
-      seguimiento[#seguimiento + 1] = { slot = b, frames = 8, p = p, v24 = nuevo }
+      -- seguimiento: si hay corte $59-fin, vigilar hasta el corte (sin limite
+      -- de 8 frames); si no, solo 8 frames de chequeo del $24
+      seguimiento[#seguimiento + 1] = {
+        slot = b, p = p, v24 = nuevo,
+        corte = AURA_FIN,
+        frames = AURA_FIN and 200 or 8,
+      }
       dice(string.format("[f %5d] AURA (%s): clon del ID=$%02X (%s) sobre el pj pos=$%04X,%04X -> slot $%06X  PALETA=%d ($24->$%04X)",
         tick, pj_inyectado.quien, AURA_ID, des_plantilla and "de plantilla" or string.format("$%06X", fuente), pj_inyectado.x, pj_inyectado.y, b, p, nuevo))
       return
