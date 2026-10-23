@@ -1127,5 +1127,30 @@ Tres bytes: `A0->A2`, `96->98`, `82->84` (targets iguales `$1A07E2`).
   UN solo test del usuario.
 - **Pendiente del usuario: re-test de la v9-3 en FBNeo.**
 
+### Adendum (v9-4): el handler $149AC decodificado y el clon invisible
+
+La v9-3 dejo de crashear ("ahora anda") pero el clon **no se veia ni con
+un dash real previo** (tapa la hipotesis de los tiles de VRAM: estan
+cargados). Desensamblo el hueco `$149AC-$14A65` (que el listing del juego
+salta): ES EL INIT DE NACIMIENTO DEL RECORD (todo en
+`PARCHES.md`, seccion del aura). Lo decisivo:
+
+- El init del handler es el que escribe `$59=$ff/$5b=$01/$5c=$0` y
+  `$6 += 2`: mi record con `$6=0` sigue el nacimiento NATURAL del juego,
+  y el `$59=$ff` de nacimiento es el centinela confirmado (FF++ cae en la
+  pisada 0 de la tabla corta).
+- El `$6=$0002` de la plantilla FIJA no era un campo: era el ESTADO
+  POST-INIT de la captura, y los clones del sonda nacian con el
+  init ya saltado.
+- El record se dibuja con los `$40/$44` (y extra `$42/$46-$47`) PROPIOS:
+  mi posicion en LONG arrastraba los sub-bytes del player al record
+  = clon vivo pero dibujado donde no se ve. La receta aprobada usa WORD.
+- Fix **v9-4**: `$1A07D6/$1A07DC` pasan de `move.l` a `move.w` (2 bytes,
+  `$21->$31`), mismo tamano, regla de branches intacta. ROM 30 = SHA1
+  `22A86626DE86B3FAAF98B11D2EE93DFE7421D129`, bisector `31_` =
+  `9A5D8588BB5CA11EB804AA30B157F45AFA515ACB`. Verificador OK.
+- Nota de docs: el listing del asm del doc tenia 7 filas (+2) desimuladas
+  con las direcciones de un esquema viejo; re-emitidas del ROM real.
+
 
 

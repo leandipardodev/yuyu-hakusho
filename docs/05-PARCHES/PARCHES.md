@@ -1273,7 +1273,7 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 | fichero | que es | SHA1 |
 |---|---|---|
 | `rom/cambios/29_china_VENENO_P1_P2_muere.bin` | la **china** + `veneno_plano` (la **v8b**, el marcador de cadaver `$FC00`, con la escritura del HP corregida) | `FE4348D17C61727F508626883DCF5CE9D9F18217` |
-| `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` | la **china** + `veneno_plano` + `veneno_aura` (la **v9-3**: el ROM limpio del veneno CON el aura, mas arriba) | `0CE1770A244BE430695CF708E5324A8A2046ABDA` |
+| `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` | la **china** + `veneno_plano` + `veneno_aura` (la **v9-4**: el ROM limpio del veneno CON el aura, mas arriba) | `22A86626DE86B3FAAF98B11D2EE93DFE7421D129` |
 | `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno **v8b** | `96C2771175C94C35BA7252CCE23E86E88F44F2BF` |
 | `rom/cambios/28_china_VENENO_P1_P2_muere.bin` | la v7 (HP -1 + estado de reposo: **no muere, la ronda no acaba**) | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
 | `rom/cambios/27_china_VENENO_P1_P2.bin` | la v6 (el veneno sin el final sin vida) | `068F02B61D3981FCD84C718F270C75169179CF3E` |
@@ -1303,7 +1303,7 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 | | |
 |---|---|
 | el veneno (HP - 1 por frame) | **PROBADO POR EL USUARIO** (v6: le resta vida al P1 y al P2) |
-| el aura v9-3 (la receta del clon `$20`, paleta 1, tabla corta) | la receta identica corre en el `sonda_efectos.lua` **aprobada por el usuario jugando**; la ROM v9-1/v9-2 rompia al cruzar (ramas Bcc.w con disp 2 bytes corto; el bisector `31_` sin spawn lo demostro), v9-3 a re-test en FBNeo |
+| el aura v9-4 (la receta del clon `$20`, paleta 1, tabla corta) | la receta identica corre en el `sonda_efectos.lua` **aprobado por el usuario jugando**; las ROMs v9-1/v9-2 rompian al cruzar (ramas `Bcc.w` con disp 2 corto, lo demostro el bisector `31_`) y la v9-3 nacio invisible (posicion en LONG arrastraba bytes del player al record; fix v9-4 en WORD, ver abajo), **a re-test** |
 | la familia de wrappers del trail `$20` (`$020202`+) y la tabla de pares en word (`$14EAC`: `$4C04 `$4D04`...) | **CODIGO** (desensamblado + captura del sonda) |
 | el mecanismo del fin de ronda (`$F852` / `$F88C` / el `$FC00` de `$01A1A4`) | **CODIGO**: leido en el desensamblado de la ROM J |
 | el final sin vida v8 (el marcador `$FC00`) | **PENDIENTE DE PROBAR EN JUEGO** (la v7 con HP -1 + reposo no moria) |
@@ -1392,13 +1392,17 @@ $1A079A  move.w  #$0100, $3e(a0)
 $1A07A0  move.l  #$0, $10(a0)      ; estatico (no vuela)
 $1A07A8  move.l  #$0, $14(a0)
 $1A07B0  move.w  #$0, $3c(a0)
-$1A07B6  move.b  #$20, $58(a0)     ; el ID $20 (estela)
-$1A07BC  move.b  #$ff, $59(a0)     ; estado nacimiento: el handler carga
-$1A07C2  move.b  #$0, $5a(a0)      ; la pisada 0 de la tabla
-$1A07C8  move.b  #$1, $5b(a0)
-$1A07CE  move.b  #$0, $5c(a0)
-$1A07D4  move.l  $40(a5), $40(a0)  ; posicion = la del jugador
-$1A07DA  move.l  $44(a5), $44(a0)
+$1A07B8  move.b  #$20, $58(a0)     ; el ID $20 (estela)
+$1A07BE  move.b  #$ff, $59(a0)     ; centinela de nacimiento: el handler
+$1A07C4  move.b  #$0, $5a(a0)      ; hace $59++ -> FF+1=0 = la pisada 0
+$1A07CA  move.b  #$1, $5b(a0)      ; (decodificado del handler $149AC:
+$1A07D0  move.b  #$0, $5c(a0)      ; SESIONES S-2024-10-23 addendum)
+$1A07D6  move.w  $40(a5), $40(a0)  ; posicion = la del jugador, WORD
+$1A07DC  move.w  $44(a5), $44(a0)  ; (v9-4: ANTES lo copiaba en LONG y
+                                   ; arrastraba los bytes $42/$46-$47 del
+                                   ; PLAYER al record: el clon nacia vivo
+                                   ; pero INVISIBLE, la leccion v3 del
+                                   ; sonda aplicada al Y entero)
 $1A07E2  movea.l (a7)+, a1         ; restaurar y volver
 $1A07E4  movea.l (a7)+, a0
 $1A07E6  move.l  (a7)+, d1
@@ -1408,6 +1412,44 @@ $1A07EA  rts
 $1A07EE  dc.w $4d04, $4e04, $0000  ; la TABLA CORTA: pares 77 y 78 con
                                    ; dur 4 + el terminador [0,0]
 ```
+
+**El handler `$149AC` decodificado (S-2024-10-23 addendum)**: no estaba en
+el listing del juego (hueco entre los bloques #810 y #811). Es el
+INICIALIZADOR de nacimiento del record + el dispatcher de la familia:
+
+- `move.w $6(a5), d0` + `bne $14A4A`: si `$6 != 0` ya nacio (va derecho al
+  runner). Si `$6 == 0` = RECIEN NACIDO: `$6 += 2`, `$24 |= $A03E` (la
+  mascara global de paleta/prioridad), limpia `$28/$2A/$2C-$38`, y el
+  PROPIO JUEGO escribe `$59=$ff`, `$5b=$01`, `$5c=$00` = el estado
+  nacimiento ORIGINAL: por eso mi record con `$6=0` va por el camino
+  natural (la plantilla FIJA tenia `$6=$0002` POR CAPTURA y los clones
+  del sonda SE SALTEABAN este init!). Despues salta por `$58` (ID) a la
+  tabla `$14A00+$58*2`: el `$20` va a `$14D30`.
+- El runner (continuacion `$14A4A`): dos compuertas globales
+  (`tst.b $F550` + `cmpi.b #0,$F55A`), despues el ancla `tst.b $5A` (si
+  `$5A != 0` = congelado: lo decrementa una vez por frame y no avanza =
+  el byren de los clones del sonda con `$5A` pisado), y si `$5A == 0`:
+  `subq.b #1, $5b` y al llegar a 0 hace **`$59++`** y busca el par en la
+  tabla de `$50(a5)` con indice `$59` (`move.b (a0,d0.w), d1` = byte
+  ingenio de la maestra; `lsl #1` -> `$3c` = offset en la tabla maestra
+  `$27F618`; el byte siguiente = la nueva dur `$5b`). Si la dur sale 0 =
+  TERMINADOR (`jmp $3556` = despedir).
+- CON Eso queda demostrado: mi `$59=$ff` de nacimiento es el CENTINELA
+  REAL (el init lo escribe el juego): en el primer tic del runner el
+  `FF++ = $00` cae en la pisada 0 de la tabla corta (par 77, dur 4),
+  luego par 78, y el par 2 = `[0,0]` = muere limpio. Ventana 25%-75%,
+  8 frames = lo aprobado.
+- Posicion: con `$48 == 0` el record es ESTATICO y cada frame hace
+  `add.l` de `$10(a5)` (X) y `$14(a5)` (Y) sobre `$40/$44`; si `$48` trae
+  un word de SLOT (`movea.w $48, a0`) copia la posicion de ESE slot
+  (follow-the-leader). Despues `jsr $156F0` = el que manda a dibujar.
+- **La aguja del v9-4**: el record se DIBUJA leyendo `$40/$44` (y sus
+  bytes extra `$42/$46-$47`) del propio record: mi copia en LONG de
+  `$44(a5)` arrastraba los bytes `$46-$47` del PLAYER (posicion
+  sub-pixel) al record -> el clon nacia vivo, corria los pares...
+  y se dibujaba en cualquier lado O en un Y truncado. La receta
+  validada del sonda escribia WORD (`$40/$44` solos, extras en 0):
+  el v9-4 replica exactamente eso con `move.w`.
 
 **Por que esa tabla corta**: la tabla real de la estela (`$14EAC`) tiene 4
 pares (76, 77, 78, 79, dur 4). La corta deja SOLO 77+78 = la franja 25%-75%
@@ -1445,7 +1487,8 @@ no la seguridad.
   (`la rutina entera se desensambla antes de entrar al parche`).
 - El fichero `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` = la **china** +
   `veneno_plano` + `veneno_aura` (la "ROM limpia" del veneno CON el aura).
-  SHA1 `0CE1770A244BE430695CF708E5324A8A2046ABDA` (v9-3: los tres `Bcc.w`
-  con el disp segun la regla real; el bisector
-  `31_china_TEST_AURA_SIN_SPAWN.bin` = `AD8100113B8D04EE8F6CB1A43A72B1E5CC701F39`).
+  SHA1 `22A86626DE86B3FAAF98B11D2EE93DFE7421D129` (v9-4: los tres `Bcc.w`
+  con el disp segun la regla real + las posiciones en WORD sin arrastrar
+  los bytes extra del player al record; el bisector
+  `31_china_TEST_AURA_SIN_SPAWN.bin` = `9A5D8588BB5CA11EB804AA30B157F45AFA515ACB`).
 
