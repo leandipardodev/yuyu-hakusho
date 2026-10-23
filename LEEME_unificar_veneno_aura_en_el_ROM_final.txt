@@ -1,0 +1,99 @@
+=====================================================================
+LEEME: COMO UNIFICAR EL VENENO+AURA EN EL ROM FINAL
+(por la session S-2024-10-23, commit 8f7adf6; leer entero una vez y
+despues usar solo la receta del paso 1)
+=====================================================================
+
+QUE EXISTE Y DONDE VIVE
+-----------------------
+- La fuente unica de los parches es  datos\parches.json
+  (grupos: "veneno_plano" = el drain del veneno v8c, "veneno_aura" =
+  el aura v9-8: 88 items, cadencia POR JUGADOR).
+- El parcheador verificado es  herramientas\desensamblado\patch_rom.py
+  No se edita el ROM a mano NUNCA: el parcheador verifica que cada byte
+  viejo coincide, aborta si no, y relee la salida al final.
+- El verificador es  herramientas\desensamblado\verificar_desensamblado.py
+- La base SIEMPRE es  rom\base\yuyu_makyou_base.bin  (no se toca).
+
+RECETA DEL ROM FINAL (3 comandos)
+---------------------------------
+1) Armar el ROM con TODOS los grupos del json + checksum:
+
+   python herramientas\desensamblado\patch_rom.py rom\base\yuyu_makyou_base.bin rom\cambios\40_rom_final.bin todos
+
+   - "todos" = todos los grupos de parches.json (incluye veneno_plano y
+     veneno_aura) + recalcula el checksum de la cabecera SIEMPRE (el
+     juego lo valida al arrancar; sin el queda colgado en el logo SEGA).
+   - Si se quiere solo la parte China/veneno/aura (como la 30 que ya
+     venimos jugando): en vez de "todos" listar
+     veneno_plano veneno_aura (en ese orden).
+   - Si tira "ABORTADO: N byte(s) no coinciden" es que el ROM base o el
+     json cambiaron de mano: NO usar --force a ciegas, comparar el json
+     con lo que hay en el ROM y arreglar el json primero.
+
+2) Verificar el ROM de salida:
+
+   python herramientas\desensamblado\verificar_desensamblado.py rom\cambios\40_rom_final.bin
+
+   Debe terminar con "OK: todo correcto." Si no, parar ahi y no usar el ROM.
+
+3) Documentar + commitear (la regla del repo):
+   - docs\05-PARCHES\PARCHES.md: fila nueva en la tabla de ficheros con
+     el SHA1 que imprime patch_rom.py en la salida.
+   - docs\08-DIARIO\SESIONES.md: una lineal al pie con fecha/SHA.
+   - python herramientas\docs\verificar_docs.py  -> debe quedar verdecito
+     (0 enlaces rotos, 0 contradicciones).
+   - git add <rom + docs si cambio> ; git commit.
+
+PERILLAS DEL AURA (estan EN el ROM final, bytes absolutos)
+---------------------------------------------------------
+- Cadencia, por jugador: el inmediato del addi.b
+    $1A074E = P1   y   $1A075C = P2   ( ahora $20 )
+    $20 = cada 8 frames / $40 = cada 16 / $80 = cada 32
+- Paleta del aura: el inmediato del ori.w
+    $1A0772-$1A0773 ( ahora 20 00 = paleta 1 )
+    00 00 = paleta 0 / 20 00 = 1 / 40 00 = 2 / 60 00 = 3
+    (esto va EN el 40_rom_final.bin a mano o mejor con un grupito
+    nuevo en parches.json: 2 items, old = 20 00, new = lo pedido).
+  OJO: si se cambia el inmediato a mano en el ROM ya armado, el
+  checksum del paso 1 NO hay que rehacerlo (el checksum sale de la
+  suma del ROM entero, se rompe) -> si tocamos a mano, recalcular el
+  checksum o mejor: agregar el grupito nuevo en el json y rearmar todo.
+
+REGLAS DURAS PARA MERGES FUTUROS (no romper nada)
+-------------------------------------------------
+- WRAM reservada por el aura:
+    $A042 bits 5-7 = el contador de cadencia de P1 (el juego solo usa
+      los bits 0/1 y el clr.b de fin de ronda limpia el resto).
+    $A043 (el byte entero) = contador de P2. Esta LIBRE en el juego de
+      fabrica (nadie lo referencia); si un parche futuro escribe ahi,
+      P2 pierde el aura.
+- ROM ocupado por el aura: $1A071C-$1A0723 (el router) y
+  $1A0730-$1A077F (la rutina de 80 bytes). Ningun otro grupito puede
+  patear esa zona.
+- El spawn del aura delega al WRAPPER REAL de efectos $020202 y al
+  allocator/pool del juego. Si un parche futuro toca el wrapper, el
+  allocator ($1FA96) o el dispatcher ($3592), re-probar el aura en
+  el plano con AMBOS jugadores antes de dar por buena la mezcla.
+- La animacion visible depende de campos STALE del slot del pool que
+  el wrapper no limpia ($10/$14/$3C/$5A/$59/$5B/$5C/$50): no "ayudar"
+  limpiandolos a 0, eso hace el aura INVISIBLE (probado: v9-4/5/6).
+- No tocar: rom\original, rom\fuentes, el ground/logica de posiciones.
+- El ROM "31_china_TEST_AURA_SIN_SPAWN.bin" es un BISECTOR de
+  diagnostico (el aura sin spawn, para separar problemas de rutina vs
+  de spawn). No es para jugar y no entra al ROM final.
+
+COMO COMPROBAR QUE EL MERGE QUEDO BIEN (en BizHawk core Genesis)
+----------------------------------------------------------------
+1. Cargar el ROM final, entrar 2 jugadores.
+2. Poner los DOS parados sobre el plano envenenado: AMBOS deben
+   perder vida Y llevar el aura (animacion en los pies, paleta 1).
+   Si solo uno lleva el aura = revivio el bug del contador compartido
+   (v9-7): revisar que $1A0742-$1A0745 siga siendo
+   20 0D 08 00 (move.l a5,d0 + btst #$b,d0).
+3. Caminar/correr/saltar por fuera: no debe haber clones del pool
+   colgados ni ralentizacion.
+4. Morir y reiniciar ronda: el aura tiene que volver a aparecer.
+5. Si se cambiaron las perillas ($1A074E/$1A075C/$1A0772): comprobar
+   la cadencia/paleta nueva.
+=====================================================================
