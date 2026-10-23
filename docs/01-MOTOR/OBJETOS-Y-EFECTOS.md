@@ -208,6 +208,37 @@ Las coordenadas custom ya son el patrón de la librería de especiales
 3. re-verificar los bloques de disparo del agente (chispas/clash/polvo) —
    bajas en costo, son greps cortos (la sonda ya corroboró la forma
    general de los IDs `$10`/`$20`/`$13E9A` en juego);
-4. primera prueba de spawn custom en juego: **la sonda ya trae el modo
-   `clonar`** (corrida pendiente del usuario); luego el parche v9 del
-   veneno que dispare el polvo al morir, con `jsr $1FB4C`.
+4. ~~primera prueba de spawn custom en juego: la sonda ya trae el modo
+   `clonar`~~ **HECHO Y PASADO A ROM: la v9 del veneno clona el efecto `$20`**
+   (ver `05-PARCHES/PARCHES.md`, `EL AURA DEL VENENO`).
+
+## 8. El spawn del trail `$20` visto en el código [VERIF]
+
+**La familia de wrappers del trail, en `$020190-$020360`** (region con el
+mapper=0 leída directa): cinco variantes que comparten la misma forma:
+
+```asm
+$020202  bsr.w  $1fa96             ; el allocator (d0 ya vale el handler adentro)
+$020206  cmpa.w  #$0, a0           ; pool lleno = salir sin clonar
+$02020A  beq.b   (fuera)
+$02020C  move.b  #$20, $58(a0)     ; el ID
+$020212  move.l  $40(a5), $40(a0)  ; X desde el dueño
+$020218  move.l  $9c(a5), $44(a0)  ; Y desde el SUELO del dueño
+$02021E  move.w  $3e(a5), $3e(a0)  ; escala heredada
+$020224  move.b  $26(a5), $26(a0)  ; ...y la variante por facing del $24
+```
+
+El `$24` del trail real sale del dueño: `move.b` del byte alto + `andi.w #$9800`
++ el `ori.$48` del facing ⇒ **`$C1A6` (paleta 2, bit15 prio, flip $0800)** —
+exactamente lo que se vio en la captura del sonda. **El wrapper NO escribe el
+byte bajo del `$24`**: el tile hereda del ocupante anterior del slot (en el
+trail en juego eso funciona porque el `$A6` lo deja la estela anterior; en un
+clon limpio hay que escribir el word completo). Consecuencia aplicada: el
+record del clon del aura (v9 del veneno) se arma COMPLETO, con el slot
+limpiado antes de escribir los campos.
+
+**La tabla de pares es WORD apretado, no pares [idx,dur] separados**:
+`$14EAC: 4C04 4D04 4E04 4F04 0000` = [idx 76..79, dur 4] + terminador
+`[0,0]`. Al llegar al `$0000` el handler `$149AC` mata el record LIMPIO (la
+via correcta de matar: nunca escribir `$4=0` a mano).
+

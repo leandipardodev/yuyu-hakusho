@@ -905,3 +905,62 @@ sonda clona un record $1D real y lo pega al jugador envenenado: la tesis
 en juego. La v3 habia pintado la pantalla de negro: copie \/\/del PLAYER al OBJETO, y esos offsets no significan lo mismo en las dos
 estructuras (en el player \ es \, no un tile). Leccion en el
 doc: los campos entre record de jugador y de objeto NO son intercambiables.
+
+## S-2024-10-22k: la v9 del veneno = el AURA en ROM limpio
+
+**Lo pedido: `implementalo al ROM limpio`** — tomar la receta del aura que el
+usuario aprobo jugando con la sonda y meterla en el ROM con SOLO el veneno
+(sin ningun otro parche del proyecto).
+
+### Lo que se descubrio para el spawn en ROM
+
+- **El spawner real del trail `$20` vive en `$020202`+** (region de wrappers
+  `$020190-$020360`, 5 variantes con el mismo `bsr $1FA96`): el wrapper de
+  `$020202` arma el record a mano: `move.b #$20, $58(a0)`, `move.l $40(a5),
+  $40(a0)`, el Y desde `$9C(a5)`, y el `$24` sale del atacante con
+  `andi.w #$9800` + `ori` por facing (salta `$C1A6`, paleta 2, la del trail
+  real). Se descarto reusar el wrapper: **no escribe el byte bajo del
+  `$24`** (el tile queda heredado del ocupante anterior del slot).
+- **La secuencia real de spawn confirmada**: `v $1A071C rts` en el router
+  v8c`; el hook corre POR FRAME POR JUGADOR parado en el plano (el chequeo
+  `$9C(a5) = 304` en `$015BEE`).
+- **La tabla de pares es WORD apretado**: `$14EAC: 4C04 4D04 4E04 4F04 0000`
+  = [masterIdx alto, dur bajo] x4 + terminador. La tabla corta del aura =
+  `$1A07EC: 4D04 4E04 0000` (los pares 77+78 = la ventana 25%-75%, el
+  terminador mata LIMPIO via handler `$149AC`).
+- **El flag de plano `$A042` tiene los bits 5-7 LIBRES** (el juego solo usa
+  los bits 0/1 con bset/btst y un clr.b de fin de ronda): ahi vive el
+  contador de cadencia del aura, sin restar RAM.
+
+### El parche
+
+Grupo `veneno_aura` (200 bytes): el router `$1A071C` = `jsr $1A0730` + `rts`,
+la rutina del aura en el hueco `$1A0730` (186 bytes, TODAS las instrucciones
+validadas con capstone en el script), la tabla corta en `$1A07EC` (6 bytes).
+La rutina: HP $78(a5) > 0 (los cadaveres `$FC00` no clonan), el
+`addi.b #$20, $A042` solo dispara con CARRY (una vez cada 8 frames, el
+contador no se lee), allocator del juego con el handler `$149AC` en d0,
+NULL = saltear el frame, slot limpiado entero (64 words) y record escrito
+completo: `$24 = $A1A6` (paleta 1), `$59 = $FF` estado nacimiento,
+`$50 = $1A07EC` la tabla corta, `$40/$44` = posicion del jugador (a5).
+
+Trampa de capstone de este tanda: mis primeros encodings tenian tres errores
+que el roundtrip cacho: `21fc` escribe sobre `(d16,a7)` no sobre `(d16,a0)`
+(el del juego es `217c`), `317c` con disp 0 es `(d16,a0)` y el `(a1)+` es
+`32fc` (capstone lo decodifico y sali del lio), y los placeholders de rama
+de 2 bytes se comian los primeros bytes de la instruccion siguiente (los
+`bxx.w` son 4 bytes). Tambien: `patch_rom.py` comparaba el resultado final
+byte por byte contra el valor de CADA item: con dos grupos tocando el mismo
+byte ($1A071D: el v8c pone 75, mi grupo pone B9) cantaba falso positivo;
+ahora gana el ULTIMO valor por byte.
+
+### El resultado
+
+- `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` = la china base + `veneno_plano`
+  + `veneno_aura`, SHA1 `7C00E4DF3F3AAE1F809DB0C388BC603DC8B9AA84`
+  (179 bytes distintos de la base + checksum).
+- `verificar_desensamblado.py`: OK. El desensamblado completo del hook,
+  router, rutina y tabla en el ROM final: OK a mano con capstone tambien.
+- Docs: la seccion `EL AURA DEL VENENO` en `PARCHES.md` (con el asm completo).
+- **Pendiente del usuario: probarlo en FBNeo** (veneno + aura juntos).
+

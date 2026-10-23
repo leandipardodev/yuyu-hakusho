@@ -1273,6 +1273,7 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 | fichero | que es | SHA1 |
 |---|---|---|
 | `rom/cambios/29_china_VENENO_P1_P2_muere.bin` | la **china** + `veneno_plano` (la **v8b**, el marcador de cadaver `$FC00`, con la escritura del HP corregida) | `FE4348D17C61727F508626883DCF5CE9D9F18217` |
+| `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` | la **china** + `veneno_plano` + `veneno_aura` (la **v9**: el ROM limpio del veneno CON el aura, mas arriba) | `7C00E4DF3F3AAE1F809DB0C388BC603DC8B9AA84` |
 | `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno **v8b** | `96C2771175C94C35BA7252CCE23E86E88F44F2BF` |
 | `rom/cambios/28_china_VENENO_P1_P2_muere.bin` | la v7 (HP -1 + estado de reposo: **no muere, la ronda no acaba**) | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
 | `rom/cambios/27_china_VENENO_P1_P2.bin` | la v6 (el veneno sin el final sin vida) | `068F02B61D3981FCD84C718F270C75169179CF3E` |
@@ -1302,6 +1303,8 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 | | |
 |---|---|
 | el veneno (HP - 1 por frame) | **PROBADO POR EL USUARIO** (v6: le resta vida al P1 y al P2) |
+| el aura v9 (la receta del clon `$20`, paleta 1, tabla corta) | la receta identica corre en el `sonda_efectos.lua` **aprobada por el usuario jugando** (v9 en ROM: pendiente de probar en FBNeo) |
+| la familia de wrappers del trail `$20` (`$020202`+) y la tabla de pares en word (`$14EAC`: `$4C04 `$4D04`...) | **CODIGO** (desensamblado + captura del sonda) |
 | el mecanismo del fin de ronda (`$F852` / `$F88C` / el `$FC00` de `$01A1A4`) | **CODIGO**: leido en el desensamblado de la ROM J |
 | el final sin vida v8 (el marcador `$FC00`) | **PENDIENTE DE PROBAR EN JUEGO** (la v7 con HP -1 + reposo no moria) |
 | el resto | el verificador de desensamblado: **OK** |
@@ -1312,3 +1315,111 @@ Son 60 de vida por segundo (el HP maximo es 223 ⇒ ~3,7 segundos en el plano
 de atras). Para hacerlo mas lento, la rutina del veneno (`$1A06F0`) es la que
 quita el 1: se puede cambiar por un "1 cada 2 frames" (un contador) o por
 quitar menos vida.
+
+## EL AURA DEL VENENO (grupo `veneno_aura`, 200 bytes)
+
+**La v9: mientras el personaje esta PARADO en el plano envenenado (veneno
+activo), empieza a brillar con el aura del turbo de Genkai.** Es el efecto
+`$20` (la estela del turbo, el handler `$149AC`) clonado sobre el jugador
+con la **paleta 1** — la misma receta que se probo a ojo en el sonda
+(`sonda_efectos.lua`) y que el usuario aprobo jugando. El aura dura **mientras
+esta el jugador en el plano**: la rutina es la misma del hook del veneno, si
+no esta parado ahi no corre, y el clon que ya salio muere solo (la ventana
+25%-75%, al estilo del trail real).
+
+### El router v9 (`$1A071C`, 8 bytes)
+
+El `rts` del router v8c pasa a llamar a la rutina del aura:
+
+```asm
+$1A071C  jsr.l   $1A0730           ; EL AURA                           (6)
+$1A0722  rts                                                        (2)
+```
+
+### La rutina del aura (`$1A0730`, 186 bytes + tabla)
+
+```asm
+$1A0730  move.l  d0, -(a7)         ; guardar d0/d1/a0/a1 (el allocator
+$1A0732  move.l  d1, -(a7)         ; $1FA96 pisa d1)
+$1A0734  move.l  a0, -(a7)
+$1A0736  move.l  a1, -(a7)
+$1A0738  move.w  $78(a5), d0       ; el HP
+$1A073C  tst.w   d0
+$1A073E  ble.w   $1A07DE           ; <= 0 (cadaver $FC00): NO clonar
+$1A0742  addi.b  #$20, $a042.w     ; el contador en los bits 5-7 del flag
+                                   ; del plano (libres)
+$1A0748  bcc.w   $1A07DE           ; sin carry: este frame no toca clonar
+$1A074C  move.l  #$149ac, d0       ; el handler de la estela
+$1A0752  jsr.l   $1fa96            ; EL ALLOCATOR del juego (a0 = slot o NULL)
+$1A0758  tst.l   (a0)
+$1A075A  beq.w   $1A07DE           ; pool lleno: se saltea sin drama
+$1A075E  movea.l a0, a1
+$1A0760  moveq   #$3f, d0          ; limpiar el slot entero (64 words)
+$1A0762  move.w  #$0, (a1)+
+$1A0766  dbra    d0, $1A0762
+$1A076A  move.l  #$149ac, $0(a0)   ; el record COMPLETO desde cero:
+$1A0772  move.w  #$0080, $4(a0)    ; el marcador de vivo
+$1A0778  move.w  #$0, $6(a0)
+$1A077E  move.l  #$27f618, $1c(a0) ; la tabla maestra de pares
+$1A0786  move.l  #$1a07ec, $50(a0) ; la TABLA CORTA (aqui abajo)
+$1A078E  move.w  #$a1a6, $24(a0)   ; PALETA 1: el look aprobado
+$1A0794  move.w  #$1001, $26(a0)
+$1A079A  move.w  #$0100, $3e(a0)
+$1A07A0  move.l  #$0, $10(a0)      ; estatico (no vuela)
+$1A07A8  move.l  #$0, $14(a0)
+$1A07B0  move.w  #$0, $3c(a0)
+$1A07B6  move.b  #$20, $58(a0)     ; el ID $20 (estela)
+$1A07BC  move.b  #$ff, $59(a0)     ; estado nacimiento: el handler carga
+$1A07C2  move.b  #$0, $5a(a0)      ; la pisada 0 de la tabla
+$1A07C8  move.b  #$1, $5b(a0)
+$1A07CE  move.b  #$0, $5c(a0)
+$1A07D4  move.l  $40(a5), $40(a0)  ; posicion = la del jugador
+$1A07DA  move.l  $44(a5), $44(a0)
+$1A07E0  movea.l (a7)+, a1         ; restaurar y volver
+$1A07E2  movea.l (a7)+, a0
+$1A07E4  move.l  (a7)+, d1
+$1A07E6  move.l  (a7)+, d0
+$1A07E8  rts
+
+$1A07EC  dc.w $4d04, $4e04, $0000  ; la TABLA CORTA: pares 77 y 78 con
+                                   ; dur 4 + el terminador [0,0]
+```
+
+**Por que esa tabla corta**: la tabla real de la estela (`$14EAC`) tiene 4
+pares (76, 77, 78, 79, dur 4). La corta deja SOLO 77+78 = la franja 25%-75%
+de la animacion (como el `AURA_PAREJA=1/FIN=3` del sonda), y el handler al
+llegar al terminador `$0000` **mata el clon LIMPIO** — nada de escribir el
+`$4=0` a mano (la leccion del bug de pantalla negra: el corte a mano deja el
+slot zombie y piezas de sprite huerfanas).
+
+### El contador de la cadencia (los bits 5-7 de `$A042`)
+
+El hook corre **por frame por jugador parado en el plano**: sin cadencia
+clonaria 60 efectos por segundo. El truco: el **`addi.b #$20`** incrementa
+un contador guardado en los **bits 5-7** del flag del plano `$A042`:
+
+- los bits 0 y 1 son los que usa el juego (la rutina `$015BD8`), los bits
+  5-7 **nadie los toca** (chequeado en todo el desensamblado);
+- el contador no se lee: el **carry** del `addi.b #$20` se enciende una vez
+  cada 8 frames (`$E0 + $20 = $100`), y el `bcc` usa ESO como disparo. 8
+  frames de cadencia, 8 clones vivos como maximo (~1 segundo de vida cada
+  uno por la dur de los pares);
+- el `clr.b $a042.w` del fin de ronda (`$01871A` / `$01875C`) resetea el
+  contador gratis entre rondas.
+
+Si hay DOS jugadores en el plano, ambos corren el mismo contador: las pisadas
+se reparten (uno clona en un tick, el otro en el siguiente) — cambia el ritmo,
+no la seguridad.
+
+### Notas
+
+- **El record se arma COMPLETO desde cero** (el slot se limpia entero antes
+  de escribir): cero dependencia de la basura que dejo el efecto anterior en
+  ese slot. Es la misma leccion del `$25` en la captura del trail (el tile
+  bajo se heredaba del ocupante anterior del slot).
+- Generado y validado con capstone EN EL MISMO script
+  (`la rutina entera se desensambla antes de entrar al parche`).
+- El fichero `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` = la **china** +
+  `veneno_plano` + `veneno_aura` (la "ROM limpia" del veneno CON el aura).
+  SHA1 `7C00E4DF3F3AAE1F809DB0C388BC603DC8B9AA84`.
+

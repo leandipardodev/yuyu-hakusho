@@ -277,7 +277,13 @@ def main():
         f.write(d)
 
     d2 = open(salida, "rb").read()
-    malos = [off for off, viejo, nuevo in todos if d2[off] != nuevo]
+    # si VARIOS grupos tocan el mismo byte, lo que queda aplicado es el
+    # ultimo (se aplican en secuencia): comparar contra el valor final de
+    # cada byte, no contra el de cada item suelto.
+    finales = {}
+    for off, viejo, nuevo in todos:
+        finales[off] = nuevo
+    malos = sorted(off for off, nuevo in finales.items() if d2[off] != nuevo)
     if malos:
         print("!! ERROR: %d byte(s) no quedaron como se pidio." % len(malos))
         sys.exit(3)

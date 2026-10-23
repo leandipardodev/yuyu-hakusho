@@ -2072,6 +2072,1212 @@
         }
       ]
     },
+    "veneno_aura": {
+      "desc": "EL AURA DEL VENENO, version 9 (implementacion en ROM de la receta aprobada en el sonda_efectos: el usuario la valido jugando). El hook del veneno (grupo veneno_plano, la rutina del plano en $1A0710) ademas clona el efecto $20 (la estela del turbo de Genkai, pairs $1A07EC con los pares 77/78 = la ventana 25%-75% + terminador [0,0]) sobre el jugador cuando esta PARADO en el plano de atras (el hook solo corre con suelo $9C(a5) = 304). La rutina $1A0730: guarda d0/d1/a0/a1 (el allocator $1FA96 pisa d1), sale si HP $78(a5) <= 0 (cadaver $FC00 incluido), incrementa el contador en los bits 5-7 de $A042 (libres: el juego solo usa los bits 0/1 y el clr.b de fin de ronda los limpia) y clona SOLO cuando el addi.b #$20 rebasa $FF (el carry salta una vez cada 8 frames = cadencia 8). El record se arma COMPLETO desde cero: allocator del juego (d0 = $149AC handler, $4 = $80, $6 = 0), limpiar el slot entero (64 words) y escribir: $0 = $149AC, $1C = $27F618 (tabla maestra), $24 = $A1A6 (paleta 1, el look aprobado), $26 = $1001, $3E = $0100, $10/$14 = 0 (estatico), $3C = 0, $58 = $20, $59 = $FF/$5B = $01/$5C = 0 (estado nacimiento), $50 = la tabla corta $1A07EC y $40/$44 = posicion del jugador (a5). El clon recorre su tabla corta y muere LIMPIO en el terminador (nada de escribir $4 = 0 a mano). Si el pool esta lleno el allocator devuelve NULL y el frame se saltea sin drama (el siguiente carry repite el intento). El router v8c en $1A071C: su rts pasa a 'jsr $1A0730' + 'rts' (6 bytes por 8: $1A071E-$1A0723 eran ceros libres). Toda la instruccion fue validada con capstone antes de entrar al parche.",
+      "confianza": "CODIGO (el hook y el drenaje ya probados en el v8c; tokens del record copiados del wrapper real del trail en $020202 y del handler $149AC; instrucciones validadas con capstone) + PROBADO (la receta identica corre en el sonda_efectos.lua, aprobada por el usuario jugando: aura continua mientras esta envenenado el jugador en el plano de atras, paleta 1, ventana 25%-75%, sin tildes ni pantalla negra)",
+      "bytes": [
+        {
+          "addr": "0x1A071C",
+          "old": "00",
+          "new": "4E",
+          "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+        },
+        {
+          "addr": "0x1A071D",
+          "old": "00",
+          "new": "B9",
+          "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+        },
+        {
+          "addr": "0x1A071E",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+        },
+        {
+          "addr": "0x1A071F",
+          "old": "00",
+          "new": "1A",
+          "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+        },
+        {
+          "addr": "0x1A0720",
+          "old": "00",
+          "new": "07",
+          "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+        },
+        {
+          "addr": "0x1A0721",
+          "old": "00",
+          "new": "30",
+          "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+        },
+        {
+          "addr": "0x1A0722",
+          "old": "00",
+          "new": "4E",
+          "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+        },
+        {
+          "addr": "0x1A0723",
+          "old": "00",
+          "new": "75",
+          "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+        },
+        {
+          "addr": "0x1A0730",
+          "old": "00",
+          "new": "2F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0731",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0732",
+          "old": "00",
+          "new": "2F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0733",
+          "old": "00",
+          "new": "01",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0734",
+          "old": "00",
+          "new": "2F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0735",
+          "old": "00",
+          "new": "08",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0736",
+          "old": "00",
+          "new": "2F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0737",
+          "old": "00",
+          "new": "09",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0738",
+          "old": "00",
+          "new": "30",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0739",
+          "old": "00",
+          "new": "2D",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A073A",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A073B",
+          "old": "00",
+          "new": "78",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A073C",
+          "old": "00",
+          "new": "4A",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A073D",
+          "old": "00",
+          "new": "40",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A073E",
+          "old": "00",
+          "new": "6F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A073F",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0740",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0741",
+          "old": "00",
+          "new": "9E",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0742",
+          "old": "00",
+          "new": "06",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0743",
+          "old": "00",
+          "new": "38",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0744",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0745",
+          "old": "00",
+          "new": "20",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0746",
+          "old": "00",
+          "new": "A0",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0747",
+          "old": "00",
+          "new": "42",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0748",
+          "old": "00",
+          "new": "64",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0749",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A074A",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A074B",
+          "old": "00",
+          "new": "94",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A074C",
+          "old": "00",
+          "new": "20",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A074D",
+          "old": "00",
+          "new": "3C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A074E",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A074F",
+          "old": "00",
+          "new": "01",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0750",
+          "old": "00",
+          "new": "49",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0751",
+          "old": "00",
+          "new": "AC",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0752",
+          "old": "00",
+          "new": "4E",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0753",
+          "old": "00",
+          "new": "B9",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0754",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0755",
+          "old": "00",
+          "new": "01",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0756",
+          "old": "00",
+          "new": "FA",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0757",
+          "old": "00",
+          "new": "96",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0758",
+          "old": "00",
+          "new": "4A",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0759",
+          "old": "00",
+          "new": "90",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A075A",
+          "old": "00",
+          "new": "67",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A075B",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A075C",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A075D",
+          "old": "00",
+          "new": "82",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A075E",
+          "old": "00",
+          "new": "22",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A075F",
+          "old": "00",
+          "new": "48",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0760",
+          "old": "00",
+          "new": "70",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0761",
+          "old": "00",
+          "new": "3F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0762",
+          "old": "00",
+          "new": "32",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0763",
+          "old": "00",
+          "new": "FC",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0764",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0765",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0766",
+          "old": "00",
+          "new": "51",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0767",
+          "old": "00",
+          "new": "C8",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0768",
+          "old": "00",
+          "new": "FF",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0769",
+          "old": "00",
+          "new": "FC",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A076A",
+          "old": "00",
+          "new": "21",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A076B",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A076C",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A076D",
+          "old": "00",
+          "new": "01",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A076E",
+          "old": "00",
+          "new": "49",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A076F",
+          "old": "00",
+          "new": "AC",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0770",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0771",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0772",
+          "old": "00",
+          "new": "31",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0773",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0774",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0775",
+          "old": "00",
+          "new": "80",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0776",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0777",
+          "old": "00",
+          "new": "04",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0778",
+          "old": "00",
+          "new": "31",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0779",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A077A",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A077B",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A077C",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A077D",
+          "old": "00",
+          "new": "06",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A077E",
+          "old": "00",
+          "new": "21",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A077F",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0780",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0781",
+          "old": "00",
+          "new": "27",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0782",
+          "old": "00",
+          "new": "F6",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0783",
+          "old": "00",
+          "new": "18",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0784",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0785",
+          "old": "00",
+          "new": "1C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0786",
+          "old": "00",
+          "new": "21",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0787",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0788",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0789",
+          "old": "00",
+          "new": "1A",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A078A",
+          "old": "00",
+          "new": "07",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A078B",
+          "old": "00",
+          "new": "EC",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A078C",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A078D",
+          "old": "00",
+          "new": "50",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A078E",
+          "old": "00",
+          "new": "31",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A078F",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0790",
+          "old": "00",
+          "new": "A1",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0791",
+          "old": "00",
+          "new": "A6",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0792",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0793",
+          "old": "00",
+          "new": "24",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0794",
+          "old": "00",
+          "new": "31",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0795",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0796",
+          "old": "00",
+          "new": "10",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0797",
+          "old": "00",
+          "new": "01",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0798",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A0799",
+          "old": "00",
+          "new": "26",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A079A",
+          "old": "00",
+          "new": "31",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A079B",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A079C",
+          "old": "00",
+          "new": "01",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A079D",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A079E",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A079F",
+          "old": "00",
+          "new": "3E",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A0",
+          "old": "00",
+          "new": "21",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A1",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A2",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A3",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A4",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A5",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A6",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A7",
+          "old": "00",
+          "new": "10",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A8",
+          "old": "00",
+          "new": "21",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07A9",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07AA",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07AB",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07AC",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07AD",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07AE",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07AF",
+          "old": "00",
+          "new": "14",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B0",
+          "old": "00",
+          "new": "31",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B1",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B2",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B3",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B4",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B5",
+          "old": "00",
+          "new": "3C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B6",
+          "old": "00",
+          "new": "11",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B7",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B8",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07B9",
+          "old": "00",
+          "new": "20",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07BA",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07BB",
+          "old": "00",
+          "new": "58",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07BC",
+          "old": "00",
+          "new": "11",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07BD",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07BE",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07BF",
+          "old": "00",
+          "new": "FF",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C0",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C1",
+          "old": "00",
+          "new": "59",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C2",
+          "old": "00",
+          "new": "11",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C3",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C4",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C5",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C6",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C7",
+          "old": "00",
+          "new": "5A",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C8",
+          "old": "00",
+          "new": "11",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07C9",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07CA",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07CB",
+          "old": "00",
+          "new": "01",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07CC",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07CD",
+          "old": "00",
+          "new": "5B",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07CE",
+          "old": "00",
+          "new": "11",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07CF",
+          "old": "00",
+          "new": "7C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D0",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D1",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D2",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D3",
+          "old": "00",
+          "new": "5C",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D4",
+          "old": "00",
+          "new": "21",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D5",
+          "old": "00",
+          "new": "6D",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D6",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D7",
+          "old": "00",
+          "new": "40",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D8",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07D9",
+          "old": "00",
+          "new": "40",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07DA",
+          "old": "00",
+          "new": "21",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07DB",
+          "old": "00",
+          "new": "6D",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07DC",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07DD",
+          "old": "00",
+          "new": "44",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07DE",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07DF",
+          "old": "00",
+          "new": "44",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E0",
+          "old": "00",
+          "new": "22",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E1",
+          "old": "00",
+          "new": "5F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E2",
+          "old": "00",
+          "new": "20",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E3",
+          "old": "00",
+          "new": "5F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E4",
+          "old": "00",
+          "new": "22",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E5",
+          "old": "00",
+          "new": "1F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E6",
+          "old": "00",
+          "new": "20",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E7",
+          "old": "00",
+          "new": "1F",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E8",
+          "old": "00",
+          "new": "4E",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07E9",
+          "old": "00",
+          "new": "75",
+          "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ec)"
+        },
+        {
+          "addr": "0x1A07EC",
+          "old": "00",
+          "new": "4D",
+          "nota": "veneno+aura v9: tabla corta de pares del trail (77/4, 78/4, terminador): el clon muere limpio en el terminador = fin 25%% antes"
+        },
+        {
+          "addr": "0x1A07ED",
+          "old": "00",
+          "new": "04",
+          "nota": "veneno+aura v9: tabla corta de pares del trail (77/4, 78/4, terminador): el clon muere limpio en el terminador = fin 25%% antes"
+        },
+        {
+          "addr": "0x1A07EE",
+          "old": "00",
+          "new": "4E",
+          "nota": "veneno+aura v9: tabla corta de pares del trail (77/4, 78/4, terminador): el clon muere limpio en el terminador = fin 25%% antes"
+        },
+        {
+          "addr": "0x1A07EF",
+          "old": "00",
+          "new": "04",
+          "nota": "veneno+aura v9: tabla corta de pares del trail (77/4, 78/4, terminador): el clon muere limpio en el terminador = fin 25%% antes"
+        },
+        {
+          "addr": "0x1A07F0",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: tabla corta de pares del trail (77/4, 78/4, terminador): el clon muere limpio en el terminador = fin 25%% antes"
+        },
+        {
+          "addr": "0x1A07F1",
+          "old": "00",
+          "new": "00",
+          "nota": "veneno+aura v9: tabla corta de pares del trail (77/4, 78/4, terminador): el clon muere limpio en el terminador = fin 25%% antes"
+        }
+      ]
+    },
     "veneno_p1_ref": {
       "desc": "EL VENENO DEL PLANO: cruzar al otro plano ENVENENA al jugador. El HP baja 1 por frame (60 por segundo) mientras este en el plano de atras, y deja de bajar en cuanto vuelve al plano principal. Es un veneno, no un golpe: el dano es continuo y acumulativo. DONDE: la rutina $015BD8, la que actualiza el flag del plano $A042 cada frame (la llama $015A2E con 'bsr.w'). Mira el suelo ($9c(a5)): si es 320 (el plano de delante) pone el bit 0 del flag, y si es 304 (el plano de atras) pone el bit 1. El suelo solo vale exactamente 304 cuando el personaje esta PARADO en el plano de atras (durante la caida va por intermedios: 319.9, 319.6...), asi que el veneno empieza al aterrizar y para al volver. EL ENGANCHE: en $015BF6, el 'bset.b #$1, $a042.w' (6 bytes) se sustituye por un 'jsr.l' a una rutina nueva en el hueco libre del banco 1, que hace lo mismo que el bset (poner el bit 1 del flag) y ademas aplica el veneno. El 'jsr.l' son 6 bytes por 6: el tamano no cambia y lo que viene detras no se desalinea. EL VENENO: 'moveq #$1,d1' + 'sub.w d1,$78(a5)' (el HP - 1) + 'move.w $78(a5),d0' + 'tst.b d0' + 'bne' + 'sub.w d1,$78(a5)' (-1 mas) + 'move.l (a7)+,d0' + 'rts'. Si al restar el HP queda en 0 se resta OTRO 1, para que quede NEGATIVO: el juego solo detecta el KO con el HP negativo ('btst.b #$7, $78(a5)' en $019CFC) y si el HP llegara a 0 en este punto nadie lo vigilaria, la ronda no acabaria y EL JUEGO SE COLGARIA. ESTA ES LA VERSION 1, LA QUE EL USUARIO PROBO Y FUNCIONA: el veneno SOLO para el P1 (el slot $FF8400) y SIN el final sin vida. Se deja como referencia para aislar los cambios.",
       "confianza": "CODIGO (la rutina del plano $015BD8, el engancho $015BF6, el HP en $78(a5), el suelo en $9c(a5), el estado en $5d(a5) y el KO del juego en $019CFC) + MEDIDO (con la sonda: el suelo baja 0.3125 px por frame desde 320 hasta 304 al cruzar y solo vale exactamente 304 al aterrizar) + PROBADO POR EL USUARIO (el veneno para el P1 funciona) + EJECUTADO (Unicorn: la rutina del veneno y el 'move.l a5,d0')",
