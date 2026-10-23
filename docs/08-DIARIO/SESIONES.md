@@ -986,7 +986,24 @@ a 68K.
 
    **La regla que faltaba en el cuaderno** (verificada contra el juego mismo,
    no contra mi memoria):
-   - `Bcc.s` y `Bcc.w`: el disp es relativo a **addr+4** para la forma
+   **[CORREGIDO por S-2024-10-23: esta bulleted-list tenia la regla de Bcc.w
+AL REVEZ — el disp de Bcc.w TAMBIEN es relativo a addr+2; la gran prueba
+esta en la entrada nueva. La lista de abajo queda como se razono EN ESE
+MOMENTO.]**
+
+2. **Los tres `Bcc.w` tenian el disp con base equivocada** (`addr+4`): el
+   `ble.w` caia en `$1A07E0` = la mitad del `move.l $44(a5), $44(a0)` del
+   epilogo. Con el ROM bisector `31_` (sin spawn) rompiendo IGUAL se
+   confirmo que el apagon no era el spawn: era el flujo roto del hook.
+   La regla correcta de todos los saltos con disp word (Bcc.w, BSR.w y
+   DBcc) = disp relativo a la direccion del word del disp (`addr+2`),
+   demostrada con el `bsr.w` del juego en `$1FFA0` -> `$1FA96` y los dos
+   `dbra` de `$250`/`$238`. Los encodings capstone NUNCA estuvieron
+   "2 antes": el desfase era de mis cuentas manuales.
+
+---- texto de la sesion original (histórico) ----
+
+- `Bcc.s` y `Bcc.w`: el disp es relativo a **addr+4** para la forma
      `.w` (los 4 bytes `6x00 xxxx`) y a **addr+2** para la `.s`. Los
      `ble/bcc/beq .w` de la rutina (disps `$A0/$96/$82`) apuntan a `$1A07E2`
      con la regla `addr+4`: OK de fabrica.
@@ -1034,5 +1051,81 @@ tres ramas).
   dos correcciones + la nota de la regla DBcc).
 - **Pendiente del usuario: re-test en FBNeo** (veneno + aura juntos; si
   vuelve a romper, la sonda queda como instrumento de diagnostico).
+
+## S-2024-10-23: el negro del aura era el DESPLAZAMIENTO de los Bcc.w (v9-3)
+
+**Lo pedido: `nop, se sigue poniendo todo en negro al cruzar enfrente`**
+(con la v9-2) y despues `lo mismo, se pone en negro` con el ROM bisector
+**`31_` (spawn amputado con 1 byte: `bcc.w` -> `bra.w` en `$1A0748`)**.
+
+### El dato que reviento la teoria
+
+Si `31_` rompe IGUAL que `30_`, el spawn no tiene culpa: en el camino
+siempre-corredor de la rutina la UNICA escritura a RAM es el
+`addi.b #$20, $A042` (y el bset del v8c escribe ese mismo byte y anda).
+Pero el flujo del camino siempre-corredor PASA POR LOS TRES `Bcc.w`... y
+ahi estaba el bicho.
+
+### La regla que faltaba (de una vez y con prueba)
+
+**El desplazamiento de todo salto con disp word (Bcc.w, BSR.w y tambien
+DBcc) es relativo a la DIRECCION DEL WORD DEL DISP (`addr+2`), no al fin
+de la instruccion (`addr+4`).**
+
+La prueba definitiva contradice el "quirk de capstone" que anotamos en la
+v9: capstone imprime los targets VERDADEROS con base `addr+2`; la cuenta
+manual con `addr+4` era la que quedaba 2 tarde:
+
+```
+01ffa0: 61 00 fa f4     bsr.w    $1fa96     <- asm del JUEGO
+```
+
+`$1FFA0 + 2 + FAF4(-1292) = $1FFA96` = `$1FA96`, EL WRAPPER DEL ALLOCATOR
+que ya desensamblamos como codigo conocido (llama el pool-del-polvo en
+$1FBAA, etc). Con `addr+4` da `$1FFA98` = la mitad de otra instruccion.
+El juego no podria andar con `addr+4`. Y los `dbra` del juego en `$252` y
+`$23E` = la misma regla aplicada a DBcc.
+
+### El bicho exacto
+
+- Con base `addr+4`, mis tres ramas tenian el disp 2 bytes corto:
+  `ble.w $A0` caia en `$1A07E0` = la mitad del `move.l $44(a5), $44(a0)`
+  del epilogo (ahi viven los bytes `00 44`). Se ejecutaba un `ori` basura
+  que gastaba 2 bytes mas, dejaba los pops desandados (3 en vez de 4),
+  devolvia `d0` con el valor viejo de `d1`, y el `rts` saltaba al POOL
+  (la RAM de los records ejecutada como codigo). Todo eso dentro del hook
+  del plano: apenas `$9C(a5) = 304` = el primer frame de cruzar = negro,
+  con o sin spawn. Cuadra con TODO: v9-1, v9-2 y el `31_` bisector.
+- El `dbra FFFA` de la v9-2 quedo BIEN de casualidad/mismo-regla (base del
+  word del disp): el arregla del dbra era real, solo la CAUSA del negro
+  estaba contada del reves.
+
+### El parche v9-3
+
+Tres bytes: `A0->A2`, `96->98`, `82->84` (targets iguales `$1A07E2`).
+
+- `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` v9-3, SHA1
+  `0CE1770A244BE430695CF708E5324A8A2046ABDA`.
+- `31_china_TEST_AURA_SIN_SPAWN.bin` regenerado con las ramas nuevas, SHA1
+  `AD8100113B8D04EE8F6CB1A43A72B1E5CC701F39` (bisector disponible).
+- `verificar_desensamblado.py` OK; los 4 saltos verificados numericamente
+  con la regla real; `patch_rom.py` OK.
+- `parches.json`: los 3 items re-escritos.
+- `herramientas/lua/probe_aura.lua`: la sonda-diagnostica (solo
+  observacion: `$A042`, cuenta de cadencia, libres, trail vivos + volcado
+  $80 del record cuando nace o cambia de estado) a usar si vuelve a
+  apagar algo.
+
+### Lecciones para el cuaderno
+
+- **Regla 68k unificada del proyecto**: el disp es relativo a la direccion
+  del word del disp (para la forma `.s` ese word = el propio opcode, o sea
+  base = instruccion+2). Capstone juzga como el hardware; si un print de
+  capstone no cuadra con la cuenta manual, SE DUDAN LAS PROPIAS CUINTAS
+  primero.
+- El bisector de 1 byte (`bcc.w`->`bra.w`) separa "spawn" de "rutina" en
+  UN solo test del usuario.
+- **Pendiente del usuario: re-test de la v9-3 en FBNeo.**
+
 
 

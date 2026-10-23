@@ -1273,7 +1273,7 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 | fichero | que es | SHA1 |
 |---|---|---|
 | `rom/cambios/29_china_VENENO_P1_P2_muere.bin` | la **china** + `veneno_plano` (la **v8b**, el marcador de cadaver `$FC00`, con la escritura del HP corregida) | `FE4348D17C61727F508626883DCF5CE9D9F18217` |
-| `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` | la **china** + `veneno_plano` + `veneno_aura` (la **v9-2**: el ROM limpio del veneno CON el aura, mas arriba) | `55D7981361A876F2677F78D3D356CE94BD483853` |
+| `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` | la **china** + `veneno_plano` + `veneno_aura` (la **v9-3**: el ROM limpio del veneno CON el aura, mas arriba) | `0CE1770A244BE430695CF708E5324A8A2046ABDA` |
 | `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno **v8b** | `96C2771175C94C35BA7252CCE23E86E88F44F2BF` |
 | `rom/cambios/28_china_VENENO_P1_P2_muere.bin` | la v7 (HP -1 + estado de reposo: **no muere, la ronda no acaba**) | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
 | `rom/cambios/27_china_VENENO_P1_P2.bin` | la v6 (el veneno sin el final sin vida) | `068F02B61D3981FCD84C718F270C75169179CF3E` |
@@ -1303,7 +1303,7 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 | | |
 |---|---|
 | el veneno (HP - 1 por frame) | **PROBADO POR EL USUARIO** (v6: le resta vida al P1 y al P2) |
-| el aura v9-2 (la receta del clon `$20`, paleta 1, tabla corta) | la receta identica corre en el `sonda_efectos.lua` **aprobada por el usuario jugando**; la ROM v9-1 rompia al cruzar (dbra + NULL-check, S-2024-10-22l), v9-2 a re-test en FBNeo |
+| el aura v9-3 (la receta del clon `$20`, paleta 1, tabla corta) | la receta identica corre en el `sonda_efectos.lua` **aprobada por el usuario jugando**; la ROM v9-1/v9-2 rompia al cruzar (ramas Bcc.w con disp 2 bytes corto; el bisector `31_` sin spawn lo demostro), v9-3 a re-test en FBNeo |
 | la familia de wrappers del trail `$20` (`$020202`+) y la tabla de pares en word (`$14EAC`: `$4C04 `$4D04`...) | **CODIGO** (desensamblado + captura del sonda) |
 | el mecanismo del fin de ronda (`$F852` / `$F88C` / el `$FC00` de `$01A1A4`) | **CODIGO**: leido en el desensamblado de la ROM J |
 | el final sin vida v8 (el marcador `$FC00`) | **PENDIENTE DE PROBAR EN JUEGO** (la v7 con HP -1 + reposo no moria) |
@@ -1327,16 +1327,29 @@ esta el jugador en el plano**: la rutina es la misma del hook del veneno, si
 no esta parado ahi no corre, y el clon que ya salio muere solo (la ventana
 25%-75%, al estilo del trail real).
 
-Schema del fix v9-2 (ver `SESIONES.md`, S-2024-10-22l): la primera version
-v9 tenia dos bugs — el `dbra` del limpiado del slot tenia el desplazamiento
-mal (`FFFC` en vez de `FFFA`: **DBcc es relativo a `addr+2`, NO a `addr+4`
-como el `Bcc.w`** — verificado contra los loops propios del juego en `$252`
-y `$23E`) y el slot salia SIN limpiar: el record arrastraba la basura del
-efecto anterior = pantalla negra al primer spawn. Ademas el NULL-check era
-`tst.l (a0)`, que con `a0 = NULL` lee la ROM en `$000000` (el SSP del
-header, ≠ 0) y NO detectaba el pool lleno (el record se escribia encima de
-la tabla de vectores); ahora es `cmpa.w #$0, a0`, el mismo patron que el
-juego usa despues del `bsr $1fa96` en `$1FAF2`.
+Historia del fix v9-3 (ver `SESIONES.md`, S-2024-10-22l y S-2024-10-23): las
+versiones v9-1/v9-2 rompian al cruzar, y el ROM bisector `31_` (sin spawn)
+rompio IGUAL: el culpable eran los **tres `Bcc.w` de la rutina con el
+desplazamiento 2 bytes corto**. La regla 68k, demostrada contra el propio
+juego, es que el desplazamiento de todo salto con disp word (`Bcc.w`,
+`BSR.w` y tambien `DBcc`) es **relativo a la direccion del word del disp**
+(`addr+2`), no al fin de la instruccion (`addr+4`). La prueba gorda: el
+`bsr.w` del juego en `$1FFA0` apunta a `$1FA96` solo con esa base
+(`$1FFA0 + 2 + FAF4 = $1FA96`; con `addr+4` da `$1FFA98` = la mitad de la
+instruccion). El caso del `dbra` mal (`FFFC`) era lo mismo (la misma regla
+valia), PERO el peso del apagon lo cargaban los tres `Bcc.w`: el
+`ble.w` con disp `$A0` caia en `$1A07E0` = la mitad de la instruccion
+`move.l $44(a5), $44(a0)` del epilogo: se ejecutaba un `ori` basura que
+hacia 3 pops en vez de 4, devolvia `d0` corrompido y el `rts` saltaba al
+pool = el flujo moria en el PRIMER frame con `$9C(a5) = 304` = negro justo
+al cruzar, con o sin spawn. Fix: disp `A2/98/84`, mismos targets
+(`$1A07E2`), 3 bytes.
+
+Queda reparado de la v9-2 el NULL-check: era `tst.l (a0)`, que con
+`a0 = NULL` lee la ROM en `$000000` (el SSP del header, != 0) y NO
+detectaba el pool lleno (el record se escribia encima de la tabla de
+vectores); ahora es `cmpa.w #$0, a0`, el mismo patron que el juego usa
+despues del `bsr $1fa96` en `$1FAF2`.
 
 ### El router v9 (`$1A071C`, 8 bytes)
 
@@ -1432,5 +1445,7 @@ no la seguridad.
   (`la rutina entera se desensambla antes de entrar al parche`).
 - El fichero `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` = la **china** +
   `veneno_plano` + `veneno_aura` (la "ROM limpia" del veneno CON el aura).
-  SHA1 `55D7981361A876F2677F78D3D356CE94BD483853`.
+  SHA1 `0CE1770A244BE430695CF708E5324A8A2046ABDA` (v9-3: los tres `Bcc.w`
+  con el disp segun la regla real; el bisector
+  `31_china_TEST_AURA_SIN_SPAWN.bin` = `AD8100113B8D04EE8F6CB1A43A72B1E5CC701F39`).
 
