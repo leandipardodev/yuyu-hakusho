@@ -2080,385 +2080,529 @@
      "addr": "0x1A071C",
      "old": "00",
      "new": "4E",
-     "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+     "nota": "veneno+aura v9-8: el rts del router del veneno pasa a jsr $1A0730 (la rutina del aura) + rts"
     },
     {
      "addr": "0x1A071D",
      "old": "00",
      "new": "B9",
-     "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+     "nota": "veneno+aura v9-8: el rts del router del veneno pasa a jsr $1A0730 (la rutina del aura) + rts"
     },
     {
      "addr": "0x1A071E",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+     "nota": "veneno+aura v9-8: el rts del router del veneno pasa a jsr $1A0730 (la rutina del aura) + rts"
     },
     {
      "addr": "0x1A071F",
      "old": "00",
      "new": "1A",
-     "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+     "nota": "veneno+aura v9-8: el rts del router del veneno pasa a jsr $1A0730 (la rutina del aura) + rts"
     },
     {
      "addr": "0x1A0720",
      "old": "00",
      "new": "07",
-     "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+     "nota": "veneno+aura v9-8: el rts del router del veneno pasa a jsr $1A0730 (la rutina del aura) + rts"
     },
     {
      "addr": "0x1A0721",
      "old": "00",
      "new": "30",
-     "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+     "nota": "veneno+aura v9-8: el rts del router del veneno pasa a jsr $1A0730 (la rutina del aura) + rts"
     },
     {
      "addr": "0x1A0722",
      "old": "00",
      "new": "4E",
-     "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+     "nota": "veneno+aura v9-8: el rts del router del veneno pasa a jsr $1A0730 (la rutina del aura) + rts"
     },
     {
      "addr": "0x1A0723",
      "old": "00",
      "new": "75",
-     "nota": "veneno+aura v9: el rts del router pasa a jsr $1A0730 (la rutina del aura) + rts"
+     "nota": "veneno+aura v9-8: el rts del router del veneno pasa a jsr $1A0730 (la rutina del aura) + rts"
     },
     {
      "addr": "0x1A0730",
      "old": "00",
      "new": "2F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0731",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0732",
      "old": "00",
      "new": "2F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0733",
      "old": "00",
      "new": "01",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0734",
      "old": "00",
      "new": "2F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0735",
      "old": "00",
      "new": "08",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0736",
      "old": "00",
      "new": "2F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0737",
      "old": "00",
      "new": "09",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0738",
      "old": "00",
      "new": "30",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0739",
      "old": "00",
      "new": "2D",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A073A",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A073B",
      "old": "00",
      "new": "78",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A073C",
      "old": "00",
      "new": "4A",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A073D",
      "old": "00",
      "new": "40",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A073E",
      "old": "00",
      "new": "6F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A073F",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0740",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0741",
      "old": "00",
-     "new": "1E",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "36",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0742",
      "old": "00",
-     "new": "06",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "20",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0743",
      "old": "00",
-     "new": "38",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "0D",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0744",
      "old": "00",
-     "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "08",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0745",
      "old": "00",
-     "new": "20",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0746",
      "old": "00",
-     "new": "A0",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0747",
      "old": "00",
-     "new": "42",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "0B",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0748",
      "old": "00",
-     "new": "64",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "66",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0749",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A074A",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A074B",
      "old": "00",
-     "new": "14",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "10",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A074C",
      "old": "00",
-     "new": "4E",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "06",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A074D",
      "old": "00",
-     "new": "B9",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "38",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A074E",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A074F",
      "old": "00",
-     "new": "02",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "20",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0750",
      "old": "00",
-     "new": "02",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "A0",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0751",
      "old": "00",
-     "new": "02",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "42",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0752",
      "old": "00",
-     "new": "02",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "64",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0753",
      "old": "00",
-     "new": "68",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0754",
      "old": "00",
-     "new": "8F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0755",
      "old": "00",
-     "new": "FF",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "22",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0756",
      "old": "00",
-     "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "60",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0757",
      "old": "00",
-     "new": "24",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0758",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0759",
      "old": "00",
-     "new": "68",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "0C",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A075A",
      "old": "00",
-     "new": "20",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "06",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A075B",
      "old": "00",
-     "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "38",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A075C",
      "old": "00",
      "new": "00",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A075D",
      "old": "00",
-     "new": "24",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "20",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A075E",
      "old": "00",
-     "new": "22",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "A0",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A075F",
      "old": "00",
-     "new": "5F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "43",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0760",
      "old": "00",
-     "new": "20",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "64",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0761",
      "old": "00",
-     "new": "5F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0762",
      "old": "00",
-     "new": "22",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0763",
      "old": "00",
-     "new": "1F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "14",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0764",
      "old": "00",
-     "new": "20",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "4E",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0765",
      "old": "00",
-     "new": "1F",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "B9",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0766",
      "old": "00",
-     "new": "4E",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     },
     {
      "addr": "0x1A0767",
      "old": "00",
+     "new": "02",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0768",
+     "old": "00",
+     "new": "02",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0769",
+     "old": "00",
+     "new": "02",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A076A",
+     "old": "00",
+     "new": "02",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A076B",
+     "old": "00",
+     "new": "68",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A076C",
+     "old": "00",
+     "new": "8F",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A076D",
+     "old": "00",
+     "new": "FF",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A076E",
+     "old": "00",
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A076F",
+     "old": "00",
+     "new": "24",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0770",
+     "old": "00",
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0771",
+     "old": "00",
+     "new": "68",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0772",
+     "old": "00",
+     "new": "20",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0773",
+     "old": "00",
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0774",
+     "old": "00",
+     "new": "00",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0775",
+     "old": "00",
+     "new": "24",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0776",
+     "old": "00",
+     "new": "22",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0777",
+     "old": "00",
+     "new": "5F",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0778",
+     "old": "00",
+     "new": "20",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A0779",
+     "old": "00",
+     "new": "5F",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A077A",
+     "old": "00",
+     "new": "22",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A077B",
+     "old": "00",
+     "new": "1F",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A077C",
+     "old": "00",
+     "new": "20",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A077D",
+     "old": "00",
+     "new": "1F",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A077E",
+     "old": "00",
+     "new": "4E",
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
+    },
+    {
+     "addr": "0x1A077F",
+     "old": "00",
      "new": "75",
-     "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a076a)"
+     "nota": "veneno+aura v9-8: cadencia POR JUGADOR (btst #11 a5: P1 -> contador $A042 bits 5-7 / P2 -> contador $A043 libre) y el spawn delegado al wrapper REAL del trail jsr $020202 con paleta 1 encima (andi 8fff + ori 2000)"
     }
    ]
   },

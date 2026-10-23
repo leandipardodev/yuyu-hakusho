@@ -1273,7 +1273,7 @@ ganador). Muere donde esta, parado, **sin tocar el suelo ni el estado `$5D`**.
 | fichero | que es | SHA1 |
 |---|---|---|
 | `rom/cambios/29_china_VENENO_P1_P2_muere.bin` | la **china** + `veneno_plano` (la **v8b**, el marcador de cadaver `$FC00`, con la escritura del HP corregida) | `FE4348D17C61727F508626883DCF5CE9D9F18217` |
-| `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` | la **china** + `veneno_plano` + `veneno_aura` (la **v9-7**: el ROM limpio del veneno CON el aura, mas arriba) | `13467D9B97AB2E500741EE338DA924F02CF4F6D9` |
+| `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` | la **china** + `veneno_plano` + `veneno_aura` (la **v9-8**: el ROM limpio del veneno CON el aura, mas arriba) | `74791462D3E58B55678C18152D374C3E67F41B25` |
 | `rom/cambios/23_china_UNIFICADA_con_VENENO.bin` | la unificada (SIN `un_plano`, para que haya dos planos) + el veneno **v8b** | `96C2771175C94C35BA7252CCE23E86E88F44F2BF` |
 | `rom/cambios/28_china_VENENO_P1_P2_muere.bin` | la v7 (HP -1 + estado de reposo: **no muere, la ronda no acaba**) | `688A9A097F39780BD2390DC4EA4063162DDEE4EE` |
 | `rom/cambios/27_china_VENENO_P1_P2.bin` | la v6 (el veneno sin el final sin vida) | `068F02B61D3981FCD84C718F270C75169179CF3E` |
@@ -1360,29 +1360,33 @@ $1A071C  jsr.l   $1A0730           ; EL AURA                           (6)
 $1A0722  rts                                                        (2)
 ```
 
-### La rutina del aura (`$1A0730`, 56 bytes, v9-7)
+### La rutina del aura (`$1A0730`, 80 bytes, v9-8)
 
 ```asm
 $1A0730  move.l  d0, -(a7)         ; guardar d0/d1/a0/a1
-$1A0732  move.l  d1, -(a7)         ; (el allocator pisa d1)
+$1A0732  move.l  d1, -(a7)         ; (el allocator del wrapper pisa d1)
 $1A0734  move.l  a0, -(a7)
 $1A0736  move.l  a1, -(a7)
 $1A0738  move.w  $78(a5), d0       ; el HP
 $1A073C  tst.w   d0
-$1A073E  ble.w   $1A075E           ; <= 0 (cadaver $FC00): NO clonar
-$1A0742  addi.b  #$20, $a042.w     ; el contador en los bits 5-7 del flag
-                                   ; del plano (libres)
-$1A0748  bcc.w   $1A075E           ; sin carry: este frame no toca clonar
-$1A074C  jsr.l   $020202           ; v9-7: EL WRAPPER REAL del trail (el
-$1A0752  andi.w  #$8fff, $24(a0)   ; mismo que el dash usa): hace el
-$1A0758  ori.w   #$2000, $24(a0)   ; allocator + $58/$40/$44/$3E/$26/$24
-                                   ; tal cual el juego; la paleta 1
-                                   ; entra encima (la customizacion)
-$1A075E  movea.l (a7)+, a1         ; restaurar y volver
-$1A0760  movea.l (a7)+, a0
-$1A0762  move.l  (a7)+, d1
-$1A0764  move.l  (a7)+, d0
-$1A0766  rts
+$1A073E  ble.w   $1A0776           ; <= 0 (cadaver $FC00): NO clonar
+$1A0742  move.l  a5, d0            ; cadencia POR JUGADOR: P1 = $FF8400
+$1A0744  btst.b  #$b, d0           ; ($8400, bit 11 = 0) vs P2 = $FF8800
+$1A0748  bne.w   $1A075A           ; ($8800, bit 11 = 1)
+$1A074C  addi.b  #$20, $a042.w     ; P1: su contador en los bits 5-7
+$1A0752  bcc.w   $1A0776           ; (el juego solo usa bits 0/1 y el
+$1A0756  bra.w   $1A0764           ; clr.b de fin de ronda los limpia)
+$1A075A  addi.b  #$20, $a043.w     ; P2: su contador en el byte libre
+$1A0760  bcc.w   $1A0776           ; $A043 (nadie lo referencia)
+$1A0764  jsr.l   $020202           ; EL WRAPPER REAL del trail (el
+$1A076A  andi.w  #$8fff, $24(a0)   ; mismo del dash: allocator + los
+$1A0770  ori.w   #$2000, $24(a0)   ; campos del player) + paleta 1
+$1A0776  movea.l (a7)+, a1         ; restaurar y volver
+$1A0778  movea.l (a7)+, a0
+$1A077A  move.l  (a7)+, d1
+$1A077C  move.l  (a7)+, d0
+$1A077E  rts
+```
 
 **El handler `$149AC` decodificado (S-2024-10-23 addendum)**: no estaba en
 el listing del juego (hueco entre los bloques #810 y #811). Es el
@@ -1438,18 +1442,22 @@ INICIALIZADOR de nacimiento del record + el dispatcher de la familia:
   la customizacion del look aprobado). Cada campo a la vez: si el v9-6 se
   ve, queda demostrado que el binding era uno de los tres. EL v9-6 TAMBIEN
   NACIO INVISIBLE => los tres campos tampoco eran.
-- **La aguja del v9-7**: los wrappers y el dispatcher ($3592: camina el
-  pool `$8000-$A000`, salta slots con `$0=0` y despacha `jsr (a0)` los
-  vivos) estan decodificados: allocation + record + dispatch + draw =
-  mecanismo sano y la receta del sonda (clon a mano en `$FF9400` + $4=$80)
-  demostro que un record a mano SE DIBUJA. Con todo el record replicado
-  al dedillo y sigo invisible, el sospechoso final = el CONTEXTO en que
-  la rutina del plano llama al spawn: o la compuerta del runner
-  (`$F550` bit7 / `$F55A`) queda viva en ese estado, o el despachador
-  per-frame no corre mientras se esta en el plano 304. La prueba
-  diferenciadora, sin ROM: la estela REAL del dash EN el plano 304
-  (si tampoco aparece, el pool esta frio ahi) - y el v9-7 delega el
-  spawn entero al wrapper real para cerrar el lado record.
+- **La aguja del v9-7 (VALIDADA EN JUEGO por el usuario)**: el aura SE VE.
+  El record a mano no era el problema: delegarle el spawn al wrapper real
+  `$020202` funciono donde las v9-4/5/6 (record a mano con los campos
+  limpiados a 0) nacieron invisibles. Hipotesis revisada tras decodificar
+  el pool: el wrapper deja `$10/$14/$3C/$5A/$59/$5B/$5C/$50` STALE del
+  ocupante anterior (design del juego); algunos de esos stale, que yo
+  limpiaba a 0, eran los que ahogaban el dibujo.
+- **La aguja del v9-8**: reporte del usuario = "cuando los 2 cruzan en
+  frente solo la animacion se le pone a uno". Causa: el contador de
+  cadencia era UNO compartido (`$A042` bits 5-7); el hook corre una vez
+  por jugador (2 por frame si ambos estan) y el carry del `addi.b #$20`
+  caia SIEMPRE en el segundo hook del frame = determinista para un solo
+  jugador (no alternado, como se documento antes de decodificar el pool).
+  Arreglo: contador PROPIO por jugador (P1 en `$A042` bits 5-7 / P2 en
+  `$A043`, byte libre verificado) con selector `btst #$b` sobre el bit 11
+  del player slot.
 
 **Por que esa tabla corta**: la tabla real de la estela (`$14EAC`) tiene 4
 pares (76, 77, 78, 79, dur 4). La corta deja SOLO 77+78 = la franja 25%-75%
@@ -1487,11 +1495,13 @@ no la seguridad.
   (`la rutina entera se desensambla antes de entrar al parche`).
 - El fichero `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` = la **china** +
   `veneno_plano` + `veneno_aura` (la "ROM limpia" del veneno CON el aura).
-  SHA1 `13467D9B97AB2E500741EE338DA924F02CF4F6D9` (v9-7: la rutina ya no
-  arme el record: llama AL WRAPPER REAL `$020202` (allocator + los 5
-  campos del player exacto como el dash) y solo pinta paleta 1 encima;
-  las v9-4/v9-5/v9-6 (record a mano, WORD, Y del `$9C`, campos completos)
-  nacieron invisibles por igual, o sea el record NUNCA fue el sospechoso
-  final: el candidato resteado = el CONTEXTO del spawn; el bisector
-  `31_china_TEST_AURA_SIN_SPAWN.bin` = `DACA1FE4E5B2F4EE104D21F1D26E13DF8399FB54`).
+    SHA1 `74791462D3E58B55678C18152D374C3E67F41B25` (v9-8: la v9-7 VALIDADA
+  EN JUEGO (el aura se ve) y encima cadencia POR JUGADOR: en la v9-7 el
+  contador era UNO compartido (`$A042` bits 5-7) y el carry del addi le
+  caia SIEMPRE al segundo hook del frame = con P1 y P2 en el plano solo
+  uno tenia la animacion. Ahora P1 cuenta en `$A042` bits 5-7 y P2 en
+  `$A043` (byte libre del WRAM), selector = `btst #$b` del bit 11 del
+  slot ($FF8400=0 / $FF8800=1). El spawn sigue siendo el wrapper real
+  `$020202` + paleta 1. Bisector `31_china_TEST_AURA_SIN_SPAWN.bin`
+  (amputa los DOS carry) = `1357AA40F2A6BDB215073C0D5E8549E5772F1B93`).
 

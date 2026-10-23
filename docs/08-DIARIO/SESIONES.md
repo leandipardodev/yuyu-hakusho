@@ -1206,3 +1206,34 @@ salta): ES EL INIT DE NACIMIENTO DEL RECORD (todo en
 
 
 
+
+- **v9-7 VALIDADA EN JUEGO (usuario: "la 30 anda")**: delegando el spawn
+  al wrapper real $020202 el aura SE VE (paleta 1, ventana completa de
+  la estela real de la $14EAC, en los pies). Las v9-4/5/6 (record a
+  mano, campos limpiados a 0) quedan explicadas: el wrapper deja STALE
+  $10/////// del ocupante anterior y algunos de
+  esos fields heredados eran los que ahogaban el dibujo cuando yo los
+  ponia en 0.
+- **Reporte del usuario**: "cuando los 2 personajes cruzan enfrente
+  solo la animacion se le pone a uno" + "analiza si estos cambios
+  rompieron algo". Causa raiz hallada: el contador de cadencia era UNO
+  compartido ($A042 bits 5-7); el hook corre una vez POR JUGADOR (2
+  veces por frame con P1 y P2 en el plano) y el carry del ddi.b
+  # caia SIEMPRE en el segundo hook del frame = determinista para
+  un solo jugador (no alternado como se suponia).
+- Fix **v9-8**: cadencia POR JUGADOR. Rutina $1A0730 crece de 56 a 80
+  bytes: move.l a5, d0 + tst.b #, d0 (bit 11 del player slot:
+  $FF8400=P1=0 / $FF8800=P2=1; ojo: tst con An directo es
+  ILEGAL en 68k, por eso va via d0) y contador propio = P1 en $A042
+  bits 5-7 (el juego solo usa bits 0/1 con bset y el clr.b de fin de
+  ronda los limpia), P2 en $A043 (**byte libretotal del WRAM**,
+  verificado en todo el desensamblado: nadie lo referenciag). El
+  opword de tst #imm, dn = $0800 + ext (verificado con capstone;
+  mi primer intento $084b000b解码 nada).
+- **"Rompio algo?" = NO**: erificar_desensamblado.py OK (138
+  parche(s) aplicados y verificados, 106 bytes distintos del original),
+  el drain del veneno (v8c) intacto, la rutina preserva
+  d0/d1/a0/a1, y el $A042/$A043 solo llevan mis bits libres.
+  ROM 30 = SHA1 74791462D3E58B55678C18152D374C3E67F41B25, bisector
+  31_ = 1357AA40F2A6BDB215073C0D5E8549E5772F1B93 (ahora amputa los
+  DOS carry: $1A0752 y $1A0760, $64->$60).
