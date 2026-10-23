@@ -871,3 +871,29 @@ bits 5-3 + reg en bits 2-0; para `move.w d0, $78(a5)` da `3B40 0078`.
 antes de meterla en el parche.
 
 **EL APENDICE del S-2024-10-22i: la v8b tambien tildaba.** El fix de la v8 arreglo SOLO el byte de $1A06FA (30 -> 3B) y me olvide del siguiente: quedo 3B 5D, que capstone decodifica `move.w (a5)+, $78(a5)` — copia (a5)+ al HP y AVANZA el puntero a5 2 bytes por frame. Mismo tildo, distinta instruccion mala. La v8c regenera los 28 bytes COMPLETOS desde el hex final y los valida con capstone dentro del MISMO script (error de letra imposible por construccion). Regla ampliada: NUNCA editar bytes sueltos de un payload, SIEMPRE regenerar el bloque completo. ROMs: 29 = FE4348D1..., 23 = 96C27711...
+
+## S-2024-10-22j: el motor de efectos (sonda = respuestas)
+
+Sistema nuevo: los EFECTOS del juego (chispas, polvo, proyectiles) son el
+MISMO motor de objetos que los jugadores: un pool de 16 slots de $80 en
+$FF9400, spawn por $1FAB4, ID en el byte $58, tabla de despacho $14A00
+(37 entradas), cada uno con su handler. Doc nueva completa:
+`01-MOTOR/OBJETOS-Y-EFECTOS.md` (9584 bytes) y sonda
+`sonda_efectos.lua` (8967 bytes).
+
+La duda vieja del pool (doc decia $FF9400, la arimetica daba $009400)
+cerro en las dos direcciones: la sonda vio los spawns reales en
+$FF9400+i*$80, y la geometria era el adda.w sign-extendido (el inmediato
+$9400 = -$6C00, el que da base $FFFF9400+cursor). Igual que el tildo del
+veneno: el 68K dolariza los word inmediatos y si no se tiene en cuenta
+el pin-pong da una direccion mala.
+
+Otras dos correcciones del agente que trajo la sonda: (1) el handler
+$13E9A NO esta sin llamador: spawnea en juego en ráfagas de 7 con la
+tabla $0D8F1A; (2) la lectura de ID=$02 con tabla $000000 no es del
+juego: es la sonda leyendo el slot DENTRO del mismo frame cuando la
+init aun no lleno la tabla.
+
+Pendiente del usuario: correr el modo clonar (duplicar un efecto vivo
+a un slot libre con la X corrida) para demostrado 'efecto donde yo
+quiera' sin parche.

@@ -343,9 +343,12 @@ contadores. Por eso el hook tiene que leerlos **ahí**.
 `addi.w #$80,$a036.w / andi.w #$7ff,$a036.w / movea.w $a036.w,a0 / adda.w
 #$9400,a0 / tst.w $4(a0) / move.l d0,$0(a0) / move.w #$80,$4(a0) / clr.w $6(a0)`.
 
-La dirección calculada es `$009400 + indice*$80` (24 bits, `movea.w`
-extiende con signo). **No está verificada en FBNeo**: `sonda_objetos.lua` la
-autodetecta por firma. [NOTAS]
+La aritmetica del allocator **cierra de las dos**: el `adda.w #$9400`
+**extiende con signo el word inmediato** (`$9400` signed-16 = `-$6C00`), o
+sea `cursor + $FFFF9400 = $FF9400 + cursor`. **Base `$FF9400`: VERIFICADA
+en juego con la sonda** (`sonda_efectos.lua`, 2026-10-22: spawns reales en
+`$FF9400 + i*$80` y las 16 casillas sanas). Detalle completo en
+`01-MOTOR/OBJETOS-Y-EFECTOS.md`. [RE, SONDA]
 
 | Handler | Tipo | Tabla de moves |
 |---|---|---|
