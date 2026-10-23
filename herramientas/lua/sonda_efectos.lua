@@ -33,9 +33,18 @@ local CLON_DX        = 0x0080   -- corrimiento de X del clon
 
 -- ------- aura / captura -------
 local AURA_ID        = 0x20     -- el trazo del dash de Genkai (spawnea de a 4 en fila)
-local AURA_CADA      = 16       -- cada cuantos frames del veneno intenta clonar
+local AURA_CADA      = 8        -- cada cuantos frames del veneno intenta clonar;
+                                -- 8 = la vida del clon con corte: el encadenado
+                                -- queda casi continuo (a 16 se ve parpadear)
 local AURA_DY        = 0x0000   -- offset de Y sobre la posicion del pj
 local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
+local AURA_MAXVIVOS  = 1        -- techo de clones de aura vivos a la vez (protege
+                                -- el pool: 16 slots y el polvo del caminar
+                                -- tambien come slots; sin techo llenaba el pool)
+local AURA_LIBRE_MIN = 2        -- no clonar si quedan menos de N slots libres
+                                -- (deja aire para los efectos del juego)
+local AURA_VIDA_MAX  = 60      -- guarda: si un clon vive mas de X frames (el
+                                -- corte deberia matarlo ~8), se mata forzado
 local AURA_CICLAR    = false    -- cada clon sale con la paleta SIGUIENTE (0-3)
 local AURA_PALETA    = 1        -- si AURA_CICLAR es false: paleta fija (0-3)
 local AURA_PAREJA    = 1        -- cuadro de la animacion con que arranca el clon
@@ -252,12 +261,20 @@ local slots_pj = { P1 = 0xFF8400, P2 = 0xFF8800 }
 
 -- seguimiento de clones: mirar si algo reescribe $24 despues del tiple
 local seguimiento = {}
+local lim_pool_dump = -999
 
 local function sigue(base)
   for i = #seguimiento, 1, -1 do
     local s = seguimiento[i]
+    s.edad = (s.edad or 0) + 1
     local sz = rw(s.slot + 4)
     if sz ~= 0x0080 then
+      table.remove(seguimiento, i)
+    elseif s.corte and rb(s.slot + 0x58) ~= s.id then
+      -- el slot lo TOMO el juego para otro efecto (polvo, burst, ...):
+      -- soltar el seguimiento SIN tocar el slot. El $59 de otro ID
+      -- significa otra cosa: el corte a ciegas asesina efectos ajenos
+      -- (recorre-prueba: pool LLENO + tildo caminando)
       table.remove(seguimiento, i)
     elseif s.corte and rb(s.slot + 0x59) >= s.corte then
       -- fin anticipado: el clon entro a los cuadros del ultimo cuarto
@@ -265,6 +282,14 @@ local function sigue(base)
       if not AURA_SILENCIO then
         dice(string.format("[f %5d] CORTE slot %d: $59=$%02X >= $%02X (fin 25%% antes)",
           tick, s.slot, rb(s.slot + 0x59), s.corte))
+      end
+      table.remove(seguimiento, i)
+    elseif s.aura and s.edad >= AURA_VIDA_MAX then
+      -- guarda: el corte debio matarlo hace rato ($59 atascado)
+      wr(s.slot + 4, 0)
+      if not AURA_SILENCIO then
+        dice(string.format("[f %5d] GUARDIA slot %d: clon de aura vivo %d frames (max %d), forzado a morir",
+          tick, s.slot, s.edad, AURA_VIDA_MAX))
       end
       table.remove(seguimiento, i)
     elseif not AURA_SILENCIO then
@@ -302,6 +327,36 @@ local function aura(base)
   end
   if not pj_inyectado then
     aura_esperando_aviso = false
+    return
+  end
+
+  -- guardas de recursos: techo de clones vivos + aire libre en el pool
+  -- (el polvo del caminar tambien come slots: sin techo llenaba el pool
+  -- y el juego tildaba; deja minimo AURA_LIBRE_MIN slots para el juego)
+  local vivos = 0
+  for _, s in ipairs(seguimiento) do
+    if s.aura and rw(s.slot + 4) == 0x0080 then vivos = vivos + 1 end
+  end
+  if vivos >= AURA_MAXVIVOS then return end
+
+  local libres, ocupados = 0, {}
+  for i = 0, 15 do
+    local b = slot_base(i, base)
+    if rw(b + 4) == 0 then
+      libres = libres + 1
+    else
+      ocupados[#ocupados + 1] = string.format("  slot %2d: ID=$%02X  $59=$%02X  $6=$%04X  handler $%06X",
+        i, rb(b + 0x58), rb(b + 0x59), rw(b + 6), rdw(b))
+    end
+  end
+  if libres < AURA_LIBRE_MIN then
+    -- diagnostico: a lo sumo cada 120 frames, SIEMPRE (incluso en silencio)
+    if tick - lim_pool_dump >= 120 then
+      lim_pool_dump = tick
+      dice(string.format("[f %5d] AURA en pausa: solo %d slot(s) libre(s) (minimo %d). Ocupacion:",
+        tick, libres, AURA_LIBRE_MIN))
+      for _, d in ipairs(ocupados) do dice(d) end
+    end
     return
   end
 
@@ -358,7 +413,7 @@ local function aura(base)
       -- seguimiento: si hay corte $59-fin, vigilar hasta el corte (sin limite
       -- de 8 frames); si no, solo 8 frames de chequeo del $24
       seguimiento[#seguimiento + 1] = {
-        slot = b, p = p, v24 = nuevo,
+        slot = b, p = p, v24 = nuevo, id = AURA_ID, aura = true,
         corte = AURA_FIN,
         frames = AURA_FIN and 200 or 8,
       }
