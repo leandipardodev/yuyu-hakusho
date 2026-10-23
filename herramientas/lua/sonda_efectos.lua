@@ -20,7 +20,7 @@
 
 local VERSION = "v3"
 
-local MODO           = "datos"  -- "datos" | "clonar" | "aura"
+local MODO           = "aura"  -- "datos" | "clonar" | "aura"
 
 -- ------- clonar -------
 local CLON_CADA      = 90       -- cada cuantos frames busca clonar
