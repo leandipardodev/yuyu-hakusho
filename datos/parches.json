@@ -3159,7 +3159,7 @@
     {
      "addr": "0x1A07DC",
      "old": "00",
-     "new": "31",
+     "new": "21",
      "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ee)"
     },
     {
@@ -3177,7 +3177,7 @@
     {
      "addr": "0x1A07DF",
      "old": "00",
-     "new": "44",
+     "new": "9C",
      "nota": "veneno+aura v9: rutina del aura (HP>0, cadencia 8 frames $A042 bits 5-7, allocator del juego, record completo, paleta 1, tabla corta 1a07ee)"
     },
     {
