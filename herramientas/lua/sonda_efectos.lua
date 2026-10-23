@@ -38,6 +38,10 @@ local AURA_DY        = 0x0000   -- offset de Y sobre la posicion del pj
 local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
 local AURA_CICLAR    = false    -- cada clon sale con la paleta SIGUIENTE (0-3)
 local AURA_PALETA    = 1        -- si AURA_CICLAR es false: paleta fija (0-3)
+local AURA_PAREJA    = nil      -- cuadro de la animacion con que arranca el clon
+                                -- nil = normal ($FF, secuencia completa); 0..N = arranca en ese par
+local AURA_DUR       = nil      -- nil = duracion de cada par del juego; sino, ticks forzados
+                                -- (ej 0x20 = un solo cuadro colgado ~32 frames)
 
 -- plantilla FIJA del record $20 (capturada del CAPTURA real de un spawn).
 -- si no es nil, el aura no necesita haber visto un dash en la sesion:
@@ -322,8 +326,8 @@ local function aura(base)
       -- log: los clones de plantilla con $59=$03 eran invisibles). El game
       -- al spawnar siempre setea $59=$FF/$5B=$01/$5C=$00: resetear SIEMPRE
       -- al estado recien-nacido para que la secuencia arranque completa.
-      wr(b + 0x59, 0xFF)
-      wr(b + 0x5B, 0x01)
+      wr(b + 0x59, AURA_PAREJA or 0xFF)
+      wr(b + 0x5B, AURA_DUR or 0x01)
       wr(b + 0x5C, 0x00)
       wr(b + 0x3C, 0x0000)
       -- cambio de color: bits 13-14 de $24 = numero de paleta VDP (aritmetica
