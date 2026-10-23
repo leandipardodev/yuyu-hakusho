@@ -21,7 +21,7 @@
 -- (Archivo -> Lua -> cargar de nuevo).
 -- =====================================================================
 
-local VERSION = "probe2"
+local VERSION = "probe3"
 
 local function rb(a) local ok, v = pcall(memory.readbyte, a); if ok then return v end return 0 end
 local function rw(a) local ok, v = pcall(memory.readword, a); if ok then return v end return 0 end
@@ -121,5 +121,31 @@ local function cada_frame()
 end
 
 detecta()
-emu.registerafter(cada_frame)
-print(string.format("PROBE %s CARGADO (solo observacion).", VERSION))
+
+-- registro del callback: la API cambia entre builds (el emu.registerafter
+-- no existe en el FBNeo del usuario: quemo el script). Pruebo los
+-- conocidos en orden y, si ninguno hay, LISTO los campos de emu/gui.
+local instalado = nil
+if type(emu) == "table" then
+  local nombres = {}
+  for k, v in pairs(emu) do nombres[#nombres + 1] = k .. "(" .. type(v) .. ")" end
+  print("PROBE: emu tiene -> " .. (table.concat(nombres, ", ") ~= "" and table.concat(nombres, ", ") or "(vacio)"))
+end
+if type(emu) == "table" and type(emu.registerafter) == "function" then
+  emu.registerafter(cada_frame)
+  instalado = "emu.registerafter"
+elseif type(emu) == "table" and type(emu.registerbefore) == "function" then
+  emu.registerbefore(cada_frame)
+  instalado = "emu.registerbefore"
+elseif type(gui) == "table" and type(gui.register) == "function" then
+  gui.register(cada_frame)
+  instalado = "gui.register"
+end
+if instalado then
+  print(string.format("PROBE %s CARGADO (solo observacion, callback=%s).", VERSION, instalado))
+else
+  print(string.format("PROBE %s: NINGUN callback conocido dispatcha. gui=%s", VERSION, tostring(gui)))
+  if type(gui) == "table" then
+    for k, v in pairs(gui) do print("  gui." .. tostring(k) .. " = " .. type(v)) end
+  end
+end
