@@ -21,7 +21,7 @@
 -- (Archivo -> Lua -> cargar de nuevo).
 -- =====================================================================
 
-local VERSION = "probe4"
+local VERSION = "probe5"
 
 local function rb(a) local ok, v = pcall(memory.readbyte, a); if ok then return v end return 0 end
 local function rw(a) local ok, v = pcall(memory.readword, a); if ok then return v end return 0 end
@@ -122,30 +122,15 @@ end
 
 detecta()
 
--- registro del callback AUTODOCUMENTADO: este host (FBNeo de Fightcade,
--- NLua) NO tiene emu.registerafter. Vuelco los globals y pruebo hooks
--- candidatos con pcall hasta que uno ande.
-print(string.format("PROBE %s: type emu=%s gui=%s memory=%s emu.sello=%s",
-  VERSION, type(emu), type(gui), type(memory), type(emu) == "table" and emu.sello or "-"))
-do
-  local n = 0
-  for k, v in pairs(_G) do
-    local t = type(v)
-    if t == "function" or t == "table" then
-      print("  G." .. tostring(k) .. " = " .. t)
-      n = n + 1
-      if n > 80 then print("  ...(capado)") break end
-    end
-  end
-end
-
+-- el host = BIZHAWK moderno (el dump del probe4 lo confirmo: tastudio,
+-- mainmemory, client, bizstring...). Los callbacks viejos (emu.registerafter)
+-- estan retirados: la API actual es event.onframeend / event.onframestart.
 local instalado = nil
 local candidatos = {
-  { "emu.registerafter",   (type(emu) == "table" and type(emu.registerafter)   == "function") and emu.registerafter   or nil },
-  { "emu.registerbefore",  (type(emu) == "table" and type(emu.registerbefore)  == "function") and emu.registerbefore  or nil },
-  { "gui.register",        (type(gui) == "table" and type(gui.register)        == "function") and gui.register        or nil },
-  { "registerafter (global)", (type(registerafter) == "function") and registerafter or nil },
-  { "registerbefore (global)", (type(registerbefore) == "function") and registerbefore or nil },
+  { "event.onframeend",   (type(event) == "table" and type(event.onframeend)   == "function") and event.onframeend   or nil },
+  { "event.onframestart", (type(event) == "table" and type(event.onframestart) == "function") and event.onframestart or nil },
+  { "emu.registerafter",  (type(emu) == "table" and type(emu.registerafter)    == "function") and emu.registerafter  or nil },
+  { "gui.register",       (type(gui) == "table" and type(gui.register)         == "function") and gui.register       or nil },
 }
 for _, c in ipairs(candidatos) do
   local nombre, fn = c[1], c[2]
@@ -159,5 +144,5 @@ end
 if instalado then
   print(string.format("PROBE %s CARGADO (solo observacion, callback=%s).", VERSION, instalado))
 else
-  print(string.format("PROBE %s: NINGUN hook candidato ando. Si la lista de G.* de arriba no muestra nada util, decime donde corriste el sonda cuando anduvo.", VERSION))
+  print(string.format("PROBE %s: NINGUN hook ando (event/emu/gui no tienen callbacks?).", VERSION))
 end
