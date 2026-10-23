@@ -324,3 +324,18 @@ end
 escanea()
 emu.registerafter(cada_frame)
 dice(string.format("SONDA EFECTOS %s CARGADA (modo %s).", VERSION, MODO))
+
+-- inventario de la API del emulador (una vez): nombres de memory/emu
+do
+  local function lista(t)
+    local nombres = {}
+    local ok = pcall(function() for k, _ in pairs(t) do nombres[#nombres + 1] = tostring(k) end end)
+    if not ok then return "???" end
+    if #nombres == 0 then return "(vacia o no es tabla)" end
+    table.sort(nombres)
+    return table.concat(nombres, " ")
+  end
+  dice("  memory: " .. lista(memory))
+  dice("  emu:    " .. lista(emu))
+  dice("  _G:     " .. lista(_G))
+end
