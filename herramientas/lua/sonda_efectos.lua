@@ -295,6 +295,16 @@ local function aura(base)
       end
       wr(b + 0x40, pj_inyectado.x)
       wr(b + 0x44, pj_inyectado.y + AURA_DY)
+      -- animacion: el estado $59/$5B/$5C del source puede venir AVANZADO
+      -- (clonamos recordes a mitad de la secuencia); si $59 sale alto el
+      -- handler cae despues del final de la tabla y NO DIBUJA (visto en el
+      -- log: los clones de plantilla con $59=$03 eran invisibles). El game
+      -- al spawnar siempre setea $59=$FF/$5B=$01/$5C=$00: resetear SIEMPRE
+      -- al estado recien-nacido para que la secuencia arranque completa.
+      wr(b + 0x59, 0xFF)
+      wr(b + 0x5B, 0x01)
+      wr(b + 0x5C, 0x00)
+      wr(b + 0x3C, 0x0000)
       -- cambio de color: bits 13-14 de $24 = numero de paleta VDP (aritmetica
       -- pura, sin lib bit), preservando el bit 15 (prioridad)
       local p = AURA_CICLAR and aura_paleta_n or AURA_PALETA
