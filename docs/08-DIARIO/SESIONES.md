@@ -964,3 +964,75 @@ ahora gana el ULTIMO valor por byte.
 - Docs: la seccion `EL AURA DEL VENENO` en `PARCHES.md` (con el asm completo).
 - **Pendiente del usuario: probarlo en FBNeo** (veneno + aura juntos).
 
+## S-2024-10-22l: la pantalla negra al cruzar = dos bugs de mano en el aura v9
+
+**Lo pedido: `al cruzar enfrente el juego se rompe`** — con el ROM v9
+(`30_china_VENENO_AURA_P1_P2.bin`), al cruzar al plano de atras el juego
+rompia: pantalla negra justa al cruzar. La receta era identica a la
+aprobada en el sonda, asi que el bug tenia que estar en la transcripcion
+a 68K.
+
+### Los dos bugs
+
+1. **El `dbra` del limpiado del slot saltaba mal.** Los bytes eran
+   `51c8 fffc` = disp `-4` relativo a la regla que use mal. Con la regla
+   CORRECTA el objetivo real era `$1A0764`: la MITAD del `move.w #$0,(a1)+`
+   (el word `$0000` ahi = `ori.b #0,d0`, pan comido): el loop "limpiaba" solo
+   2 bytes del slot y el resto del record quedaba con la **basura del efecto
+   anterior** (el polvo del caminar, sobre todo): el handler `$149AC` leia un
+   record quebrado = pantalla negra al primer clone (~8 frames despues de
+   pisar el plano). El fix: disp `FFFA`, target el `move.w` en `$1A0764`
+   completo, 64 words = los `$80` bytes del slot.
+
+   **La regla que faltaba en el cuaderno** (verificada contra el juego mismo,
+   no contra mi memoria):
+   - `Bcc.s` y `Bcc.w`: el disp es relativo a **addr+4** para la forma
+     `.w` (los 4 bytes `6x00 xxxx`) y a **addr+2** para la `.s`. Los
+     `ble/bcc/beq .w` de la rutina (disps `$A0/$96/$82`) apuntan a `$1A07E2`
+     con la regla `addr+4`: OK de fabrica.
+   - **`DBcc` (`dbra`/`dbf`): el disp es relativo a `addr+2`**, NO a
+     `addr+4`. Prueba: el loop del juego en `$250` (`move.b (a5)+,(a0)+`
+     de 2 bytes) tiene `dbra d2, FFFC` y el target tiene que ser el
+     `move.b`: `$252 + 2 + FFFC = $250` solo con la regla `addr+2`; con
+     `addr+4` el dbra saltaria a SI MISMO y el juego no copiaria nada.
+     Otro caso igual en `$23E` (`dbra d1, FFF8` -> el cuerpo de 6 bytes en
+     `$238`). Ojo: capstone imprime el target de DBcc 2 antes, igual que el
+     de los Bcc.w: verificar por aritmetica, no por el print.
+
+2. **El NULL-check del allocator era `tst.l (a0)`.** Cuando el pool esta
+   lleno el allocator devuelve `a0 = $00000000` y mi `tst.l (a0)` leia la
+   ROM en `$000000` (el SSP del header, ≠ 0): NO detectaba el NULL y el
+   record se escribria encima de la tabla de vectores = crash. El juego
+   mismo hace el chequeo `cmpa.w #$0, a0` justo despues de su `bsr $1fa96`
+   (en `$1FAF2`): copie EXACTO ese patron (4 bytes) y el `beq.w` se corrio
+   a `$1A075C` con el disp recalculado (`$82`, target `$1A07E2`).
+
+### El detalle util: la rutina gano 2 bytes
+
+`tst` (2 bytes) -> `cmpa.w` (4 bytes): la rutina pasa de 186 a **188 bytes**
+(`$1A0730-$1A07EB`) y la tabla corta se corrio de `$1A07EC` a **`$1A07EE`**
+(los writes del record `$50` la apuntan ahi, el hueco hasta `$1A0826` sigue
+cabiendo). Los `ble/bcc` tambien alcanzan el epilogo nuevo (`$1A07E2` las
+tres ramas).
+
+### Verificacion
+
+- Total de saltos con regla numerica (no capstone print para los ramas):
+  `ble $1A073E/$A0`, `bcc $1A0748/$96`, `beq $1A075C/$82` -> `$1A07E2` (OK),
+  `dbra $1A0768/FFFA` -> `$1A0764` (OK). Capstone confirma todas las
+  instrucciones del ROM final (router + rutina + tabla + hueco en ceros).
+- `patch_rom.py`: 252 parches aplicados, `verificar_desensamblado.py` OK.
+- `parches.json`: grupo `veneno_aura` re-escrito (202 items, `desc` con los
+  dos fixes = la memoria de la leccion DBcc).
+
+### El resultado
+
+- `rom/cambios/30_china_VENENO_AURA_P1_P2.bin` v9-2, SHA1
+  `55D7981361A876F2677F78D3D356CE94BD483853` (mismo nombre, el FBNeo lo
+  carga con reload).
+- `PARCHES.md`: la seccion del aura re-escrita (v9-2, asm completo con las
+  dos correcciones + la nota de la regla DBcc).
+- **Pendiente del usuario: re-test en FBNeo** (veneno + aura juntos; si
+  vuelve a romper, la sonda queda como instrumento de diagnostico).
+
+
