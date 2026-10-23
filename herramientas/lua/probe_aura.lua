@@ -21,7 +21,7 @@
 -- (Archivo -> Lua -> cargar de nuevo).
 -- =====================================================================
 
-local VERSION = "probe3"
+local VERSION = "probe4"
 
 local function rb(a) local ok, v = pcall(memory.readbyte, a); if ok then return v end return 0 end
 local function rw(a) local ok, v = pcall(memory.readword, a); if ok then return v end return 0 end
@@ -122,30 +122,42 @@ end
 
 detecta()
 
--- registro del callback: la API cambia entre builds (el emu.registerafter
--- no existe en el FBNeo del usuario: quemo el script). Pruebo los
--- conocidos en orden y, si ninguno hay, LISTO los campos de emu/gui.
+-- registro del callback AUTODOCUMENTADO: este host (FBNeo de Fightcade,
+-- NLua) NO tiene emu.registerafter. Vuelco los globals y pruebo hooks
+-- candidatos con pcall hasta que uno ande.
+print(string.format("PROBE %s: type emu=%s gui=%s memory=%s emu.sello=%s",
+  VERSION, type(emu), type(gui), type(memory), type(emu) == "table" and emu.sello or "-"))
+do
+  local n = 0
+  for k, v in pairs(_G) do
+    local t = type(v)
+    if t == "function" or t == "table" then
+      print("  G." .. tostring(k) .. " = " .. t)
+      n = n + 1
+      if n > 80 then print("  ...(capado)") break end
+    end
+  end
+end
+
 local instalado = nil
-if type(emu) == "table" then
-  local nombres = {}
-  for k, v in pairs(emu) do nombres[#nombres + 1] = k .. "(" .. type(v) .. ")" end
-  print("PROBE: emu tiene -> " .. (table.concat(nombres, ", ") ~= "" and table.concat(nombres, ", ") or "(vacio)"))
+local candidatos = {
+  { "emu.registerafter",   (type(emu) == "table" and type(emu.registerafter)   == "function") and emu.registerafter   or nil },
+  { "emu.registerbefore",  (type(emu) == "table" and type(emu.registerbefore)  == "function") and emu.registerbefore  or nil },
+  { "gui.register",        (type(gui) == "table" and type(gui.register)        == "function") and gui.register        or nil },
+  { "registerafter (global)", (type(registerafter) == "function") and registerafter or nil },
+  { "registerbefore (global)", (type(registerbefore) == "function") and registerbefore or nil },
+}
+for _, c in ipairs(candidatos) do
+  local nombre, fn = c[1], c[2]
+  if fn then
+    local ok, err = pcall(fn, cada_frame)
+    if ok then instalado = nombre break end
+    print(string.format("  hook %s EXISTE pero pcall fallo: %s", nombre, tostring(err)))
+  end
 end
-if type(emu) == "table" and type(emu.registerafter) == "function" then
-  emu.registerafter(cada_frame)
-  instalado = "emu.registerafter"
-elseif type(emu) == "table" and type(emu.registerbefore) == "function" then
-  emu.registerbefore(cada_frame)
-  instalado = "emu.registerbefore"
-elseif type(gui) == "table" and type(gui.register) == "function" then
-  gui.register(cada_frame)
-  instalado = "gui.register"
-end
+
 if instalado then
   print(string.format("PROBE %s CARGADO (solo observacion, callback=%s).", VERSION, instalado))
 else
-  print(string.format("PROBE %s: NINGUN callback conocido dispatcha. gui=%s", VERSION, tostring(gui)))
-  if type(gui) == "table" then
-    for k, v in pairs(gui) do print("  gui." .. tostring(k) .. " = " .. type(v)) end
-  end
+  print(string.format("PROBE %s: NINGUN hook candidato ando. Si la lista de G.* de arriba no muestra nada util, decime donde corriste el sonda cuando anduvo.", VERSION))
 end
