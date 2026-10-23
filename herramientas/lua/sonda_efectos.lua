@@ -32,7 +32,7 @@ local CLON_CADA      = 90       -- cada cuantos frames busca clonar
 local CLON_DX        = 0x0080   -- corrimiento de X del clon
 
 -- ------- aura / captura -------
-local AURA_ID        = 0x1D     -- el efecto que el usuario quiere
+local AURA_ID        = 0x10     -- el polvo del walking (spawnea de a 2, Y $0140)
 local AURA_CADA      = 16       -- cada cuantos frames del veneno intenta clonar
 local AURA_DY        = 0x0000   -- offset de Y sobre la posicion del pj
 local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
