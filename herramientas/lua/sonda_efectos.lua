@@ -36,8 +36,8 @@ local AURA_ID        = 0x20     -- el trazo del dash de Genkai (spawnea de a 4 e
 local AURA_CADA      = 16       -- cada cuantos frames del veneno intenta clonar
 local AURA_DY        = 0x0000   -- offset de Y sobre la posicion del pj
 local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
-local AURA_CICLAR    = true     -- cada clon sale con la paleta SIGUIENTE (0-3)
-local AURA_PALETA    = 3        -- si AURA_CICLAR es false: paleta fija (0-3)
+local AURA_CICLAR    = false    -- cada clon sale con la paleta SIGUIENTE (0-3)
+local AURA_PALETA    = 1        -- si AURA_CICLAR es false: paleta fija (0-3)
 
 local MAXLINEAS      = 150
 
@@ -132,6 +132,7 @@ end
 -- ---------------------------------------------------------------------
 local tick = 0
 local ult_estado = {}
+local plantilla_id = { ok = false }   -- ultimo record completo del AURA_ID capturado
 
 local function slot_base(i, base) return base + i * 0x80 end
 
@@ -160,6 +161,10 @@ local function vivo(base)
         -- CAPTURA: si es el ID que busca el aura, volcar el record entero
         if did == AURA_ID then
           vuelca_record(a, "ID=" .. string.format("$%02X", did))
+          -- plantilla: copia del record en RAM de la sonda (para clonarlo
+          -- sin necesidad de que un dash este vivo en el pool)
+          for o = 0, 0x7E, 2 do plantilla_id[o] = rw(a + o) end
+          plantilla_id.ok = true
         end
       elseif prev == 0x0080 and sz == 0 then
         dice(string.format("[f %5d] muere slot %2d ($%06X)", tick, i, a))
@@ -242,7 +247,8 @@ local function aura(base)
   if aura_conto > 0 then return end
   aura_conto = AURA_CADA
 
-  -- el jugador pasa por el veneno?
+  -- el jugador puede recibir el aura? (siempre y cuando este vivo;
+  -- el aura lo sigue a CUALQUIER lado, no solo en el plano del fondo)
   local destinos = {}
   if AURA_DESTINO == "P1" or AURA_DESTINO == "AMBOS" then destinos[#destinos + 1] = { "P1", slots_pj.P1 } end
   if AURA_DESTINO == "P2" or AURA_DESTINO == "AMBOS" then destinos[#destinos + 1] = { "P2", slots_pj.P2 } end
@@ -251,8 +257,7 @@ local function aura(base)
   for _, d in ipairs(destinos) do
     local a = d[2]
     local hp = rw(a + 0x78)
-    local suelo = rw(a + 0x9C)
-    if suelo == 304 and hp >= 1 then
+    if hp >= 1 then
       pj_inyectado = { quien = d[1], x = rw(a + 0x40), y = rw(a + 0x44) }
       break
     end
@@ -262,15 +267,20 @@ local function aura(base)
     return
   end
 
-  -- buscar una fuente viva del ID pedido
+  -- buscar una fuente viva del ID pedido; si no la hay, usar la plantilla
+  -- capturada (asi el aura no depende de que un dash este vivo AHORA)
   local fuente = nil
+  local des_plantilla = false
   for i = 0, 15 do
     local a = slot_base(i, base)
     if rw(a + 4) == 0x0080 and rb(a + 0x58) == AURA_ID then fuente = a break end
   end
-  if not fuente then
+  if not fuente and plantilla_id.ok then
+    des_plantilla = true
+  end
+  if not fuente and not des_plantilla then
     if not aura_esperando_aviso then
-      dice(string.format("[f %5d] AURA: el jugador pasa por veneno, pero no hay un ID=$%02X vivo (esperando que el juego spawnee uno)", tick, AURA_ID))
+      dice(string.format("[f %5d] AURA: sin ID=$%02X vivo y sin plantilla todavia (esperando que el juego spawnee uno)", tick, AURA_ID))
       aura_esperando_aviso = true
     end
     return
@@ -280,7 +290,9 @@ local function aura(base)
   for j = 0, 15 do
     local b = slot_base(j, base)
     if rw(b + 4) == 0 then
-      for o = 0, 0x7E, 2 do wr(b + o, rw(fuente + o)) end
+      for o = 0, 0x7E, 2 do
+        wr(b + o, des_plantilla and plantilla_id[o] or rw(fuente + o))
+      end
       wr(b + 0x40, pj_inyectado.x)
       wr(b + 0x44, pj_inyectado.y + AURA_DY)
       -- cambio de color: bits 13-14 de $24 = numero de paleta VDP (aritmetica
@@ -293,8 +305,8 @@ local function aura(base)
       if AURA_CICLAR then aura_paleta_n = (aura_paleta_n + 1) % 4 end
       -- seguimiento: 8 frames para ver si algo REESCRIBE el $24 del clon
       seguimiento[#seguimiento + 1] = { slot = b, frames = 8, p = p, v24 = nuevo }
-      dice(string.format("[f %5d] AURA (%s): clon del ID=$%02X (slot $%06X) sobre el pj pos=$%04X,%04X -> slot $%06X  PALETA=%d ($24 $%04X->$%04X)",
-        tick, pj_inyectado.quien, AURA_ID, fuente, pj_inyectado.x, pj_inyectado.y, b, p, v24 or 0, nuevo))
+      dice(string.format("[f %5d] AURA (%s): clon del ID=$%02X (%s) sobre el pj pos=$%04X,%04X -> slot $%06X  PALETA=%d ($24->$%04X)",
+        tick, pj_inyectado.quien, AURA_ID, des_plantilla and "de plantilla" or string.format("$%06X", fuente), pj_inyectado.x, pj_inyectado.y, b, p, nuevo))
       return
     end
   end
