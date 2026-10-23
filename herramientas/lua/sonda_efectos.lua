@@ -44,6 +44,8 @@ local AURA_FIN       = 3        -- cortar el clon cuando $59 llegue a este par (
                                 -- nil = vida natural completa. trail = pares 0-3: 1..2 = 25%/75%
 local AURA_DUR       = nil      -- nil = duracion de cada par del juego; sino, ticks forzados
                                 -- (ej 0x20 = un solo cuadro colgado ~32 frames)
+local AURA_SILENCIO  = true     -- true = apagar el log por-frame (SPAWN/CAPTURA/SEGU/CORTE);
+                                -- el stdout de la consola viene a desacelerar el emulador
 
 -- plantilla FIJA del record $20 (capturada del CAPTURA real de un spawn).
 -- si no es nil, el aura no necesita haber visto un dash en la sesion:
@@ -179,18 +181,23 @@ local function vivo(base)
     if prev then
       if prev == 0 and sz == 0x0080 then
         local did = rb(a + 0x58)
-        dice(string.format("[f %5d] SPAWN slot %2d ($%06X): handler $%06X  ID=$%02X  pos=$%04X,%04X  tabla=$%06X",
-          tick, i, a, rdw(a), did, rw(a + 0x40), rw(a + 0x44), rdw(a + 0x1C)))
-        -- CAPTURA: si es el ID que busca el aura, volcar el record entero
+        if not AURA_SILENCIO then
+          dice(string.format("[f %5d] SPAWN slot %2d ($%06X): handler $%06X  ID=$%02X  pos=$%04X,%04X  tabla=$%06X",
+            tick, i, a, rdw(a), did, rw(a + 0x40), rw(a + 0x44), rdw(a + 0x1C)))
+        end
+        -- CAPTURA: si es el ID que busca el aura, guardar copia del record
+        -- (corre SIEMPRE: el print es lo silenciado, la captura no)
         if did == AURA_ID then
-          vuelca_record(a, "ID=" .. string.format("$%02X", did))
-          -- plantilla: copia del record en RAM de la sonda (para clonarlo
-          -- sin necesidad de que un dash este vivo en el pool)
+          if not AURA_SILENCIO then
+            vuelca_record(a, "ID=" .. string.format("$%02X", did))
+          end
           for o = 0, 0x7E, 2 do plantilla_id[o] = rw(a + o) end
           plantilla_id.ok = true
         end
       elseif prev == 0x0080 and sz == 0 then
-        dice(string.format("[f %5d] muere slot %2d ($%06X)", tick, i, a))
+        if not AURA_SILENCIO then
+          dice(string.format("[f %5d] muere slot %2d ($%06X)", tick, i, a))
+        end
       end
     end
     ult_estado[i] = sz
@@ -255,10 +262,12 @@ local function sigue(base)
     elseif s.corte and rb(s.slot + 0x59) >= s.corte then
       -- fin anticipado: el clon entro a los cuadros del ultimo cuarto
       wr(s.slot + 4, 0)
-      dice(string.format("[f %5d] CORTE slot %d: $59=$%02X >= $%02X (fin 25%% antes)",
-        tick, s.slot, rb(s.slot + 0x59), s.corte))
+      if not AURA_SILENCIO then
+        dice(string.format("[f %5d] CORTE slot %d: $59=$%02X >= $%02X (fin 25%% antes)",
+          tick, s.slot, rb(s.slot + 0x59), s.corte))
+      end
       table.remove(seguimiento, i)
-    else
+    elseif not AURA_SILENCIO then
       dice(string.format("[f %5d] SEGU slot %d (PALETA=%d): $6=$%04X  $3C=$%04X  $59=$%02X  $5B=$%02X  $5C=$%02X",
         tick, s.slot, s.p, rw(s.slot + 6), rw(s.slot + 0x3C), rb(s.slot + 0x59), rb(s.slot + 0x5B), rb(s.slot + 0x5C)))
       s.frames = s.frames - 1
