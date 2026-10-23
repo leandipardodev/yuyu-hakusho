@@ -39,6 +39,23 @@ local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
 local AURA_CICLAR    = false    -- cada clon sale con la paleta SIGUIENTE (0-3)
 local AURA_PALETA    = 1        -- si AURA_CICLAR es false: paleta fija (0-3)
 
+-- plantilla FIJA del record $20 (capturada del CAPTURA real de un spawn).
+-- si no es nil, el aura no necesita haber visto un dash en la sesion:
+-- clona directo de esta tabla. Es la prueba de "efecto sin Genkai".
+-- word-indexed; $40/$44 y $59/$5B/$5C/$3C los pisa el clon.
+local AURA_PLANTILLA_FIJA = {
+  [0x00] = 0x0001, [0x02] = 0x49AC,   -- handler $000149AC
+  [0x04] = 0x0080,                    -- vivo
+  [0x06] = 0x0002,                    -- tick de spawn
+  [0x1C] = 0x0027, [0x1E] = 0xF618,   -- tabla maestra $27F618
+  [0x24] = 0xC1A6,                    -- tile $01A6 + paleta 2 + prioridad
+  [0x26] = 0x1001,                    -- plano del trail
+  [0x3E] = 0x0100,                    -- escala
+  [0x50] = 0x0001, [0x52] = 0x4EAC,   -- tabla de pares $14EAC
+  [0x58] = 0x20FF,                    -- ID=$20, $59=$FF
+  [0x5A] = 0x0001,                    -- $5B=$01 anim inicial
+}
+
 local MAXLINEAS      = 150
 
 -- los handlers que se conocen
@@ -275,8 +292,12 @@ local function aura(base)
     local a = slot_base(i, base)
     if rw(a + 4) == 0x0080 and rb(a + 0x58) == AURA_ID then fuente = a break end
   end
-  if not fuente and plantilla_id.ok then
-    des_plantilla = true
+  local p_plantilla = nil
+  if not fuente then
+    p_plantilla = AURA_PLANTILLA_FIJA or (plantilla_id.ok and plantilla_id or nil)
+    if p_plantilla then
+      des_plantilla = true
+    end
   end
   if not fuente and not des_plantilla then
     if not aura_esperando_aviso then
@@ -291,7 +312,7 @@ local function aura(base)
     local b = slot_base(j, base)
     if rw(b + 4) == 0 then
       for o = 0, 0x7E, 2 do
-        wr(b + o, des_plantilla and plantilla_id[o] or rw(fuente + o))
+        wr(b + o, des_plantilla and (p_plantilla[o] or 0) or rw(fuente + o))
       end
       wr(b + 0x40, pj_inyectado.x)
       wr(b + 0x44, pj_inyectado.y + AURA_DY)
