@@ -1,201 +1,150 @@
 -- =====================================================================
--- sonda_efectos.lua -- EL POOL DE OBJETOS: donde vive y que IDs hay
+-- sonda_efectos.lua  v3 -- EL POOL DE OBJETOS: donde vive y que IDs hay
 --                     (para FBNeo / Fightcade)
 -- =====================================================================
--- QUE HACE (el por que de cada cosa esta en
---           docs\01-MOTOR\OBJETOS-Y-EFECTOS.md):
---
---   1) ESCANEA la RAM buscando slots de efectos por firma: el longword 0
---      es el puntero al handler ($149AC / $14EC6 / $14930 / $13E9A) y el
---      word en +4 vale $0080. Prueba la DOS hipotesis de base:
---        A) $FF9400 (la que se docuento de oido)
---        B) $009400 (lo que da la aritmetica del allocator $1FAB4,
---                    el movea.w sign-extiende)
---      y reporta CON CUAL de las dos hay slots reales (o el DIAPO: si la
---      base real es otra, lo halla en el escaneo completo).
---
---   2) MODO CLONAR: cada CLONAR_CADA frames agarra un efecto VIVO del
---      pool, clona su record completo de $80 bytes en un slot LIBRE y
---      corre la posicion: el efecto deberia aparecer DOS VECES.
---      Si aparece: el mecanismo de "efecto donde yo quiera" queda
---      demostrado en juego. Si algo tira error/lag: aca sabemos donde.
---      OJO: es una venta experimental. Si el juego se rompe, apagar
---      CLONAR = false y listo (no toca nada mas).
+-- AL CARGAR imprime el banner SONDA EFECTOS v3. Si no lo ves, el script
+-- no esta corriendo: recarga (Archivo -> Lua -> cargar de nuevo).
+-- Latido cada 300 frames: "[SONDA viva: modo ...]" para que sepas que anda.
 --
 -- MODOS (cambialo ACA ARRIBA y recarga el script):
 --   MODO = "datos"   solo informa (escaneo + spawns en vivo)
---   MODO = "clonar"  escaneo + spawns + el clon
---   MODO = "aura"    AURA: inyecta el efecto ID=$1D sobre el jugador
---                    MIENTRAS ESTE EN EL PLANO DE ATRAS (condicion del
---                    veneno). Es el prototipo del parche v9, sin toccar
---                    el ROM. La cadencia y destino van en AURA_*. abajo.
+--   MODO = "clonar"  duplica un efecto vivo a un slot libre (+128 en X)
+--   MODO = "aura"    inyecta el efecto AURA_ID sobre el jugador MIENTRAS
+--                    esta en el plano de atras (prototipo de la v9)
+--
+-- La inyeccion del aura copia del JUGADOR los campos que el llamador
+-- real copia (tiles/paleta $24, plano $26, escala $3E) porque la rama del
+-- ID en la tabla $14A00 SOLO hace un ORI sobre $24 (visto en el ROM:
+-- $14D08, rama del $1D).
 -- =====================================================================
 
+local VERSION = "v3"
+
 local MODO           = "datos"  -- "datos" | "clonar" | "aura"
-local CLONAR         = (MODO == "clonar")
 
--- ------- los ajustes del aura -------
-local AURA_ID        = 0x1D     -- el efecto (el del log del usuario)
-local AURA_CADA      = 16       -- re-inyectar cada N frames (vive ~50 => 2-3 a la vez)
-local AURA_DY        = 0x0000   -- visto bueno del Y (0 = la posicion del pj tal cual)
+-- ------- clonar -------
+local CLON_CADA      = 90       -- cada cuantos frames busca clonar
+local CLON_DX        = 0x0080   -- corrimiento de X del clon
+
+-- ------- aura -------
+local AURA_ID        = 0x1D     -- el efecto (el que pidio el usuario)
+local AURA_CADA      = 16       -- re-inyectar cada N frames (vive ~50)
+local AURA_DY        = 0x0000   -- offset de Y sobre la posicion del pj
 local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
--- -------------------------------------
-local CLONAR_CADA    = 90       -- cada cuantos frames busca clonar
-local CLON_DX        = 0x0080   -- corrimiento de X del clon (px? ver el juego usa 1:1 en $40/$44)
-local MAXLINEAS      = 80
 
--- los handlers que se conocen (docs 01-MOTOR/OBJETOS-Y-EFECTOS.md)
+local MAXLINEAS      = 120
+
+-- los handlers que se conocen
 local HANDLERS = {
-  [0x0149AC] = "grande (chispa/proyector bases)",
-  [0x014EC6] = "polvo/humo",
-  [0x014930] = "flash del combo",
-  [0x013E9A] = "wrapper muerto",
+  [0x0149AC] = "grande",
+  [0x014EC6] = "polvo",
+  [0x014930] = "flash-combo",
+  [0x013E9A] = "g Alejandro (13E9A)",
 }
-local HANDLER_JUGADOR = 0x00012668   -- para ubicar los slots de jugadores
 
--- regional de escaneo: los efectos viven cerca de los jugadores
 local SCAN_INI = 0xFF8000
 local SCAN_FIN = 0xFFC000
 
 -- ---------------------------------------------------------------------
 -- la RAM
 -- ---------------------------------------------------------------------
-local function rb(a)
-  local ok, v = pcall(memory.readbyte, a)
-  if ok and type(v) == "number" then return v end
-  return nil
-end
+local function rb(a) local ok, v = pcall(memory.readbyte, a); if ok then return v end return 0 end
+local function rw(a) local ok, v = pcall(memory.readword, a); if ok then return v end return 0 end
+local function wr(a, v) pcall(memory.writeword, a, v) end
+local function wb(a, v) pcall(memory.writebyte, a, v) end
 
-local function rw(a)
-  local ok, v = pcall(memory.readword, a)
-  if ok and type(v) == "number" then return v end
-  return nil
-end
-
-local function rdw(a)   -- longword = 2 words (la de arriba Leo es el LOW first: little endian? el 68K es BIG endian)
+local function rdw(a)
   local ok, v = pcall(memory.readdword, a)
   if ok and type(v) == "number" then return v end
-  local hi = rw(a)
-  local lo = rw(a + 2)
+  local hi, lo = rw(a), rw(a + 2)
   if hi and lo then return hi * 65536 + lo end
-  return nil
+  return 0
 end
 
-local function dice(s)
-  print(s)
-end
+local function dice(s) print(s) end
 
 -- ---------------------------------------------------------------------
 -- 1) el escaneo de bases
 -- ---------------------------------------------------------------------
 local base_detectada = nil
-local escaneo_hecho = false
-
-local function es_handler_valido(lw)
-  return HANDLERS[lw] ~= nil
-end
 
 local function escanea()
   dice("=====================================================================")
-  dice("SONDA DE EFECTOS: buscando slots por firma (handler + $4 == $0080)")
+  dice("SONDA EFECTOS " .. VERSION .. ": buscando slots (handler + $4 = $0080)")
   dice("=====================================================================")
 
   local matches = {}
   local a = SCAN_INI
   while a < SCAN_FIN do
     local lw = rdw(a)
-    if lw and es_handler_valido(lw) then
-      local four = rw(a + 4)
+    if HANDLERS[lw] then
       matches[#matches + 1] = string.format("  $%06X  handler $%06X (%s)  $4=$%04X  $58=$%02X  $6=$%04X",
-        a, lw, HANDLERS[lw] or "", four or 0, rb(a + 0x58) or 0, rw(a + 6) or 0)
+        a, lw, HANDLERS[lw], rw(a + 4), rb(a + 0x58), rw(a + 6))
     end
     a = a + 0x20
   end
 
-  -- los dos candidatos, verificados slot por slot
-  local function chequea_candidato(base, nombre)
+  local function chequea(base, nombre)
     local libres, ocupados = 0, 0
     for i = 0, 15 do
-      local slot = base + i * 0x80
-      local four = rw(slot + 4)
-      if four == 0x0080 then
-        ocupados = ocupados + 1
-      elseif four == 0 then
-        libres = libres + 1
-      end
+      local f = rw(base + i * 0x80 + 4)
+      if f == 0x0080 then ocupados = ocupados + 1
+      elseif f == 0 then libres = libres + 1 end
     end
-    dice(string.format("  candidato %s: 16 slots -> %d libres, %d ocupados (la suma debería ser 16 para que sea el pool)",
-      nombre, libres, ocupados))
-    return ocupados + libres
+    dice(string.format("  candidato %s: %d libres + %d ocupados = %d (el pool suma 16)",
+      nombre, libres, ocupados, libres + ocupados))
+    return libres + ocupados
   end
 
-  local sumA = chequea_candidato(0xFF9400, "A: $FF9400 (doc de oido)")
-  local sumB = chequea_candidato(0x009400, "B: $009400 (aritmetica del allocator)")
-  dice("")
+  local sumA = chequea(0xFF9400, "A: $FF9400")
+  local sumB = chequea(0x009400, "B: $009400")
 
-  if #matches == 0 then
-    dice("  (ningun slot con firma de efecto todavia: arranca una partida,")
-    dice("   tiras un par de combos, y recarga el script)")
-  else
-    dice("  slots con firma de efecto encontrados:")
-    if #matches > 40 then
-      for i = 1, 40 do dice(matches[i]) end
-      dice(string.format("  (...y %d mas)", #matches - 40))
-    else
-      for _, m in ipairs(matches) do dice(m) end
-    end
-  end
-
-  -- el veredicto: el pool es donde las 16 casillas suman 16
   if sumA == 16 and sumB ~= 16 then
     base_detectada = 0xFF9400
-    dice("")
-    dice(">> VEREDICTO: el pool es $FF9400 (0xFF9400 + i*$80)")
+    dice(">> VEREDICTO: el pool es $FF9400")
   elseif sumB == 16 and sumA ~= 16 then
     base_detectada = 0x009400
-    dice("")
-    dice(">> VEREDICTO: el pool es $009400 (la aritmetica del allocator tenia razon)")
+    dice(">> VEREDICTO: el pool es $009400")
   else
-    base_detectada = nil
-    dice("")
-    dice(">> Ningun candidato da 16 casillas: mirá los slots con firma de arriba")
-    dice("   y deduce la base del stride (todos deberian caer en la misma base).")
+    dice(">> Ningun candidato suma 16; mirá los matches de arriba.")
   end
-  escaneo_hecho = true
+
+  if #matches == 0 then
+    dice("  (aun sin efecto vivo: arranca la pelea y recarga el script)")
+  elseif #matches > 40 then
+    for i = 1, 40 do dice(matches[i]) end
+    dice(string.format("  (...y %d mas)", #matches - 40))
+  else
+    for _, m in ipairs(matches) do dice(m) end
+  end
   dice("=====================================================================")
 end
 
 -- ---------------------------------------------------------------------
--- 2) el vivo: los spawns que pasan
+-- 2) el vivo: spawns que pasan
 -- ---------------------------------------------------------------------
 local tick = 0
 local ult_estado = {}
 local ult_cursor = nil
 
-local function slot_base(i, base)
-  return base + i * 0x80
-end
+local function slot_base(i, base) return base + i * 0x80 end
 
 local function vivo(base)
-  local c = rw(0xFFA036) or rw(0xA036)
-  if c and c ~= ult_cursor then
-    dice(string.format("[f %5d] cursor $A036 -> $%04X  (slot que toca: base + $%03X)",
-      tick, c, c))
+  local c = rw(0xFFA036)
+  if c ~= ult_cursor then
     ult_cursor = c
   end
 
-  local quel = {}
   for i = 0, 15 do
     local a = slot_base(i, base)
-    local sz = rw(a + 4) or 0
+    local sz = rw(a + 4)
     local prev = ult_estado[i]
     if prev then
       if prev == 0 and sz == 0x0080 then
-        local lw = rdw(a) or 0
-        dice(string.format("[f %5d] SPAWN slot %d ($%06X): handler $%06X  ID=$%02X  pos=$%04X,%04X  tabla=$%06X",
-          tick, i, a, lw, rb(a + 0x58) or 0, rw(a + 0x40) or 0, rw(a + 0x44) or 0, rdw(a + 0x1C) or 0))
+        dice(string.format("[f %5d] SPAWN slot %2d ($%06X): handler $%06X  ID=$%02X  pos=$%04X,%04X  tabla=$%06X",
+          tick, i, a, rdw(a), rb(a + 0x58), rw(a + 0x40), rw(a + 0x44), rdw(a + 0x1C)))
       elseif prev == 0x0080 and sz == 0 then
-        dice(string.format("[f %5d] muere slot %d ($%06X)", tick, i, a))
+        dice(string.format("[f %5d] muere slot %2d ($%06X)", tick, i, a))
       end
     end
     ult_estado[i] = sz
@@ -203,83 +152,73 @@ local function vivo(base)
 end
 
 -- ---------------------------------------------------------------------
--- 3) el clon: un efecto con vida -> copiar su record a un slot libre
+-- 3) clonar: efecto vivo -> copia en slot libre, corrida en X
 -- ---------------------------------------------------------------------
-local cooldown = CLONAR_CADA
+local clon_cooldown = CLON_CADA
+local clon_aviso = false
 
 local function clona(base)
-  if cooldown > 0 then cooldown = cooldown - 1 return end
+  if clon_cooldown > 0 then clon_cooldown = clon_cooldown - 1 return end
+
+  -- una sola vez por recarga: aviso de que el modo esta activo
+  if not clon_aviso then
+    dice(string.format("[f %5d] modo CLONAR listo: busco efecto vivo para clonar...", tick))
+    clon_aviso = true
+  end
+
   for i = 0, 15 do
     local a = slot_base(i, base)
-    if (rw(a + 4) or 0) == 0x0080 then
-      -- buscar un slot libre
+    if rw(a + 4) == 0x0080 then
       for j = 0, 15 do
         local b = slot_base(j, base)
-        if j ~= i and (rw(b + 4) or 1) == 0 then
-          -- copiar el record completo (word por word: las direcciones impares
-          -- quedan cubiertas porque se escriben las mismas posiciones)
-          for o = 0, 0x7E, 2 do
-            local v = rw(a + o)
-            if v then pcall(memory.writeword, b + o, v) end
-          end
-          -- posición corrida
-          local x = rw(a + 0x40) or 0
-          pcall(memory.writeword, b + 0x40, x + CLON_DX)
-          local y = rw(a + 0x44) or 0
-          pcall(memory.writeword, b + 0x44, y)
-          dice(string.format("[f %5d] CLON: efecto del slot %d ($%06X, ID=$%02X) -> slot %d ($%06X) en +$%03X de X",
-            tick, i, a, rb(a + 0x58) or 0, j, b, CLON_DX))
-          cooldown = CLONAR_CADA
+        if j ~= i and rw(b + 4) == 0 then
+          for o = 0, 0x7E, 2 do wr(b + o, rw(a + o)) end
+          wr(b + 0x40, rw(a + 0x40) + CLON_DX)
+          wr(b + 0x44, rw(a + 0x44))
+          dice(string.format("[f %5d] CLON: slot %d (ID=$%02X) -> slot %d en +$%03X de X",
+            tick, i, rb(a + 0x58), j, CLON_DX))
+          clon_cooldown = CLON_CADA
           return
         end
       end
-      cooldown = CLONAR_CADA
+      clon_cooldown = CLON_CADA
       return
     end
   end
 end
 
 -- ---------------------------------------------------------------------
--- 4) el aura: inyectar el efecto AURA_ID sobre el jugador envenenado
+-- 4) el aura: el efecto AURA_ID sobre el jugador envenenado
 -- ---------------------------------------------------------------------
--- La condicion "esta siendo envenenado" = esta PARADO en el plano de atras
--- (el suelo ($9C) en 304, y con vida). La inyeccion es la MISMA secuencia
--- que hace el allocator del juego: $0 = handler $149AC, $4 = $0080,
--- $6 = 0 (asi el handler entra en modo init y el branch de la tabla
--- $14A00 llena tiles/tabla/velocidad), $58 = ID, $40/$44 = posicion del pj
--- (+ AURA_DY).
-
-local wk = function(adr, v) pcall(memory.writeword, adr, v) end
-local wk8 = function(adr, v) pcall(memory.writebyte, adr, v) end
+-- Condicion: parado en el plano de atras ($9C = 304) y con vida.
+-- La inyeccion: $0 = handler $149AC, $4 = $0080, $6 = 0 (init),
+-- $58 = AURA_ID, $40/$44 = posicion del pj (+DY), y $24/$26/$3E
+-- copiados del JUGADOR (eso es lo que hacen los llamadores reales; la
+-- rama del ID solo hace un ORI sobre $24, comprobado en $14D08).
 
 local slots_pj = { P1 = 0xFF8400, P2 = 0xFF8800 }
 
-local function inyecta_aura(base_pool, px, py, quien)
-  for j = 0, 15 do
-    local b = slot_base(j, base_pool)
-    if (rw(b + 4) or 1) == 0 then
-      -- limpiar el record y armarlo como el allocator + el llamador
-      for o = 0, 0x7E, 2 do
-        wk(b + o, 0)
-      end
-      wk(b + 0, 0x0149)          -- longword 0 = $00149AC (handler grande)
-      wk(b + 2, 0x09AC)
-      wk(b + 4, 0x0080)          -- ocupado
-      wk(b + 6, 0)               -- $6 = 0: init en el proximo pase
-      wk8(b + 0x58, AURA_ID)     -- el tipo de efecto
-      wk(b + 0x40, px)           -- X del jugador
-      wk(b + 0x44, py + AURA_DY) -- Y del jugador (+ offset opcional)
-      dice(string.format("[f %5d] AURA (%s): ID=$%02X inyectado en slot %d ($%06X) pos=$%04X,%04X",
-        tick, quien, AURA_ID, j, b, px, py))
-      return true
-    end
-  end
-  return false
+local function inyecta_aura(b, px, py, quien, sx, sy)
+  -- limpiar el record
+  for o = 0, 0x7E, 2 do wr(b + o, 0) end
+  wr(b + 0, 0x0149)              -- longword 0 = $00149AC
+  wr(b + 2, 0x09AC)
+  wr(b + 4, 0x0080)
+  wr(b + 6, 0)                   -- init en el proximo pase del dispatcher
+  wr(b + 0x24, rw(sx + 0x24))    -- tiles/paleta DEL JUGADOR (lo que copian los llamadores)
+  wr(b + 0x26, rw(sx + 0x26))    -- plano
+  wr(b + 0x3E, rw(sx + 0x3E))    -- escala
+  wb(b + 0x58, AURA_ID)
+  wr(b + 0x40, px)
+  wr(b + 0x44, py + AURA_DY)
+  dice(string.format("[f %5d] AURA (%s): ID=$%02X en slot $%06X  pos=$%04X,%04X  $24=$%04X",
+    tick, quien, AURA_ID, b, px, py, rw(sx + 0x24)))
 end
 
 local aura_conto = AURA_CADA
+local aura_sin_slot_avisado = false
 
-local function aura(base_pool)
+local function aura(base)
   aura_conto = aura_conto - 1
   if aura_conto > 0 then return end
   aura_conto = AURA_CADA
@@ -288,15 +227,25 @@ local function aura(base_pool)
   if AURA_DESTINO == "P1" or AURA_DESTINO == "AMBOS" then destinos[#destinos + 1] = { "P1", slots_pj.P1 } end
   if AURA_DESTINO == "P2" or AURA_DESTINO == "AMBOS" then destinos[#destinos + 1] = { "P2", slots_pj.P2 } end
 
+  local puso = false
   for _, d in ipairs(destinos) do
     local a = d[2]
-    local hp = rw(a + 0x78) or 0
-    local suelo = rw(a + 0x9C) or 0
-    -- siendo envenenado: parado en el plano de atras y con vida
+    local hp = rw(a + 0x78)
+    local suelo = rw(a + 0x9C)
     if suelo == 304 and hp >= 1 then
-      local px = rw(a + 0x40) or 0
-      local py = rw(a + 0x44) or 0
-      inyecta_aura(base_pool, px, py, d[1])
+      -- buscar slot libre
+      for j = 0, 15 do
+        local b = slot_base(j, base)
+        if rw(b + 4) == 0 then
+          inyecta_aura(b, rw(a + 0x40), rw(a + 0x44), d[1], a, a)
+          puso = true
+          break
+        end
+      end
+      if not puso and not aura_sin_slot_avisado then
+        dice(string.format("[f %5d] AURA (%s): pool LLENO, no hay slot libre", tick, d[1]))
+        aura_sin_slot_avisado = true
+      end
     end
   end
 end
@@ -306,20 +255,21 @@ end
 -- ---------------------------------------------------------------------
 local function cada_frame()
   tick = tick + 1
-  if tick % 180 == 1 then
-    -- re-escaneo suave cada ~3 s si no se detecto base todavia
-    if not base_detectada then
-      escanea()
-    end
+
+  if tick % 300 == 0 then
+    dice(string.format("[SONDA viva: modo=%s  pool=$%s]", MODO,
+      base_detectada and string.format("%06X", base_detectada) or "?"))
   end
+
   if base_detectada then
     vivo(base_detectada)
-    if CLONAR then clona(base_detectada) end
-    if MODO == "aura" then aura(base_detectada) end
-  elseif escaneo_hecho then
-    -- nada: el escaneo ya dijo lo suyo; el refresh lo hace el %180
+    if MODO == "clonar" then clona(base_detectada) end
+    if MODO == "aura"   then aura(base_detectada) end
+  elseif tick % 180 == 1 then
+    escanea()
   end
 end
 
 escanea()
 emu.registerafter(cada_frame)
+dice(string.format("SONDA EFECTOS %s CARGADA (modo %s). Con la pelea arrancada si no detecta el pool, escané de nuevo en ~3 s.", VERSION, MODO))
