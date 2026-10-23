@@ -1152,6 +1152,31 @@ salta): ES EL INIT DE NACIMIENTO DEL RECORD (todo en
 - Nota de docs: el listing del asm del doc tenia 7 filas (+2) desimuladas
   con las direcciones de un esquema viejo; re-emitidas del ROM real.
 
+### Adendum (v9-7): el dispatcher decodificado y el wrapper real como spawn
+
+- Test del v9-6: TAMBIEN invisible. Se termino de decodificar el pool:
+  el allocator `$1FA96` = un anillo fijo de 16 slots (`$A036 += $80`
+  con base `$9400`, stride `$80`, NULL si estan todos ocupados, no
+  depende de d1) y el DISPATCHER ($3592) camina `$8000-$A000`,
+  salta slots con `$0 = 0` y despacha `jsr (a0)` a los vivos (a5 =
+  el slot). El kill ($3556) borra `$4>>4 * 16` bytes y los muertos se
+  saltan con stride `$40` = el pool es una lista empacada de estados
+  `$4`. Todo el mecanismo = sano, y la receta del sonda (clon a mano
+  en `$FF9400` con `$4=$80`) demostro que un record a mano se dibuja.
+- Con el record replicado al dedillo (v9-4/v9-5/v9-6 todos invisibles)
+  el record deja de ser el sospechoso: queda el CONTEXTO del spawn.
+  Dos compuertas del runner pueden helarlo (`$F550` bit7, `$F55A`) o
+  directamente el despachador per-frame no corre en el estado del
+  plano 304 (es la prueba bifurcante: la estela REAL del dash en ese
+  plano; si tampoco aparece, el pool esta frio ahi).
+- Fix **v9-7** (commit actual): el record NO se arma a mano NADA: la rutina
+  llama a `jsr $020202` (el wrapper REAL del trail) y solo pinta
+  paleta 1 encima (`andi #$8fff` + `ori #$2000`). Rutina de 56 bytes,
+  epilogo en `$1A075E`, `ble/bcc` disp `1E/14`. La tabla corta queda
+  fuera del parche (el init `$14D30` la pisaba igual). ROM 30 = SHA1
+  `13467D9B97AB2E500741EE338DA924F02CF4F6D9`, bisector `31_` =
+  `DACA1FE4E5B2F4EE104D21F1D26E13DF8399FB54`. Verificador OK.
+
 ### Adendum (v9-5/v9-6): el wrapper real del trail al dedillo
 
 - Test del v9-4: "no se ve". Antes de seguir, dis de `loc_020202`
