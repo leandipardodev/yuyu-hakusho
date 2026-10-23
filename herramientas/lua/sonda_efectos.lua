@@ -22,13 +22,24 @@
 --      OJO: es una venta experimental. Si el juego se rompe, apagar
 --      CLONAR = false y listo (no toca nada mas).
 --
--- MODOS (cambialo ACA ARRIBA y recargá el script):
---   MODO = "datos"  solo informa (escaneo + spawns en vivo)
---   MODO = "clonar" escaneo + spawns + el clon
+-- MODOS (cambialo ACA ARRIBA y recarga el script):
+--   MODO = "datos"   solo informa (escaneo + spawns en vivo)
+--   MODO = "clonar"  escaneo + spawns + el clon
+--   MODO = "aura"    AURA: inyecta el efecto ID=$1D sobre el jugador
+--                    MIENTRAS ESTE EN EL PLANO DE ATRAS (condicion del
+--                    veneno). Es el prototipo del parche v9, sin toccar
+--                    el ROM. La cadencia y destino van en AURA_*. abajo.
 -- =====================================================================
 
-local MODO           = "datos"  -- "datos" | "clonar"
+local MODO           = "datos"  -- "datos" | "clonar" | "aura"
 local CLONAR         = (MODO == "clonar")
+
+-- ------- los ajustes del aura -------
+local AURA_ID        = 0x1D     -- el efecto (el del log del usuario)
+local AURA_CADA      = 16       -- re-inyectar cada N frames (vive ~50 => 2-3 a la vez)
+local AURA_DY        = 0x0000   -- visto bueno del Y (0 = la posicion del pj tal cual)
+local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
+-- -------------------------------------
 local CLONAR_CADA    = 90       -- cada cuantos frames busca clonar
 local CLON_DX        = 0x0080   -- corrimiento de X del clon (px? ver el juego usa 1:1 en $40/$44)
 local MAXLINEAS      = 80
@@ -229,6 +240,68 @@ local function clona(base)
 end
 
 -- ---------------------------------------------------------------------
+-- 4) el aura: inyectar el efecto AURA_ID sobre el jugador envenenado
+-- ---------------------------------------------------------------------
+-- La condicion "esta siendo envenenado" = esta PARADO en el plano de atras
+-- (el suelo ($9C) en 304, y con vida). La inyeccion es la MISMA secuencia
+-- que hace el allocator del juego: $0 = handler $149AC, $4 = $0080,
+-- $6 = 0 (asi el handler entra en modo init y el branch de la tabla
+-- $14A00 llena tiles/tabla/velocidad), $58 = ID, $40/$44 = posicion del pj
+-- (+ AURA_DY).
+
+local wk = function(adr, v) pcall(memory.writeword, adr, v) end
+local wk8 = function(adr, v) pcall(memory.writebyte, adr, v) end
+
+local slots_pj = { P1 = 0xFF8400, P2 = 0xFF8800 }
+
+local function inyecta_aura(base_pool, px, py, quien)
+  for j = 0, 15 do
+    local b = slot_base(j, base_pool)
+    if (rw(b + 4) or 1) == 0 then
+      -- limpiar el record y armarlo como el allocator + el llamador
+      for o = 0, 0x7E, 2 do
+        wk(b + o, 0)
+      end
+      wk(b + 0, 0x0149)          -- longword 0 = $00149AC (handler grande)
+      wk(b + 2, 0x09AC)
+      wk(b + 4, 0x0080)          -- ocupado
+      wk(b + 6, 0)               -- $6 = 0: init en el proximo pase
+      wk8(b + 0x58, AURA_ID)     -- el tipo de efecto
+      wk(b + 0x40, px)           -- X del jugador
+      wk(b + 0x44, py + AURA_DY) -- Y del jugador (+ offset opcional)
+      dice(string.format("[f %5d] AURA (%s): ID=$%02X inyectado en slot %d ($%06X) pos=$%04X,%04X",
+        tick, quien, AURA_ID, j, b, px, py))
+      return true
+    end
+  end
+  return false
+end
+
+local aura_conto = AURA_CADA
+
+local function aura(base_pool)
+  aura_conto = aura_conto - 1
+  if aura_conto > 0 then return end
+  aura_conto = AURA_CADA
+
+  local destinos = {}
+  if AURA_DESTINO == "P1" or AURA_DESTINO == "AMBOS" then destinos[#destinos + 1] = { "P1", slots_pj.P1 } end
+  if AURA_DESTINO == "P2" or AURA_DESTINO == "AMBOS" then destinos[#destinos + 1] = { "P2", slots_pj.P2 } end
+
+  for _, d in ipairs(destinos) do
+    local a = d[2]
+    local hp = rw(a + 0x78) or 0
+    local suelo = rw(a + 0x9C) or 0
+    -- siendo envenenado: parado en el plano de atras y con vida
+    if suelo == 304 and hp >= 1 then
+      local px = rw(a + 0x40) or 0
+      local py = rw(a + 0x44) or 0
+      inyecta_aura(base_pool, px, py, d[1])
+    end
+  end
+end
+
+-- ---------------------------------------------------------------------
 -- el frame
 -- ---------------------------------------------------------------------
 local function cada_frame()
@@ -242,6 +315,7 @@ local function cada_frame()
   if base_detectada then
     vivo(base_detectada)
     if CLONAR then clona(base_detectada) end
+    if MODO == "aura" then aura(base_detectada) end
   elseif escaneo_hecho then
     -- nada: el escaneo ya dijo lo suyo; el refresh lo hace el %180
   end
