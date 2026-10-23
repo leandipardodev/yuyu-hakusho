@@ -21,7 +21,7 @@
 -- (Archivo -> Lua -> cargar de nuevo).
 -- =====================================================================
 
-local VERSION = "probe1"
+local VERSION = "probe2"
 
 local function rb(a) local ok, v = pcall(memory.readbyte, a); if ok then return v end return 0 end
 local function rw(a) local ok, v = pcall(memory.readword, a); if ok then return v end return 0 end
@@ -87,9 +87,21 @@ local function cada_frame()
   local cuenta = a042 // 32           -- bits 5-7 = mi contador de cadencia
   local cursor = rw(0x00A036)
 
+  -- la posicion de los jugadores: $40=X word, $42 extra, $44=Y word,
+  -- $46/$47 extra (los bytes que mi ROM copia en LONG al record del trail)
+  local function pos(b)
+    return string.format("x=%04X e=%02X%02X y=%04X e=%02X%02X",
+      rw(b + 0x40), rb(b + 0x42), rb(b + 0x43),
+      rw(b + 0x44), rb(b + 0x46), rb(b + 0x47))
+  end
+  local p1 = pos(0xFF8400)
+  local p2 = pos(0xFF8800)
+
   -- el latido cada 30 frames
   print(string.format("PI f%-6d | $A042=%02X (cuenta=%d) | libres=%d | trail=%d | resto=[%s] | cursor=%04X",
     tick, a042, cuenta, libres, trails, table.concat(otros, ","), cursor))
+  print(string.format("      P1 %s", p1))
+  print(string.format("      P2 %s", p2))
 
   -- volcado del trail cuando NACE o cambia de estado
   if slot_trail then
