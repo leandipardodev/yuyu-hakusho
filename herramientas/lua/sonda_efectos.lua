@@ -459,9 +459,28 @@ local function cada_frame()
 end
 
 escanea()
-emu.registerafter(cada_frame)
-dice(string.format("SONDA EFECTOS %s CARGADA (modo %s).", VERSION, MODO))
 
+-- registro del callback compatible con BizHawk moderno (donde
+-- emu.registerafter fue retirado: la API actual es event.onframeend /
+-- event.onframestart), BizHawk viejo (emu.registerafter) y FBNeo
+-- (gui.register), probando con pcall hasta que uno ande.
+local callback_usado = nil
+local hooks = {
+  { "event.onframeend",   (type(event) == "table" and type(event.onframeend)   == "function") and event.onframeend   or nil },
+  { "event.onframestart", (type(event) == "table" and type(event.onframestart) == "function") and event.onframestart or nil },
+  { "emu.registerafter",  (type(emu) == "table" and type(emu.registerafter)    == "function") and emu.registerafter  or nil },
+  { "gui.register",       (type(gui) == "table" and type(gui.register)         == "function") and gui.register       or nil },
+}
+for _, h in ipairs(hooks) do
+  if h[2] then
+    local ok = pcall(h[2], cada_frame)
+    if ok then callback_usado = h[1] break end
+  end
+end
+if not callback_usado then
+  dice("SONDA EFECTOS: NINGUN hook ando (event/emu/gui sin callbacks) - avisa a Leonardo.")
+end
+dice(string.format("SONDA EFECTOS %s CARGADA (modo %s, callback=%s).", VERSION, MODO, tostring(callback_usado)))
 -- inventario de la API del emulador (una vez): nombres de memory/emu
 do
   local function lista(t)
