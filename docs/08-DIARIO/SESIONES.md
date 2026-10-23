@@ -897,3 +897,11 @@ init aun no lleno la tabla.
 Pendiente del usuario: correr el modo clonar (duplicar un efecto vivo
 a un slot libre con la X corrida) para demostrado 'efecto donde yo
 quiera' sin parche.
+
+
+**EL APENDICE del S-2024-10-22j: el aura FUNCIONA.** El modo aura de la
+sonda clona un record $1D real y lo pega al jugador envenenado: la tesis
+'efecto donde yo quiera = clonar record + mover \/' quedo demostrada
+en juego. La v3 habia pintado la pantalla de negro: copie \/\/del PLAYER al OBJETO, y esos offsets no significan lo mismo en las dos
+estructuras (en el player \ es \, no un tile). Leccion en el
+doc: los campos entre record de jugador y de objeto NO son intercambiables.

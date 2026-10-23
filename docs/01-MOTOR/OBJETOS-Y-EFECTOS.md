@@ -131,6 +131,27 @@ sesion del dia):
   el pool dice y no se ve `pool lleno` en pelea normal: hay razonable para
   aumentar Ammo sin dropout, TODAVIA hay.
 
+### 4.2. La tesis DEMOSTRADA en juego (sonda v4, 2026-10-22) [VERIF]
+
+**"Un efecto donde yo quiera" = clonar un record real y mover `$40/$44`.**
+El modo `aura` de `sonda_efectos.lua` funciona: cuando el usuario esta en
+veneno (parado en el plano de atras), la sonda agarra un ID=$1D vivo del
+pool, clona el record entero a un slot libre y le pone la posicion del
+jugador — **y el efecto aparece acompanando al pj**.
+
+La leccion ARDUO de la v3 (pantalla negra): **los campos del record del
+JUGADOR NO son los del OBJETO**, aunque ambos entren en el dispatcher.
+Copie `$24/$26/$3E` desde el player creyendo que eran tile/plano/escala y
+el objeto dibujo basura sobre toda la pantalla. Regla: al construir un
+record de objeto, SOLO se llenan campos con datos de un record de objeto
+(exactamente lo que hace la v4: nada sintetico, clon de lo que el juego
+dejo vivito).
+
+Para el parche v9 del ROM quedan dos caminos: (a) encontrar el wrapper de
+la libreria de especiales que spawnea el ID deseado con d5/d6 y llamarlo
+con la posicion del pj (el camino limpio), o (b) clonar-on-RAM como la
+sonda (necesita guardar la ultima instancia real, mas intrusivo).
+
 ## 5. Límites duros [VERIF]
 
 
