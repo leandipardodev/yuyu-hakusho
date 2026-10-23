@@ -36,6 +36,8 @@ local AURA_ID        = 0x1D     -- el efecto que el usuario quiere
 local AURA_CADA      = 16       -- cada cuantos frames del veneno intenta clonar
 local AURA_DY        = 0x0000   -- offset de Y sobre la posicion del pj
 local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
+local AURA_CICLAR    = true     -- cada clon sale con la paleta SIGUIENTE (0-3)
+local AURA_PALETA    = 1        -- si AURA_CICLAR es false: paleta fija (0-3)
 
 local MAXLINEAS      = 150
 
@@ -215,6 +217,7 @@ local slots_pj = { P1 = 0xFF8400, P2 = 0xFF8800 }
 
 local aura_conto = AURA_CADA
 local aura_esperando_aviso = false
+local aura_paleta_n = 0
 
 local function aura(base)
   aura_conto = aura_conto - 1
@@ -262,8 +265,16 @@ local function aura(base)
       for o = 0, 0x7E, 2 do wr(b + o, rw(fuente + o)) end
       wr(b + 0x40, pj_inyectado.x)
       wr(b + 0x44, pj_inyectado.y + AURA_DY)
-      dice(string.format("[f %5d] AURA (%s): clon del ID=$%02X (slot $%06X) sobre el pj en pos=$%04X,%04X -> slot $%06X",
-        tick, pj_inyectado.quien, AURA_ID, fuente, pj_inyectado.x, pj_inyectado.y, b))
+      -- cambio de color: bits 13-14 de $24 = numero de paleta VDP (aritmetica
+      -- pura, sin lib bit), preservando el bit 15 (prioridad)
+      local p = AURA_CICLAR and aura_paleta_n or AURA_PALETA
+      local v24 = rw(b + 0x24)
+      local prio = ((v24 or 0) >= 0x8000) and 0x8000 or 0
+      local nuevo = ((v24 or 0) % 0x2000) + 0x2000 * p + prio
+      wr(b + 0x24, nuevo)
+      if AURA_CICLAR then aura_paleta_n = (aura_paleta_n + 1) % 4 end
+      dice(string.format("[f %5d] AURA (%s): clon del ID=$%02X (slot $%06X) sobre el pj pos=$%04X,%04X -> slot $%06X  PALETA=%d ($24 $%04X->$%04X)",
+        tick, pj_inyectado.quien, AURA_ID, fuente, pj_inyectado.x, pj_inyectado.y, b, p, v24 or 0, nuevo))
       return
     end
   end
