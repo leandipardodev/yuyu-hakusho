@@ -1152,5 +1152,32 @@ salta): ES EL INIT DE NACIMIENTO DEL RECORD (todo en
 - Nota de docs: el listing del asm del doc tenia 7 filas (+2) desimuladas
   con las direcciones de un esquema viejo; re-emitidas del ROM real.
 
+### Adendum (v9-5/v9-6): el wrapper real del trail al dedillo
+
+- Test del v9-4: "no se ve". Antes de seguir, dis de `loc_020202`
+  (el wrapper REAL del ID `$20`, el que spawnea la estela del dash):
+  copia del player X=`move.l $40`, **Y=`move.l $9c(a5) -> $44(a0)`**
+  (espacio de RENDER, no el `$44` mecanico), `move.w $3e` (escala),
+  `move.b $26 - 4` (binding de plano) y `$24` = byte del player +
+  `andi.w #$8000` + `ori.b #$40` (rama con `$61=0`).
+- Fix **v9-5**: el Y se copia del `$9C(a5)` en LONG (`0044->009C`, 1
+  byte, la MISMA instruccion del wrapper). Resultado: TAMBIEN invisible
+  (pero al usuario le gusta que la ventana sea la de la tabla real:
+  init de `$14D30` reescribe `$50 = $14eac` y camina los pares 76-79 =
+  estela completa, mas grande y ancha que la receta del sonda).
+- Hallazgo del init de `$14D30` (dis del ROM, capstone): aparte de
+  reescribir `$50`, hace `ori.w #$1a6, $24` (el hi del tile) y
+  `move.b #1, $27` — la `$27=1` de la FIJA quedaba explicada: era
+  solo el byte bajo de `move.w #$1001, $26` de mi copia, no un campo.
+- Fix **v9-6** (commit actual): los TRES campos del wrapper al dedillo
+  escalando la rutina a 216 bytes (tabla corta ahora en `$1A080A`,
+  epilogo en `$1A07FE`, disp de los 3 `Bcc.w` = `BE/B4/A0`):
+  `$24` = byte del player + `andi #$8000` + `ori.b #$40` + `andi
+  #$8fff` + `ori.w #$2000` (paleta 1, la customizacion del aura),
+  `$26` = byte del player - 4, `$3E` = word del player. ROM 30 = SHA1
+  `F67E920C6A5618557BB25CD99FB988E6143A8917`, bisector `31_` =
+  `D4E9AF474A5B9389185626206AA1CA0189B1803D`. Verificador de saltos y
+  `verificar_desensamblado.py` OK.
+
 
 
