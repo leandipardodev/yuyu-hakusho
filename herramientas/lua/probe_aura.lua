@@ -21,7 +21,7 @@
 -- (Archivo -> Lua -> cargar de nuevo).
 -- =====================================================================
 
-local VERSION = "probe6"
+local VERSION = "probe7"
 
 local function rb(a) local ok, v = pcall(memory.readbyte, a); if ok then return v end return 0 end
 local function rw(a) local ok, v = pcall(memory.readword, a); if ok then return v end return 0 end
@@ -47,6 +47,7 @@ end
 
 local tick = 0
 local ult_firma = nil
+local ult_slot = nil
 
 local function hexd(a)
   for o = 0, 0x78, 16 do
@@ -103,54 +104,37 @@ local function cada_frame()
   print(string.format("      P1 %s", p1))
   print(string.format("      P2 %s", p2))
 
-  -- volcado del trail cuando NACE o cambia de estado
+  -- volcado del trail: SOLO cuando cambia algo de la receta (nacimiento,
+  -- $59/$5B, $24, $3C, posicion o muerte). El $6 (tick) va fuera: cambia
+  -- cada frame y congelaba la consola con un dump por frame.
   if slot_trail then
-    local firma = rw(slot_trail + 6) * 0x10000 + rw(slot_trail + 0x3C) + rb(slot_trail + 0x59) * 256
+    local firma = slot_trail .. "/" .. table.concat({
+      rw(slot_trail + 4), rw(slot_trail + 0x40), rw(slot_trail + 0x44),
+      rw(slot_trail + 0x24), rw(slot_trail + 0x3C),
+      rb(slot_trail + 0x59), rb(slot_trail + 0x5B),
+    }, "/")
     if firma ~= ult_firma then
+      local nacio = (ult_slot ~= slot_trail)          -- slot nuevo o recien nacido
+      local linea = string.format(
+        ">>> TRAIL slot $%06X  $4=%04X  $59=%02X  $5B=%02X  $24=%04X  $3C=%04X  $40=%04X  $44=%04X",
+        slot_trail, rw(slot_trail + 4), rb(slot_trail + 0x59), rb(slot_trail + 0x5B),
+        rw(slot_trail + 0x24), rw(slot_trail + 0x3C),
+        rw(slot_trail + 0x40), rw(slot_trail + 0x44))
+      print(linea)
+      if nacio then
+        print(string.format("    $1C=%06X  $50=%06X",
+          rw(slot_trail + 0x1C) * 65536 + rw(slot_trail + 0x1E),
+          rw(slot_trail + 0x50) * 65536 + rw(slot_trail + 0x52)))
+        hexd(slot_trail)                              -- el completo SOLO al nacer
+      end
       ult_firma = firma
-      print(string.format("  >>> TRAIL slot $%06X  $4=%04X  $6=%04X  $3C=%04X  $59=%02X  $5B=%02X  $24=%04X  $1C=%06X  $50=%06X  $40=%04X  $44=%04X",
-        slot_trail, rw(slot_trail + 4), rw(slot_trail + 6), rw(slot_trail + 0x3C),
-        rb(slot_trail + 0x59), rb(slot_trail + 0x5B), rw(slot_trail + 0x24),
-        rw(slot_trail + 0x1C) * 65536 + rw(slot_trail + 0x1E),
-        rw(slot_trail + 0x50) * 65536 + rw(slot_trail + 0x52),
-        rw(slot_trail + 0x40), rw(slot_trail + 0x44)))
-      hexd(slot_trail)
-      return
+      ult_slot = slot_trail
     end
-  end
-end
-
-detecta()
-
--- el host = BIZHAWK (core genesis). DETALLE CLAVE: en este build las
--- funciones nativas LLEGAN COMO USERDATA (el dump del gui lo mostro),
--- asi que el chequeo exige function O userdata.
-local function esfn(v)
-  local t = type(v)
-  return t == "function" or t == "userdata"
-end
-
-local instalado = nil
-local candidatos = {
-  { "event.onframeend",   esfn(event.onframeend)   and event.onframeend },
-  { "event.onframestart", esfn(event.onframestart) and event.onframestart },
-  { "emu.registerafter",  esfn(emu.registerafter)  and emu.registerafter },
-  { "gui.register",       esfn(gui.register)       and gui.register },
-}
-for _, c in ipairs(candidatos) do
-  local nombre, fn = c[1], c[2]
-  if fn then
-    local ok, err = pcall(fn, cada_frame)
-    if ok then instalado = nombre break end
-    print(string.format("  hook %s EXISTE pero pcall fallo: %s", nombre, tostring(err)))
-  end
-end
-
-if instalado then
-  print(string.format("PROBE %s CARGADO (solo observacion, callback=%s).", VERSION, instalado))
-else
-  print(string.format("PROBE %s: NINGUN hook ando. Tabla event:", VERSION))
-  if type(event) == "table" then
-    for k, v in pairs(event) do print(string.format("  event.%s = %s", tostring(k), type(v))) end
+  else
+    if ult_firma and not ult_firma:find("^LIBRE") then
+      ult_firma = "LIBRE"
+      ult_slot = nil
+      print("  >>> TRAIL TERMINADO (slot libre de vuelta)")
+    end
   end
 end
