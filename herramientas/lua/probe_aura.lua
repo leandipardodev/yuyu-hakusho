@@ -21,7 +21,7 @@
 -- (Archivo -> Lua -> cargar de nuevo).
 -- =====================================================================
 
-local VERSION = "probe5"
+local VERSION = "probe6"
 
 local function rb(a) local ok, v = pcall(memory.readbyte, a); if ok then return v end return 0 end
 local function rw(a) local ok, v = pcall(memory.readword, a); if ok then return v end return 0 end
@@ -122,15 +122,20 @@ end
 
 detecta()
 
--- el host = BIZHAWK moderno (el dump del probe4 lo confirmo: tastudio,
--- mainmemory, client, bizstring...). Los callbacks viejos (emu.registerafter)
--- estan retirados: la API actual es event.onframeend / event.onframestart.
+-- el host = BIZHAWK (core genesis). DETALLE CLAVE: en este build las
+-- funciones nativas LLEGAN COMO USERDATA (el dump del gui lo mostro),
+-- asi que el chequeo exige function O userdata.
+local function esfn(v)
+  local t = type(v)
+  return t == "function" or t == "userdata"
+end
+
 local instalado = nil
 local candidatos = {
-  { "event.onframeend",   (type(event) == "table" and type(event.onframeend)   == "function") and event.onframeend   or nil },
-  { "event.onframestart", (type(event) == "table" and type(event.onframestart) == "function") and event.onframestart or nil },
-  { "emu.registerafter",  (type(emu) == "table" and type(emu.registerafter)    == "function") and emu.registerafter  or nil },
-  { "gui.register",       (type(gui) == "table" and type(gui.register)         == "function") and gui.register       or nil },
+  { "event.onframeend",   esfn(event.onframeend)   and event.onframeend },
+  { "event.onframestart", esfn(event.onframestart) and event.onframestart },
+  { "emu.registerafter",  esfn(emu.registerafter)  and emu.registerafter },
+  { "gui.register",       esfn(gui.register)       and gui.register },
 }
 for _, c in ipairs(candidatos) do
   local nombre, fn = c[1], c[2]
@@ -144,5 +149,8 @@ end
 if instalado then
   print(string.format("PROBE %s CARGADO (solo observacion, callback=%s).", VERSION, instalado))
 else
-  print(string.format("PROBE %s: NINGUN hook ando (event/emu/gui no tienen callbacks?).", VERSION))
+  print(string.format("PROBE %s: NINGUN hook ando. Tabla event:", VERSION))
+  if type(event) == "table" then
+    for k, v in pairs(event) do print(string.format("  event.%s = %s", tostring(k), type(v))) end
+  end
 end

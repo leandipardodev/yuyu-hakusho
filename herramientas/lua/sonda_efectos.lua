@@ -458,6 +458,11 @@ local function cada_frame()
   end
 end
 
+local function esfn(v)
+  local t = type(v)
+  return t == "function" or t == "userdata" -- BizHawk: funciones nativas = userdata
+end
+
 escanea()
 
 -- registro del callback compatible con BizHawk moderno (donde
@@ -466,10 +471,10 @@ escanea()
 -- (gui.register), probando con pcall hasta que uno ande.
 local callback_usado = nil
 local hooks = {
-  { "event.onframeend",   (type(event) == "table" and type(event.onframeend)   == "function") and event.onframeend   or nil },
-  { "event.onframestart", (type(event) == "table" and type(event.onframestart) == "function") and event.onframestart or nil },
-  { "emu.registerafter",  (type(emu) == "table" and type(emu.registerafter)    == "function") and emu.registerafter  or nil },
-  { "gui.register",       (type(gui) == "table" and type(gui.register)         == "function") and gui.register       or nil },
+  { "event.onframeend",   (type(event) == "table" and esfn(event.onframeend)) and event.onframeend   or nil },
+  { "event.onframestart", (type(event) == "table" and esfn(event.onframestart)) and event.onframestart or nil },
+  { "emu.registerafter",  (type(emu) == "table" and esfn(emu.registerafter))  and emu.registerafter  or nil },
+  { "gui.register",       (type(gui) == "table" and esfn(gui.register))       and gui.register       or nil },
 }
 for _, h in ipairs(hooks) do
   if h[2] then
