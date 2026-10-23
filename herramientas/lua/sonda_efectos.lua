@@ -277,18 +277,23 @@ local function sigue(base)
       -- (recorre-prueba: pool LLENO + tildo caminando)
       table.remove(seguimiento, i)
     elseif s.corte and rb(s.slot + 0x59) >= s.corte then
-      -- fin anticipado: el clon entro a los cuadros del ultimo cuarto
-      wr(s.slot + 4, 0)
+      -- fin anticipado: NO escribir $4=0 a mano. Eso deja el record zombie
+      -- (handler/tablas/$58 intactos) y las piezas del SAT colgadas:
+      -- "pantalla en negro al terminar la animacion". Lo correcto es
+      -- MANDARLO AL TERMINADOR de la tabla de pares ($59=$04 = la entrada
+      -- [0,0]): el $149AC hace su kill COMPLETO en el proximo tick, exacto
+      -- a como muere un trail real del juego.
+      wb(s.slot + 0x59, 0x04)
       if not AURA_SILENCIO then
-        dice(string.format("[f %5d] CORTE slot %d: $59=$%02X >= $%02X (fin 25%% antes)",
+        dice(string.format("[f %5d] CORTE slot %d: $59=$%02X >= $%02X -> terminador (kill del juego)",
           tick, s.slot, rb(s.slot + 0x59), s.corte))
       end
       table.remove(seguimiento, i)
     elseif s.aura and s.edad >= AURA_VIDA_MAX then
       -- guarda: el corte debio matarlo hace rato ($59 atascado)
-      wr(s.slot + 4, 0)
+      wb(s.slot + 0x59, 0x04)
       if not AURA_SILENCIO then
-        dice(string.format("[f %5d] GUARDIA slot %d: clon de aura vivo %d frames (max %d), forzado a morir",
+        dice(string.format("[f %5d] GUARDIA slot %d: clon de aura vivo %d frames (max %d), mando al terminador",
           tick, s.slot, s.edad, AURA_VIDA_MAX))
       end
       table.remove(seguimiento, i)
@@ -337,7 +342,12 @@ local function aura(base)
   for _, s in ipairs(seguimiento) do
     if s.aura and rw(s.slot + 4) == 0x0080 then vivos = vivos + 1 end
   end
-  if vivos >= AURA_MAXVIVOS then return end
+  if vivos >= AURA_MAXVIVOS then
+    if not AURA_SILENCIO or tick % 60 == 0 then
+      dice(string.format("[f %5d] AURA en espera: vivos=%d (max %d), listo para el proximo", tick, vivos, AURA_MAXVIVOS))
+    end
+    return
+  end
 
   local libres, ocupados = 0, {}
   for i = 0, 15 do
@@ -398,9 +408,12 @@ local function aura(base)
       -- log: los clones de plantilla con $59=$03 eran invisibles). El game
       -- al spawnar siempre setea $59=$FF/$5B=$01/$5C=$00: resetear SIEMPRE
       -- al estado recien-nacido para que la secuencia arranque completa.
-      wr(b + 0x59, AURA_PAREJA or 0xFF)
-      wr(b + 0x5B, AURA_DUR or 0x01)
-      wr(b + 0x5C, 0x00)
+      -- OJO: $59/$5B/$5C son campos de un BYTE: escribilos con wb, no wr
+      -- (un writeword pisa el byte vecino: $59=0 y $5A=1 = el clon queda
+      -- anclado en el par 0 y el corte nunca dispara)
+      wb(b + 0x59, AURA_PAREJA or 0xFF)
+      wb(b + 0x5B, AURA_DUR or 0x01)
+      wb(b + 0x5C, 0x00)
       wr(b + 0x3C, 0x0000)
       -- cambio de color: bits 13-14 de $24 = numero de paleta VDP (aritmetica
       -- pura, sin lib bit), preservando el bit 15 (prioridad)
