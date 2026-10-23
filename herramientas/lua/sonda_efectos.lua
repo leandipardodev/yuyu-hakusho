@@ -36,8 +36,8 @@ local AURA_ID        = 0x10     -- el polvo del walking (spawnea de a 2, Y $0140
 local AURA_CADA      = 16       -- cada cuantos frames del veneno intenta clonar
 local AURA_DY        = 0x0000   -- offset de Y sobre la posicion del pj
 local AURA_DESTINO   = "P1"     -- "P1" | "P2" | "AMBOS"
-local AURA_CICLAR    = true     -- cada clon sale con la paleta SIGUIENTE (0-3)
-local AURA_PALETA    = 1        -- si AURA_CICLAR es false: paleta fija (0-3)
+local AURA_CICLAR    = false    -- cada clon sale con la paleta SIGUIENTE (0-3)
+local AURA_PALETA    = 3        -- si AURA_CICLAR es false: paleta fija (0-3)
 
 local MAXLINEAS      = 150
 
