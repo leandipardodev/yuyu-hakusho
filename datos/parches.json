@@ -3951,6 +3951,122 @@
           "nota": "el veneno"
         }
       ]
+    },
+    "doble_abajo_diag": {
+      "desc": "DIAGNOSTICO del doble-abajo v2c: el MISMO hook del cargador de mando $155E8 pero con stub DE PASAMANOS (solo re-ejecuta move.b $76(a5),d0 + cmpi.b #$ff,d0 y vuelve a $155F0 con los flags intactos; NO escribe ningun byte de RAM ni usa d1/d2). Para aislar la causa del doble-arriba y el tornado muertos: si con ESTE rom el doble-arriba tambien muere, el responsable es el hook del cargador en si (o el buzon que lo rodea); si el doble-arriba VIVE, el responsable era la escritura de la FSM. Probar tambien la BASE limpia como linea de base y SIEMPRE arranque en frio: la RAM persiste entre cargas de ROM y la v2b (estado en $A044) dejo danos que un reload no limpia.",
+      "confianza": "CODIGO (14 bytes: dos instrucciones COPIADAS del original en $155E8 verificadas con capstone + jmp.l al re-anclaje $155F0; hook de 6+2 con relleno original). Diagnostico, no receta final.",
+      "bytes": [
+        {
+          "addr": "0x0155E8",
+          "old": "10",
+          "new": "4E"
+        },
+        {
+          "addr": "0x0155E9",
+          "old": "2D",
+          "new": "F9"
+        },
+        {
+          "addr": "0x0155EA",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x0155EB",
+          "old": "76",
+          "new": "1A"
+        },
+        {
+          "addr": "0x0155EC",
+          "old": "0C",
+          "new": "07"
+        },
+        {
+          "addr": "0x0155ED",
+          "old": "00",
+          "new": "80"
+        },
+        {
+          "addr": "0x0155EE",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x0155EF",
+          "old": "FF",
+          "new": "FF"
+        },
+        {
+          "addr": "0x1A0780",
+          "old": "00",
+          "new": "10"
+        },
+        {
+          "addr": "0x1A0781",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A0782",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0783",
+          "old": "00",
+          "new": "76"
+        },
+        {
+          "addr": "0x1A0784",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A0785",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0786",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0787",
+          "old": "00",
+          "new": "FF"
+        },
+        {
+          "addr": "0x1A0788",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A0789",
+          "old": "00",
+          "new": "F9"
+        },
+        {
+          "addr": "0x1A078A",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A078B",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A078C",
+          "old": "00",
+          "new": "55"
+        },
+        {
+          "addr": "0x1A078D",
+          "old": "00",
+          "new": "F0"
+        }
+      ]
     }
   },
   "instrumentacion": {

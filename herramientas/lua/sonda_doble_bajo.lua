@@ -1,175 +1,129 @@
 -- =====================================================================
--- sonda_doble_bajo.lua  v2 -- EL DOBLE ABAJO EN EL AIRE (JIN)
+-- sonda_doble_bajo.lua  v3 -- CAZADOR DEL DETECTOR DE DOBLE-PULSACION
 --                            (para BizHawk / core Genesis)
 -- =====================================================================
--- v2: ahora dispara por LO QUE SE VE:
---   a) caida vertical rapida: $44 baja mas de UMBRAL subpixels en un frame
---      mientras esta en el aire ($44 < $9C)
---   b) el comando de doble ($71/$72/$73 con bit5 = $20) prendido
---   c) $5F entra a la familia $A0-$AD (por si el armador deja rastro)
--- En cualquier caso VUELCA el buffer de los ultimos ~2*FONDO frames de
--- AMBOS jugadores, para ver que hizo cada uno alrededor del pique.
+-- OBJETIVO NUEVO: no mirar el dive, mirar el DETECTOR. Con esta sonda se
+-- corre la BASE limpia (o la 34 DIAG) y se hacen DOBLE-ARRIBA (super
+-- salto) unas 5 veces. La sonda compara frame a frame la pagina de RAM
+-- $FFA000-$FFA0FF (la zona del buzon/globals) y vuelca CADA byte que
+-- cambia, con direccion, valor viejo->nuevo y frame. El byte del
+-- detector de doble-pulsacion TIENE que aparecer ahi justo alrededor
+-- del doble tap. Luego se comparan los volcados entre ROMs: el byte que
+-- laten en la base y queda pegado en la 33 es el detector.
+--
+-- Para no inundar el log, el diff de la pagina se vuelca SOLO en los
+-- frames donde el mando cambia (bits de arriba/abajo o botones).
+--
+-- TAMBIEN LOGUEA el mando bruto ($71/$72/$73/$74 del P1), $5F y la FSM
+-- del parche ($FF85B0 = $1B0(a5) del P1, en la 33; en otras ROMs es
+-- basura: se ve igual, solo se interpreta en la 33).
 --
 -- EL LOG ESCRIBE TAMBIEN EN UN ARCHIVO:
 --   C:\Users\leand\AppData\Local\Temp\opencode\sonda_doble_bajo.log
 -- =====================================================================
 
-local VERSION = "v2"
+local VERSION = "v3"
+local FONDO   = 80
+local LOG_TXT = "C:\\Users\\leand\\AppData\\Local\\Temp\\opencode\\sonda_doble_bajo.log"
 
-local SILENCIO = true        -- el latido no aparea la consola
-local FONDO    = 80          -- frames de buffer por jugador (se vuelca x2)
-local UMBRAL   = 0x20        -- subpixels de Y por frame = "caida rapida"
-local LOG_TXT  = "C:\\Users\\leand\\AppData\\Local\\Temp\\opencode\\sonda_doble_bajo.log"
-local VIGILAR  = { 0x5F, 0x5D, 0x60, 0x6B, 0x59, 0x5A, 0x5B, 0x71, 0x72, 0x73, 0xCE }
+-- la pagina del buzon/globals
+local PAG_DESDE, PAG_HASTA = 0xFFA000, 0xFFA0FF
+local FSM_P1, FSM_P2 = 0xFF85B0, 0xFF89B0
+local P1B, P2B = 0xFF8400, 0xFF8800
 
 local function rb(a) local ok, v = pcall(memory.readbyte, a); if ok then return v end return 0 end
 local function rw(a) local ok, v = pcall(memory.readword, a); if ok then return v end return 0 end
-local function rdw(a)
-  local ok, v = pcall(memory.readdword, a)
-  if ok and type(v) == "number" then return v end
-  local hi, lo = rw(a), rw(a + 2)
-  if hi and lo then return hi * 65536 + lo end
-  return 0
-end
 
--- bases: dominio BizHawk ($FF...) fallback FBNeo ($00...)
-local P1B, P2B = 0xFF8400, 0xFF8800
-local function fija_bases()
-  if rw(P1B + 0x44) ~= 0 or rw(P1B + 0xB8) ~= 0 then return end
-  if rw(0x008400 + 0x44) ~= 0 and rw(0x008800 + 0x44) ~= 0 then
-    P1B, P2B = 0x008400, 0x008800
-  end
-end
-
-local archivo = nil
+local archivo
 local function loga(s)
   print(s)
   if archivo == nil then
     local ok, fh = pcall(io.open, LOG_TXT, "a")
-    if ok and fh then archivo = fh; archivo:write("== sesion nueva ==\n") end
+    if ok and fh then archivo = fh; archivo:write("\r\n== sesion nueva ==\r\n") end
   end
-  if archivo then pcall(function() archivo:write(s .. "\n") end) end
+  if archivo then pcall(function() archivo:write(s .. "\r\n") end) end
 end
 
-local fondo = {}   -- fondo[base] = lista de lineas
-local prev   = {}
-local frame  = 0
-
-local function snapshot(base, tag)
-  local parts = {}
-  for _, off in ipairs(VIGILAR) do
-    parts[#parts + 1] = string.format("$%02X=$%02X", off, rb(base + off))
-  end
-  parts[#parts + 1] = string.format("$D2=$%04X", rw(base + 0xD2))
-  parts[#parts + 1] = string.format("$D4=$%04X", rw(base + 0xD4))
-  parts[#parts + 1] = string.format("$B8=$%04X", rw(base + 0xB8))
-  parts[#parts + 1] = string.format("$Y=$%04X", rw(base + 0x44))
-  parts[#parts + 1] = string.format("$9C=$%04X", rw(base + 0x9C))
-  parts[#parts + 1] = string.format("$61=$%02X", rb(base + 0x61))
-  parts[#parts + 1] = string.format("$14=$%08X", rdw(base + 0x14))
-  return string.format("  [%s] f%d: ", tag, frame) .. table.concat(parts, " ")
-end
-
-local function dump_todos(motivo)
-  loga(("##### CAIDA RAPIDA / DOBLE DETECTADA (f%d) motivo=%s"):format(frame, motivo))
-  for _, b in ipairs({ P1B, P2B }) do
-    local tag = (b == P1B) and "P1" or "P2"
-    loga("-- buffer " .. tag .. " --")
-    local buf = fondo[b]
-    if buf then
-      for _, line in ipairs(buf) do loga(line) end
+local function fija_bases()
+  -- fallback FBNeo (direcciones sin FFFFFF de dominio)
+  if rw(P1B + 0x44) == 0 and rw(P1B + 0xB8) == 0 and rb(P1B + 0x71) == 0 then
+    if rw(0x008400 + 0x44) ~= 0 or rb(0x008400 + 0x71) ~= 0 then
+      P1B, P2B = 0x008400, 0x008800
+      PAG_DESDE, PAG_HASTA = 0x00A000, 0x00A0FF
+      FSM_P1, FSM_P2 = 0x0085B0, 0x0089B0
     end
   end
 end
 
-local function pasa()
-  local ok_orig, err = pcall(function()
-    frame = frame + 1
+local pag_vieja      -- snapshot anterior de la pagina
+local mando_viejo    -- los 4 bytes de mando del frame anterior
+local frame = 0
+
+local function lee_mando()
+  return rb(P1B + 0x71), rb(P1B + 0x72), rb(P1B + 0x73), rb(P1B + 0x74)
+end
+
+local function hex2(v) return string.format("%02X", v) end
+
+local function snapshot_pagina()
+  local t = {}
+  for a = PAG_DESDE, PAG_HASTA do t[a] = rb(a) end
+  return t
+end
+
+local function vuelca_diff(vieja, nueva, tag)
+  local n = 0
+  local fila = {}
+  for a = PAG_DESDE, PAG_HASTA do
+    if vieja[a] ~= nueva[a] then
+      n = n + 1
+      fila[#fila + 1] = string.format("$%06X %02X->%02X", a, vieja[a] or 0, nueva[a])
+      if #fila == 8 then
+        loga("      " .. table.concat(fila, "  ")); fila = {}
+      end
+    end
+  end
+  if n > 0 then
+    if #fila > 0 then loga("      " .. table.concat(fila, "  ")) end
+    loga(string.format("[f %d] %s: %d bytes de la pagina %06X-%06X cambian",
+      frame, tag, n, PAG_DESDE, PAG_HASTA))
+  end
+  return n
+end
+
+local function on_frame()
+  frame = frame + 1
+  if frame == 1 then
     fija_bases()
-    for _, p in ipairs({ { P1B, "P1" }, { P2B, "P2" } }) do
-      local base, tag = p[1], p[2]
-      local buf = fondo[base] or {}
-      buf[#buf + 1] = snapshot(base, tag)
-      while #buf > FONDO * 2 do table.remove(buf, 1) end
-      fondo[base] = buf
-
-      -- transiciones livianas (sin volcado)
-      for _, off in ipairs({ 0x5F, 0x6B, 0x71 }) do
-        local v = rb(base + off)
-        local k = string.format("%06X:%02X", base, off)
-        if prev[k] ~= nil and prev[k] ~= v then
-          loga(string.format(">> [%s] f%d CAMBIO $%02X: %02X -> %02X", tag, frame, off, prev[k], v))
-        end
-        prev[k] = v
-      end
-
-      -- a) caida rapida en el aire
-      local y, yprev = rw(base + 0x44), prev[base .. ":y"]
-      local enaire = rw(base + 0x44) < rw(base + 0x9C)
-      local dy = 0
-      if yprev then dy = y - yprev end
-      prev[base .. ":y"] = y
-      if dy >= UMBRAL and enaire then
-        if prev[base .. ":pique"] == nil then
-          prev[base .. ":pique"] = 1
-          if not prev[base .. ":dumpeado"] then
-            prev[base .. ":dumpeado"] = 1
-            dump_todos("caida rapida en " .. tag)
-          end
-        end
-      else
-        prev[base .. ":pique"] = nil
-        -- despues de 45 frames calmo re-permite dumpear
-        if dy < UMBRAL and prev[base .. ":dumpeado"] then
-          prev[base .. ":calm"] = (prev[base .. ":calm"] or 0) + 1
-          if prev[base .. ":calm"] > 45 then
-            prev[base .. ":dumpeado"] = nil
-            prev[base .. ":calm"] = nil
-          end
-        end
-      end
-
-      -- b) el comando doble (bit5 en $71/$72/$73)
-      local d71 = rb(base + 0x71)
-      if (d71 % 32) >= 16 then
-        -- bit5
-        if not prev[base .. ":doble"] then
-          prev[base .. ":doble"] = 1
-          loga(string.format(">> [%s] f%d COMANDO DOBLE: $71=%02X $72=%02X $73=%02X",
-            tag, frame, d71, rb(base + 0x72), rb(base + 0x73)))
-          if not prev[base .. ":dumpeado"] then
-            prev[base .. ":dumpeado"] = 1
-            dump_todos("bit5 doble en " .. tag)
-          end
-        end
-      else
-        prev[base .. ":doble"] = nil
-      end
-
-      -- c) cualquier estado $A0-$AD
-      local f5f = rb(base + 0x5F)
-      if f5f >= 0xA0 and f5f <= 0xAD then
-        loga(string.format(">> [%s] f%d ESTADO A-: $5F=%02X", tag, frame, f5f))
-      end
-    end
-    if not SILENCIO and frame % 600 == 0 then
-      loga(string.format("[sonda %s viva f%d]", VERSION, frame))
-    end
-  end)
-  if not ok_orig then
-    if not prev.errmostrado then
-      prev.errmostrado = true
-      print("SONDA ERROR: " .. tostring(err))
-    end
+    loga(string.format("== sonde v%s | bases P1=%06X P2=%06X | pagina %06X-%06X | FSM P1=%06X ==",
+      VERSION, P1B, P2B, PAG_DESDE, PAG_HASTA, FSM_P1))
   end
+
+  local b71, b72, b73, b74 = lee_mando()
+  local mando = b71 * 0x1000000 + b72 * 0x10000 + b73 * 0x100 + b74
+  local cambio_mando = (mando ~= mando_viejo)
+
+  if cambio_mando and mando_viejo then
+    local mv71 = math.floor(mando_viejo / 0x1000000) % 0x100
+    loga(string.format(
+      "[f %d] MANDO cambia: $71 %s->%s  $72=%02X $73=%02X $74=%02X  $5F=%02X  Y=%04X  FSM(P1)=%02X",
+      frame, hex2(mv71), hex2(b71), b72, b73, b74,
+      rb(P1B + 0x5F), rw(P1B + 0x44), rb(FSM_P1)))
+  end
+
+  -- el diff de la pagina SOLO cuando el mando movio
+  if frame > 60 and cambio_mando then
+    local nueva = snapshot_pagina()
+    if pag_vieja ~= nil then
+      vuelca_diff(pag_vieja, nueva, "pagina buzon/globals")
+    end
+    pag_vieja = nueva
+  end
+
+  mando_viejo = mando
 end
 
-if event and event.onframeend then event.onframeend(pasa) end
-if gui and gui.register then gui.register(function() pcall(pasa) end) end
-
-loga("====================================================================")
-loga("SONDA DOBLE BAJO " .. VERSION .. ": cargada")
-loga("1) P1 humano = Jin: salta y aprieta abajo dos veces en el aire")
-loga("2) despues pon Jin CPU y espera su descenso")
-loga("el log tambien va a: " .. LOG_TXT)
-loga("====================================================================")
+while true do
+  on_frame()
+  emu.frameadvance()
+end

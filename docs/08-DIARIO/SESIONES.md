@@ -1373,3 +1373,38 @@ que VOLVER; el dive tiene que salir). Si el dive sigue sin salir con el
 doble-arriba funcionando, la FSM `$1B0(a5)` queda como instrumento: la
 sonda de BizHawk (`sonda_doble_bajo.lua`) puede leer `$FF85B0` (P1) y
 `$FF89B0` (P2) para ver el estado de la FSM frame a frame.
+
+## S-2024-10-24 (apéndice) -- El doble-arriba sigue muerto con la v2c: diagnóstico diferencial
+
+- Test del usuario de la ROM 33 (v2c): **el doble-arriba SIGUE sin
+  andar** y el tornado no sale (5 peleas sin que la máquina lo lance).
+- Con la v2c NO se escribe `$FFA044`: la teoría "el clr de la v2b
+  mató el detector" ya no explicaba nada. Contra-escaneo capstone
+  LINEAL sobre la base china entera (`censo_china.py`): **cero
+  referencias reales del 68K a `$FFA040-$FFA045`** en la china también
+  (las únicas de verdad son las de `$A042` del plano y el `lea
+  $A04000` del chip de sonido); y el disp `$1B0(a5)` tampoco tiene
+  dueño en la china (los hits de la búsqueda son el inmediato `$1B0`
+  de las técnicas, data, y un disp NEGATIVO `-$1b0` que el filtro
+  confundió).
+- Quedan dos sospechosas: (a) la RAM de BizHawk/FBNeo **persiste entre
+  cargas de ROM** (el daño que la v2b hizo EN JUEGO sobre `$A044`
+  queda pegado hasta un ARRANQUE EN FRÍO; un reload no lo limpia);
+  (b) el **hook en sí** de `$155E8`: el doble-arriba vivía con el hook
+  del aura en `$015BF6`, otro cargador distinto.
+- Acción: grupo `doble_abajo_diag` (+22 items) con **stub de
+  pasamanos** (re-ejecuta `move.b $76(a5),d0` + `cmpi.b #$ff,d0` y
+  vuelve a `$155F0`; no escribe ni un byte de RAM, no usa `d1`/`d2`).
+  ROM 34 `rom/cambios/34_china_DIAG_hook_pasamanos.bin`, SHA1
+  `2D2D993021EEF1A173EAD1FCF64ACD31CE22FA53` (17 bytes distintos),
+  `verificar_desensamblado.py` OK.
+- Sonda v3 (`herramientas/lua/sonda_doble_bajo.lua`): diff de la
+  página `$FFA000-$FFA0FF` solo en los frames donde el mando cambia,
+  con dirección y valor viejo->nuevo; el byte del detector del
+  doble-tap TIENE que aparecer al hacer doble-arriba en la base limpia.
+  Log a `C:/Users/leand/AppData/Local/Temp/opencode/sonda_doble_bajo.log`.
+  También vuelca `$71-$74`, `$5F`, Y (`$44`) y la FSM `$FF85B0` del P1.
+- Matriz de tests pedidos al usuario, SIEMPRE arranque en frío:
+  1) base limpia con sonda (línea de base del detector),
+  2) ROM 34 con sonda,
+  3) ROM 33 con sonda.

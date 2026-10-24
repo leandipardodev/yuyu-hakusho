@@ -1650,3 +1650,53 @@ es la MISMA zona del buzon `$FFA040-$FFA0FF`. En juego estuvo OK
 de forma rara, mirar el buzon primero. El addi.b de bits 5-7 es un
 read-modify-write del byte ENTERO: si el dueno invisible de `$FFA042`
 escribe concurrido podeis pisar bits (esto es hipotesis, no ha pasado).
+
+### El doble-arriba SIGUE muerto con la v2c: el diagnostico diferencial
+
+El test del usuario con la v2c (ROM 33) reporto: doble-arriba muerto y
+el tornado no sale. La v2c NO escribe `$FFA044` para nada, asi que la
+teoria "el clr de la v2b mato el detector" quedo sin sustento si el
+doble-arriba estaba muerto en una sesion limpia. Contra-escaneo con
+capstone LINEAL sobre la base CHINA entera (`censo_china.py`,
+~632715 instrucciones decodificadas): **cero referencias reales del
+68K a `$FFA040-$FFA045`** en la china tambien (las unicas de verdad son
+las de `$A042` del plano y el `lea $A04000` del chip de sonido; el resto
+era data y branch-targets falsos). Y el disp `$1B0(a5)` tampoco tiene
+dueno en la china (los hits de la busqueda son el inmediato `$1B0` de
+las tecnicas, data, y un disp NEGATIVO `-$1b0` que el filtro confundio).
+
+Dos sospechosas que quedaron de pie:
+
+1. **La RAM persiste entre recargas de ROM** en BizHawk/FBNeo: el dano
+   que la v2b hizo EN JUEGO sobre `$A044` queda pegado hasta un
+   ARRANQUE EN FRIO (energy/power-cycle), y un reload no lo limpia. Los
+   tests anteiores pudieron estar corriendo con la `$A044` vencida.
+2. **El hook del cargador `$155E8` en si**: el doble-arriba funcionaba
+   con la ROM 30 del aura, cuyo hook vive en `$015BF6` (OTRO cargador).
+   El hook de `$155E8` es la constante de TODAS las roturas.
+
+Para romper el empate salio el grupo `doble_abajo_diag` (+22 items):
+el MISMO hook de `$155E8` con un stub DE PASAMANOS que solo re-ejecuta
+`move.b $76(a5),d0` + `cmpi.b #$ff,d0` (los dos operandos COPIADOS tal
+cual del original) y vuelve con `jmp $155f0.l`; NO escribe ni un byte
+de RAM y no usa `d1`/`d2`. El ROM:
+`rom/cambios/34_china_DIAG_hook_pasamanos.bin`, SHA1
+`2D2D993021EEF1A173EAD1FCF64ACD31CE22FA53` (17 bytes distintos),
+`verificar_desensamblado.py` OK. La matriz del test:
+
+- BASE limpia + sonda: el doble-arriba TIENE que vivir (linea de base
+  del detector). Si vive aca, la base esta bien.
+- ROM 34 (diag, arranque en frio): doble-arriba VIVE = el responsable
+  era la escritura de la FSM (vuelve el foco al byte del struct);
+  doble-arriba MUERTO = el hook del cargador en si es el asesino y hay
+  que re-ancarlo en otro sitio.
+- ROM 33 (v2c, arranque en frio): el test original.
+
+La sonda=`herramientas/lua/sonda_doble_bajo.lua` v3: en vez de mirar el
+dive, VUELCA EL DIFF de la pagina `$FFA000-$FFA0FF` frame a frame (solo
+en los frames donde el mando cambia), con direccion y valor
+viejo->nuevo. Con la base limpia y cinco doble-arriba, el byte del
+detector del doble-tap TIENE que aparecer en el log; ese byte se
+compara entre ROMs y se sabe que hay que respetar. El log va a
+`C:/Users/leand/AppData/Local/Temp/opencode/sonda_doble_bajo.log`
+(tambien vuelca `$71-$74`, `$5F`, Y y la FSM `$FF85B0` del P1).
