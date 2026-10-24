@@ -304,8 +304,11 @@ local function on_frame()
   -- identidad del build en vivo + marca de disparo del stub
     local bid, fmark = rb(0xFFA0F0), rb(0xFFA0F1)
     if bid ~= bid_viejo and frame > 60 then
-      local nb = ({[1]='A FSM_A0',[2]='B AUTODIVE',[3]='C VELONLY',
-                   [4]='D NOMANA',[5]='E NOFIRE'})[bid] or '???'
+      local nb = ({[0x01]='A FSM_A0',[0x02]='B AUTODIVE',[0x03]='C VELONLY',
+                   [0x04]='D NOMANA',[0x05]='E NOFIRE',
+                   [0x06]='F1 AD armador 5D=2',[0x07]='F2 AD armador 5D=28',
+                   [0x08]='F3 AD armador cost8',[0x09]='F4 AD armador cost14',
+                   [0x0A]='F5 AD armador FREE'})[bid] or '???'
       loga(string.format('[f %d] BUILD STUB: $%02X (%s)', frame, bid, nb))
     end
     if fmark ~= fire_viejo and frame > 60 then

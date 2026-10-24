@@ -45,11 +45,13 @@ def A(ops, tgt): prog.append(('A', bytes.fromhex(ops), tgt))
 def E(name): prog.append(('E', name))
 
 
-def emit_stub(bid, tap, fire, mana):
-    """bid: byte de identidad en $FFA0F0 (1..5).
+def emit_stub(bid, tap, fire, mana, entrada=None):
+    """bid: byte de identidad en $FFA0F0 (1..F).
     tap: 'doble' (FSM 2 toques) | 'solo' (1 toque = dispara)
-    fire: 'a0' (bloque $A0 completo) | 'vel' (solo velocidad) | 'nada'
-    mana: True = cobra 4 via $19C46"""
+    fire: 'a0' (bloque $A0 completo) | 'vel' (solo velocidad) |
+          'nada' (no dispara) | 'jsr' (disparo = armador AD nativo)
+    mana: True = cobra 4 via $19C46 antes de 'a0'/'vel'
+    entrada: para fire='jsr', entry-point del armador AD nativo"""
     reset()
     d('13 fc 00 %02x 00 ff a0 f0' % bid)   # ROM identidad: $FFA0F0 := bid
     d('13 fc 00 00 00 ff a0 f1')           # marca de disparo: apagarla
@@ -64,6 +66,8 @@ def emit_stub(bid, tap, fire, mana):
     E('FSM')
     d('48 e7 60 04')            # push d1,d2,a5 (predecrem: d1=bit14 d2=bit13 a5=bit2)
     d('4b f9 00 ff 84 00')      # lea $FF8400,a5 ($4b=a5; $49=a4, $4d=a6)
+    d('12 2d 01 b0')            # move.b ($1b0,a5), d1
+    d('13 c1 00 ff a0 f2')      # espejo del estado FSM -> $FFA0F2 (diagnostico)
     d('12 2d 00 5f')            # move.b $5f(a5), d1   (= $FF845F, estado aire)
     d('0c 01 00 0e'); b(0x67,'RUN')   # cae    -> RUN
     d('0c 01 00 0d'); b(0x67,'RUN')   # sube   -> RUN
@@ -95,7 +99,15 @@ def emit_stub(bid, tap, fire, mana):
         d('1b 7c 00 00 01 b0'); b(0x60,'SALIDA')
     else:
         d('13 fc 00 10 00 ff a0 f1')      # marca DISPARO: $FFA0F1 := $10
-        if mana:
+        if fire == 'jsr':
+            # disparo = el armador AD NATIVO del juego (cobra su propio
+            # mana, escribe $AD/$5D/$6B/$6C y sale por $19C1C->rts):
+            # se lo invoca con a5=P1 via el wrapper (push/lea/pop).
+            d('48 e7 60 04')                  # push d1,d2,a5
+            d('4b f9 00 ff 84 00')            # lea $FF8400, a5
+            A('4eb9', entrada)                # jsr <entrada del armador AD>
+            d('4c df 20 06')                  # pop d1,d2,a5
+        elif mana:
             d('30 3c 00 04')              # move.w #4, d0
             A('4eb9', 0x019C46)           # jsr $19C46 (cobra 4 de mana $B8(a5))
             d('0c 00 00 00'); b(0x67,'RST')   # sin mana: reset y fuera
@@ -180,16 +192,22 @@ print('base: checksum almacenado $%04X, calculado $%04X (%s)' % (alm, s & 0xffff
       'OK, se recalcula tras parchear' if alm == (s & 0xffff) else 'NO CUADRA'))
 
 BUILDS = [
-    # (archivo,                      bid, tap,   fire, mana)
-    ('44_DIVE_A_FSM_A0.bin',         0x01, 'doble', 'a0', True),
-    ('45_DIVE_B_AUTODIVE.bin',       0x02, 'solo',  'a0', True),
-    ('46_DIVE_C_VELONLY.bin',        0x03, 'solo',  'vel', False),
-    ('47_DIVE_D_NOMANA.bin',         0x04, 'doble', 'a0', False),
-    ('48_DIVE_E_NOFIRE.bin',         0x05, 'doble', 'nada', False),
+    # (archivo,                      bid, tap,   fire, mana, entrada)
+    ('44_DIVE_A_FSM_A0.bin',         0x01, 'doble', 'a0', True,  None),
+    ('45_DIVE_B_AUTODIVE.bin',       0x02, 'solo',  'a0', True,  None),
+    ('46_DIVE_C_VELONLY.bin',        0x03, 'solo',  'vel', False, None),
+    ('47_DIVE_D_NOMANA.bin',         0x04, 'doble', 'a0', False, None),
+    ('48_DIVE_E_NOFIRE.bin',         0x05, 'doble', 'nada', False, None),
+    # familia: disparo = jsr al armador AD NATIVO de cada clase
+    ('49_DIVE_F1_AD5D02.bin',        0x06, 'doble', 'jsr', False, 0x018AE0),
+    ('50_DIVE_F2_AD5D28.bin',        0x07, 'doble', 'jsr', False, 0x0191F0),
+    ('51_DIVE_F3_AD_COST8.bin',      0x08, 'doble', 'jsr', False, 0x0194AE),
+    ('52_DIVE_F4_AD_COST14.bin',     0x09, 'doble', 'jsr', False, 0x019BA4),
+    ('53_DIVE_F5_AD_FREE.bin',       0x0A, 'doble', 'jsr', False, 0x01C2F6),
 ]
 
-for nombre, bid, tap, fire, mana in BUILDS:
-    emit_stub(bid, tap, fire, mana)
+for nombre, bid, tap, fire, mana, entrada in BUILDS:
+    emit_stub(bid, tap, fire, mana, entrada)
     cod, total = resolver(prog)
     print('-- %s: stub %06X-%06X (%d bytes, hueco $%04X)' %
           (nombre, STUB, STUB+len(cod)-1, total, HASTA-STUB))
