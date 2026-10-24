@@ -1816,10 +1816,14 @@ jmp al stub nuevo en `$1A06AE` (hueco de ceros `$1A06AE-$1A0826`,
      `move.w #4,d0; jsr $19C46` (sin mana no dispara), luego
      `move.l #0,$10 / move.l #$48000,$14 / $5F=$A0 / $4C=0 /
      $5D=$2F / clr $6B / $6C=0 / $1B0=0`. Nada de jsr al armador.
-  4. salida: pop d1-d2, rejuega `move.b $76,d0` (el base hace
-     `movea.w d0,a2`), `jmp $0155F4` (bypass del beq `$0155F0`:
-     ya se sabe que `$76!=ff`).
-Header checksum: el juego LO VERIFICA al bootear (aprendido de la
+   4. salida: pop d1-d2, clr.w d0 + rejuega move.b $76,d0,
+      jmp $0155F4 (bypass del beq $0155F0: ya se sabe que $76!=ff).
+      El clr.w d0 es OBLIGATORIO: el cuerpo en $0155F4 hace
+      'movea.l d0,a2' y lee la tabla en -$880(a2) con d0 COMPLETO
+      (32 bits); con los altos de d0 sucios, a2 = basura y el
+      aplicador pisa $71-$74/$c0-$c2 con datos corruptos. El base
+      lo evita en su otro camino con clr.w d0 ($1555B4) y movea.w
+      ($155C0).
 practica: los tres ROMs de la generacion sin recalcular dieron
 "error checksum" y rojo en el logo Sega; la 38 con su checksum
 recalculado $D94B arrancaba). `hacer_dive39.py` recalcula el
@@ -1829,6 +1833,19 @@ partida es consistente ($337B almacenado == calculado).
 
 `rom/cambios/39_china_DIVE_A0INLINE.bin` (nombre viejo, con checksum
 SIN RECALCULAR: petea rojo en el logo, no cargar).
+
+Log de la sesion con el 40 checksumado (sonda fuerte): el detector
+base del doble-abajo SI dispara en el aire ($6B: 00 -> 06 con
+$5F=07 diagonal, f 8414 del log) y el juego corre bien, PERO la
+FSM nunca sale de 00 (FF85B0 queda 00 con abajo presionado en aire).
+Diagnostico: 43_china_DIVE_DIAG_SENTINEL.bin = stub que replayea
+la cabeza, escribe $A5 via ($1B0,a5), $0C por abs en FF85B0 y un
+eco $C0/$A5 en $FFA0F4/$FFA0F5 (la pagina que la sonda vigila), y
+sale por jmp $0155F0. Veredictos: FFA0F4=$C0/FFA0F5=$A5 => el stub
+corre; FF85B0 $A5 => a5==FF8400 (el write via a5 piso el abs);
+FF85B0 $0C => el stub corre pero a5 != FF8400 (los writes del FSM
+van a otro struct); FF85B0 $00 con eco presente => algo del juego
+borra FF85B0 por frame; sin eco => el hook no se ejecuta.
 
 Prueba el dive (vertical y diagonal) y si el `$A0` vuelve a quedar
 huorfo el proximo paso es la ruta `$6B=6`: hookear el write-site del

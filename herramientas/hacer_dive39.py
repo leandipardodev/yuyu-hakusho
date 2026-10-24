@@ -47,6 +47,16 @@ def emit_stub(variant):
     if variant == 'shim':
         d('4ef9000155f0')       # jmp $0155F0 (sin FSM: paso puro)
         return
+    if variant == 'sentinel':
+        # diagnostico: escribe marcas en distintos canales para saber
+        # (a) si el stub corre (echo en FFA0F4/F5), (b) si a5==FF8400
+        # (FF85B0 queda $A5 escrito via a5 pisando el $0C absoluto).
+        d('13 fc 00 c0 00 ff a0 f4')   # abs $FFA0F4 := $C0 (eco buzon: corre)
+        d('13 fc 00 a5 00 ff a0 f5')   # abs $FFA0F5 := $A5 (eco buzon: corre)
+        d('1b 7c 00 a5 01 b0')         # ($1b0,a5) := $A5  (si a5==FF8400 pisara)
+        d('13 fc 00 0c 00 ff 85 b0')   # abs $FF85B0 := $0C (valor si a5 != FF8400)
+        d('4ef9000155f0')           # jmp $0155F0 (flags del cmpi intactos)
+        return
     b(0x66, 'FSM')              # bne FSM (hay comando armado pendiente)
     d('4ef9000155f0')           # jmp $0155F0  (sin comando: el base sigue)
     E('FSM')
@@ -88,6 +98,12 @@ def emit_stub(variant):
         d('42 2d 01 b0')
     E('SALIDA')
     d('4c df 00 06')            # pop d1,d2
+    # los bytes altos de d0 vienen sucios (los restauramos del push/y del
+    # propio juego) y el cuerpo del base en $0155F4 hace movea.l d0,a2 y lee
+    # la tabla en -$880(a2): sin limpiar d0, a2 = basura y el aplicador
+    # pisa $71-$74/$c0-$c2 con datos corrompidos. El base evita esto en su
+    # otro camino con movea.w + clr.w ($1555B4). Nosotros limpiamos SIEMPRE.
+    d('42 40')                  # clr.w d0
     d('10 2d 00 76')            # move.b $76(a5), d0 (rejuega)
     d('4ef9000155f4')           # jmp $0155F4 (bypass del beq $0155F0)
 
@@ -152,7 +168,8 @@ print('base: checksum almacenado $%04X, calculado $%04X (%s)' % (alm, s & 0xffff
 
 for nombre, variante in [('40_china_DIVE_A0INLINE_v2.bin', 'full'),
                          ('41_china_DIVE_DIAG_NOFIRE.bin', 'nofire'),
-                         ('42_china_DIVE_DIAG_SHIM.bin',   'shim')]:
+                         ('42_china_DIVE_DIAG_SHIM.bin',   'shim'),
+                         ('43_china_DIVE_DIAG_SENTINEL.bin', 'sentinel')]:
     emit_stub(variante)
     cod, total = resolver(prog)
     print('-- %s: stub %06X-%06X (%d bytes, hueco $%04X)' %
