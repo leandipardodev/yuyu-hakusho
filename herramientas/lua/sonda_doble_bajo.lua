@@ -197,21 +197,10 @@ local function titulo()
   pcall(function()
     cs = memory.read_u16(0x18E, "MD CART")
   end)
-  local builds = {
-    [0x337B] = "base (SIN parche!)",
-    [0x355F] = "40 DIVE FSM-v3 (el del test)",
-    [0x1C10] = "41 NOFIRE diag",
-    [0x2F25] = "42 SHIM diag",
-    [0x54F1] = "43 SENTINELA diag (no es el del test!)"
-  }
-  if builds[cs] then nom = builds[cs] end
   loga(string.format(
-    "SONDA v%s | ROM=%s ($%04X) | modo=%s dominio=%s tam=%d | addr=%+d | bases P1=%06X P2=%06X | pagina %06X-%06X | FSM P1=%06X",
-    VERSION, nom, cs, modo, tostring(DOMINIO), TAMDOM, OFF, P1B, P2B, PAG_DESDE, PAG_HASTA, FSM_P1))
-  if cs ~= 0x355F then
-    loga("(!) ATENCION: el ROM cargado NO es el 40 del FSM-v3. Cerrar")
-    loga("    BizHawk y abrir rom\\cambios\\40_china_DIVE_A0INLINE_v2.bin")
-  end
+    "SONDA v%s | rom checksum=$%04X | modo=%s dominio=%s tam=%d | addr=%+d | bases P1=%06X P2=%06X | pagina %06X-%06X | FSM P1=%06X",
+    VERSION, cs, modo, tostring(DOMINIO), TAMDOM, OFF, P1B, P2B, PAG_DESDE, PAG_HASTA, FSM_P1))
+  loga("(la identidad EXACTA del build esta en $FFA0F0; se reporta en vivo)")
 end
 
 -- ---- el resto ---------------------------------------------------------
@@ -219,6 +208,7 @@ local pag_vieja
 local mando_viejo
 local char_viejo
 local fsm_viejo, f5f_viejo, f6b_viejo
+local bid_viejo, fire_viejo
 local frame = 0
 
 DOMINIO_FIJO = ""   -- forzar: el nombre EXACTO que imprime la lista
@@ -311,6 +301,21 @@ local function on_frame()
     if f6b ~= f6b_viejo and frame > 60 then
       loga(string.format("[f %d] P1 $6B: %02X -> %02X", frame, f6b_viejo or 0, f6b))
     end
+  -- identidad del build en vivo + marca de disparo del stub
+    local bid, fmark = rb(0xFFA0F0), rb(0xFFA0F1)
+    if bid ~= bid_viejo and frame > 60 then
+      local nb = ({[1]='A FSM_A0',[2]='B AUTODIVE',[3]='C VELONLY',
+                   [4]='D NOMANA',[5]='E NOFIRE'})[bid] or '???'
+      loga(string.format('[f %d] BUILD STUB: $%02X (%s)', frame, bid, nb))
+    end
+    if fmark ~= fire_viejo and frame > 60 then
+      if fmark == 0x10 then
+        loga(string.format('[f %d] ** DISPARO del stub ejecutado **', frame))
+      elseif fire_viejo == 0x10 then
+        loga(string.format('[f %d] marca de disparo apagada', frame))
+      end
+    end
+    bid_viejo, fire_viejo = bid, fmark
     fsm_viejo, f5f_viejo, f6b_viejo = fsm, f5f, f6b
 
     if mando ~= mando_viejo then
