@@ -1561,3 +1561,34 @@ la lectura del struct depende del DOMINIO de memoria del emulador
   `DOMINIO_FIJO` arriba permite forzar el dominio a mano si todo
   falla. Si `io.open` no existe en BizHawk, avisa y todo sale a la
   consola (copiarla entera).
+
+## S-2024-10-24c (apéndice 6) -- $92=$25D2 existe en el china; $07 = salto diagonal
+
+- El log de la sonda v4 (BizHawk, dominio actual = M68K BUS lineal
+  válido) trae dos datos que cambian el plan:
+  1) `f808 CHAR P1: $92(word) 0000->25D2`: el struct del P1 carga
+     **$92=$25D2** cuando se elige Jin - **existe en el china** (no
+     estaba inventado en el build J). CONSECUENCIA: el gate del build J
+     (`cmpi.w #$25d2, $92(a5)`) no era el asesino del dive muerto de la
+     ROM 35; la FSM pasaba el gate y algo ANTES del gate, o en la
+     máquina del `d2`, bloqueó el disparo. (El asunto queda abierto otra
+     vez; el `$92` es el ID correcto.)
+  2) Los down-bounces del P1 (f1198-f1230 de esa sesión) con
+     `$5F=$07`: la FSM rechaza esos frames porque el gate de aire
+     {`$0E`,`0D`,`$08`} no incluye `$07`.
+- ESTADO `$07` DESCIFRADO: armador del salto en `$015E76` y
+  `$018580/$0185A4`: toman `$71(a5)&F`: nibble `1` (arriba puro) ->
+  `move.b #$8, $5f` + `$10=0` (salto VERTICAL); nibble `9` -> `$10 =
+  a2.c` + `$5F=$07` (si facing=1); nibble `5` -> `$10 = -a2.c` +
+  `$5F=$07` (si facing=0). **`$07` = salto DIAGONAL** (con la
+  velocidad horizontal del struct de datos `a2 = $90(a5)`), `$08` =
+  vertical. En el log v1 (base limpia, FBNeo) `$07` también aparece en
+  `0C -> 07 -> 06/08/0E` al aterrizar de ataques (`$90/$AE/$AC` =
+  estados de ataque aéreo, `$0C` = caída post-ataque).
+- HERRAMIENTA v5: la v4 tenía un bug que contaminó el probe (pasaba
+  los nombres de dominio en MINÚSCULA y BizHawk no los encuentra:
+  "Unable to find domain: m68k bus..."). La v5 guarda el nombre
+  ORIGINAL, agrega el tercer candidato implícito (el dominio actual)
+  y re-instala el watch de `$5F/$6B/FSM(P1)` frame a frame que la v1
+  tenía y la v4 había perdido (en v4 solo se veían en las líneas
+  MANDO y se escapaban los intermedios).

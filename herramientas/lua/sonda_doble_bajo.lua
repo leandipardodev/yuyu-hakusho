@@ -1,30 +1,32 @@
 -- =====================================================================
--- sonda_doble_bajo.lua  v4 -- CAZADOR DEL DETECTOR DE DOBLE-PULSACION
+-- sonda_doble_bajo.lua  v5 -- CAZADOR DEL DETECTOR DE DOBLE-PULSACION
 --                            (BizHawk Y FBNeo, autodeteccion de dominio)
 -- =====================================================================
--- CAMBIO v4: en BizHawk la lectura default NO mapea 0xFF8400 (el dominio
--- de memoria activo puede ser otro) y la v3 se creia el fallback FBNeo
--- y leia basura (asi salio el $92=$3B41 falso). La v4:
---   1) lista los dominios de memoria de BizHawk (nombre + tamano) y
---      los imprime al arrancar;
---   2) elige un dominio por nombre preferido ("68000", "68k", "main
---      ram", "mainram", "work ram", "wram", "bus";
---   3) traduce direcciones: dominio de 64KB (RAM) -> offset -0xFF0000;
---      dominio grande (bus) -> offset 0;
---   4) PROBE: entre f30 y f300 rota candidates y puntua cual lectura del
---      $5F del P1 da EXACTAMENTE los estados del menu boot (28/29/2A/30,
---      medidos en el log v1 real f55-f131); al final fija el ganador e
---      imprime los scores. Si ninguna da nada, cae al modo actual y
---      avisa (y DOMINIO_FIJO arriba permite forzar el dominio a mano).
---   5) si io.open no existe (BizHawk puede rechazarlo), avisa: el log
---      completo sale a la consola de Lua y hay que copiarlo a mano.
---
--- USO: la ROM arranca y SE DEJA QUIETA hasta ~f300 (la sonda hace el
--- probe sola). Luego P1 humano = Jin: salta y aprieta abajo dos veces
--- en el aire, 3 intentos.
+-- CAMBIO v5:
+--   BUG FIX: la v4 pasaba los nombres de dominio en minuscula a
+--     memory.readbyte/use_memory_domain y BizHawk NO los encuentra
+--     ("Unable to find domain: m68k bus...falling back to current").
+--     La v5 guarda el nombre ORIGINAL (minuscula solo para el match).
+--   NUEVO: 3er candidate implicito = "sin tocar dominio" (el actual).
+--     En el run v5 del usuario el dominio actual (M68K BUS) trabalhava
+--     PERFECTO y los candidates rotos cayeron por fallback al mismo...
+--     mejor no arriesgar: si "actual" puntua igual o mejor, gana.
+--   NUEVO: watch de los bytes de estado del STRUCT del P1 cada frame,
+--     como la v1: $5F, $6B, FSM(P1), $76, $1B0. La v4 solo los imprimia
+--     en los MANDO-cambia y se perdian los valores intermedios.
+--   PROBE: set plausible {07,08,0D,0E,28,29,2A,30} (estados de salto y
+--     menu vistos en logs reales), ventana f40-f900.
+--   OJO DEL USUARIO v4 (oro puro):
+--     * $92(word) = 25D2 en el struct del P1 apenas se elige Jin
+--       (f808): el gate del build J NO era el asesino del dive.
+--     * $07 = salto diagonal (nibbles 9/5 alto+lateral -> 5F=07 con
+--       velocidad horizontal; nibble 1 arriba puro -> 5F=08),
+--       armador en $015E76/$018580 (cmpi #$9/5/1 sobre $71&$F).
+--     * $90/$AE/$AC = estados de ataque aereo; 0C = caida post-ataque;
+--       06/01/02 = floor/walk/land-ish; 90->0C->07 al aterrizar.
 -- =====================================================================
 
-local VERSION = "v4"
+local VERSION = "v5"
 local LOG_TXT = "C:\\Users\\leand\\AppData\\Local\\Temp\\opencode\\sonda_doble_bajo.log"
 
 -- direcciones GLOBALES (espacio 68K del juego); rb/rw aplican el offset
@@ -33,11 +35,11 @@ local FSM_P1, FSM_P2 = 0xFF85B0, 0xFF89B0
 local P1B, P2B = 0xFF8400, 0xFF8800
 
 -- ---- infra de dominio/offset -----------------------------------------
-local DOMINIO, TAMDOM, OFF = "?", 0, 0
-local modo = "actual"     -- "actual" (FBNeo-ish) | "bizhawk" | "fallback"
+local DOMINIO, TAMDOM, OFF = "(actual)", 0, 0
+local modo = "actual"
 
 local function AD(a)
-  return (a + OFF) % 0x1000000   -- lua sin &: modulo en 24 bits
+  return (a + OFF) % 0x1000000
 end
 
 local function rb(a)
@@ -65,7 +67,7 @@ local function loga(s)
     if archivo == nil then
       print("(!) el archivo de log no abre en este emulador (io restringido).")
       print("    TODO sale a la consola de Lua: copiala completa al final.")
-    elseif aviso_io then
+    else
       print("(log tambien va a: " .. LOG_TXT .. ")")
     end
   end
@@ -74,7 +76,7 @@ end
 
 local function lista_dominios()
   local ok, lista = pcall(memory.getmemorydomainlist)
-  if not ok or type(lista) ~= "table" then return nil end
+  if not ok or type(lista) ~= "table" then return "" end
   local salida = {}
   for _, nombre in pairs(lista) do
     local n = tostring(nombre)
@@ -91,13 +93,10 @@ local function tam_de(nombre)
   return tam
 end
 
--- ---- fija dominio + offset --------------------------------------------
--- probe: puntua candidates leyendo $5F del P1 entre f30..f300; en el
--- boot del juego $5F pasa por 30/28/29/2A (no cero la mayor parte del
--- arranque), asi que bastantes frames nonzero = dominant plausibile.
-local probe_frames      -- score por candidate: [i] = frames plausibles
-local probe_cand        -- lista de candidates: [i] = {dom, off}
-local probe_sak = 300   -- frames de probe (f30-f300; dejalo quieto hasta ahi)
+-- ---- probe -------------------------------------------------------------
+local probe_cand        -- [i] = {orig, low, off}; vacio = probe off
+local probe_frames
+local probe_sak = 900
 
 local function armar_candidates()
   local lista_ok, lista = pcall(memory.getmemorydomainlist)
@@ -107,14 +106,15 @@ local function armar_candidates()
   local vistos = {}
   for _, pref in ipairs(prefs) do
     for _, nombre in pairs(lista) do
-      local n = tostring(nombre):lower()
-      if n:find(pref, 1, true) and not vistos[n] then
+      local n = tostring(nombre)
+      local low = n:lower()
+      if low:find(pref, 1, true) and not vistos[n] then
         vistos[n] = true
         local tam = tam_de(n)
         if tam == 0x10000 then
-          cands[#cands + 1] = { dom = n, off = -0xFF0000 }
+          cands[#cands + 1] = { orig = n, off = -0xFF0000 }
         elseif tam >= 0xFF8A00 then
-          cands[#cands + 1] = { dom = n, off = 0 }
+          cands[#cands + 1] = { orig = n, off = 0 }
         end
       end
     end
@@ -122,59 +122,71 @@ local function armar_candidates()
   return cands
 end
 
-local function aplicar(dom, off)
-  local ok = pcall(memory.use_memory_domain, dom)
-  if not ok then ok = pcall(memory.usememorydomain, dom) end
-  if ok then DOMINIO, OFF, modo = dom, off, "bizhawk" end
-  TAMDOM = tam_de(dom)
+local function aplicar(off)          -- el dominio se fija UNA vez fuera
+  OFF = off
+  modo = "fijado"
+end
+
+local function fija_dominio(nombre)
+  local ok = pcall(memory.use_memory_domain, nombre)
+  if not ok then ok = pcall(memory.usememorydomain, nombre) end
+  DOMINIO = nombre
+  TAMDOM = tam_de(nombre)
   return ok
 end
 
 local function fija_bases()
+  loga("dominios de memoria: " .. lista_dominios())
   local cands = armar_candidates()
-  local dl = lista_dominios()
-  if dl then loga("dominios de memoria: " .. dl) end
   if cands and #cands > 0 then
     probe_cand = cands
     probe_frames = {}
     for i = 1, #cands do probe_frames[i] = 0 end
-    -- se hace el probe por frames de 1 a probe_sak en on_frame()
-    return
+    return   -- el probe corre en on_frame hasta probe_sak
   end
-  -- sin API de dominios (FBNeo): la actual sirve si la base global da vida;
-  -- si no, fallback FBNeo con bases 0x0084xx (historica, calibrada alli)
+  -- sin API de dominios (FBNeo): igualar al viejo fallback calibrado
   if rw(P1B + 0x44) == 0 and rw(P1B + 0xB8) == 0 and rb(P1B + 0x71) == 0 then
     if rw(0x008400 + 0x44) ~= 0 or rb(0x008400 + 0x71) ~= 0 then
       P1B, P2B = 0x008400, 0x008800
       PAG_DESDE, PAG_HASTA = 0x00A000, 0x00A0FF
       FSM_P1, FSM_P2 = 0x0085B0, 0x0089B0
       modo = "fallback"
+      DOMINIO = "(FBNeo)"
     end
   end
 end
 
+local DOMUS_PLENITUD = { [0x07]=1,[0x08]=1,[0x0D]=1,[0x0E]=1,
+                         [0x28]=1,[0x29]=1,[0x2A]=1,[0x30]=1 }
+
 local function cerrar_probe()
-  local mejor,mondon,mejoroff,mejorN = 0, nil, 0, 0
-  local total = probe_sak - 30 + 1
-  local res = {}
+  local total = probe_sak - 40 + 1
+  local res, mejorN, mejoroff = {}, -1, nil
+  local sbus, sram = probe_frames[1] or 0, probe_frames[2] or 0
   for i = 1, #probe_cand do
     local cand = probe_cand[i]
-    res[#res + 1] = string.format("%s@%+d=%d/%d", cand.dom, cand.off, probe_frames[i], total)
+    res[#res + 1] = string.format("%s@%+d=%d/%d", cand.orig, cand.off, probe_frames[i], total)
     if probe_frames[i] > mejorN then
-      mejor, mondon, mejoroff, mejorN = i, cand.dom, cand.off, probe_frames[i]
+      mejorN, mejoroff = probe_frames[i], cand.off
     end
   end
-  loga("probe $5F(P1) por candidate: " .. table.concat(res, " | "))
-  if mejorN >= 10 then
-    if aplicar(mondon, mejoroff) then
-      P1B, P2B = 0xFF8400, 0xFF8800
-      PAG_DESDE, PAG_HASTA = 0xFFA000, 0xFFA0FF
-      FSM_P1, FSM_P2 = 0xFF85B0, 0xFF89B0
+  loga("probe $5F(P1) por candidato: " .. table.concat(res, " | "))
+  if mejorN >= 20 then
+    -- fijar el dominio del ganador y clarificar el modo
+    local ganador
+    for i = 1, #probe_cand do
+      if probe_frames[i] == mejorN then ganador = probe_cand[i] break end
+    end
+    local ok = fija_dominio(ganador.orig)
+    if ok then
+      aplicar(ganador.off)
+    else
+      loga("(!) dominio ganador no fijable; sigo en el actual")
+      modo, DOMINIO = "actual", "(actual)"
     end
   else
-    loga("(!) probe sin datos: caigo al modo actual (dominio del visor)")
-    loga("    si sale basura: chequea el nombre del dominio en el memory")
-    loga("    viewer de BizHawk y escribelo arriba en DOMINIO_FIJO.")
+    loga("(!) probe debil: sigo en el dominio ACTUAL (en BizHawk con core")
+    loga("    Genesis el M68K BUS suele mapear lineal y anda bien)")
   end
 end
 
@@ -184,17 +196,14 @@ local function titulo()
     VERSION, modo, tostring(DOMINIO), TAMDOM, OFF, P1B, P2B, PAG_DESDE, PAG_HASTA, FSM_P1))
 end
 
--- ---- el resto, identico a la v3 --------------------------------------
+-- ---- el resto ---------------------------------------------------------
 local pag_vieja
 local mando_viejo
 local char_viejo
+local fsm_viejo, f5f_viejo, f6b_viejo
 local frame = 0
 
-DOMINIO_FIJO = ""   -- si el autodeteque falla: pon aqui el nombre exacto
-
-local function lee_mando()
-  return rb(P1B + 0x71), rb(P1B + 0x72), rb(P1B + 0x73), rb(P1B + 0x74)
-end
+DOMINIO_FIJO = ""   -- forzar: el nombre EXACTO que imprime la lista
 
 local function hex2(v) return string.format("%02X", v) end
 
@@ -221,88 +230,88 @@ local function vuelca_diff(vieja, nueva, tag)
     loga(string.format("[f %d] %s: %d bytes de la pagina %06X-%06X cambian",
       frame, tag, n, PAG_DESDE, PAG_HASTA))
   end
-  return n
 end
 
 local function on_frame()
   frame = frame + 1
   if frame == 1 then
     fija_bases()
-    if DOMINIO_FIJO ~= "" and DOMINIO ~= DOMINIO_FIJO then
-      if aplicar(DOMINIO_FIJO, 0) then
+    if DOMINIO_FIJO ~= "" then
+      if fija_dominio(DOMINIO_FIJO) then
         TAMDOM = tam_de(DOMINIO_FIJO)
-        if TAMDOM == 0x10000 then OFF = -0xFF0000 end
+        OFF = (TAMDOM == 0x10000) and -0xFF0000 or 0
+        modo = "fijado"
       end
     end
-    if modo ~= "bizhawk" then titulo() end
-    -- el probe lo cierra el on_frame al llegar a probe_sak
   end
 
-  -- probe en marcha: rotar candidates y medir $5F(P1) plausible
   if probe_cand and frame <= probe_sak then
     local idx = ((frame - 1) % #probe_cand) + 1
     local cand = probe_cand[idx]
-    -- sin tocar el dominio global: leemos con el param dominio
     local v
-    local okdom = pcall(function()
-      if cand.off == 0 then
-        v = memory.readbyte(P1B + 0x5F, cand.dom)
-      else
-        v = memory.readbyte((P1B + 0x5F) + cand.off, cand.dom)
-      end
+    pcall(function()
+      v = memory.readbyte((0xFF8400 + 0x5F + cand.off) % 0x1000000, cand.orig)
     end)
-    -- plausibilizacion FUERTE: el boot del juego deja $5F del P1 solo en
-    -- {28,29,2A,30} (log v1 real: f55-f131); la basura rara vez iguala
-    -- esos valores exactos frame tras frame. (v==0 no puntua: todos lo tienen)
-    if okdom and v and (v == 0x28 or v == 0x29 or v == 0x2A or v == 0x30) then
-      probe_frames[idx] = probe_frames[idx] + 1
-    end
-    if frame == 30 and not probe_titulo then
+    if v and DOMUS_PLENITUD[v] then probe_frames[idx] = probe_frames[idx] + 1 end
+    if frame == 40 and not probe_titulo then
       probe_titulo = true
-      loga(string.format(
-        "SONDA v%s (probe en marcha f30-%d) | bases tentativas P1=FF8400 | dominio por fijar",
+      loga(string.format("SONDA v%s (probe f40-%d en marcha; dejalo quieto)",
         VERSION, probe_sak))
     end
     if frame == probe_sak then
       cerrar_probe()
       probe_cand, probe_frames = nil, nil
-      TAMDOM = tam_de(DOMINIO)
       titulo()
     end
   end
 
   if probe_cand then
-    mando_viejo, pag_vieja, char_viejo = nil, nil, nil   -- el probe contamina
+    mando_viejo, pag_vieja, char_viejo = nil, nil, nil
   end
 
-  local b71, b72, b73, b74 = lee_mando()
-  local mando = b71 * 0x1000000 + b72 * 0x10000 + b73 * 0x100 + b74
-  local cambio_mando = (mando ~= mando_viejo)
-
-  -- calibracion del ID de personaje: word en $92 del struct del P1
-  local w92 = rb(P1B + 0x92) * 0x100 + rb(P1B + 0x93)
-  if w92 ~= char_viejo then
-    loga(string.format("[f %d] CHAR P1: $92(word) %04X->%04X  ( esperado $25D2 en el build J, NINGUNO en el china )",
-      frame, char_viejo or 0, w92))
-    char_viejo = w92
-  end
-
-  if cambio_mando and mando_viejo then
-    local mv71 = math.floor(mando_viejo / 0x1000000) % 0x100
-    loga(string.format(
-      "[f %d] MANDO cambia: $71 %s->%s  $72=%02X $73=%02X $74=%02X  $5F=%02X  Y=%04X  $76=%02X  FSM(P1)=%02X",
-      frame, hex2(mv71), hex2(b71), b72, b73, b74,
-      rb(P1B + 0x5F), rw(P1B + 0x44), rb(P1B + 0x76), rb(FSM_P1)))
-  end
-
-  if frame > 60 and cambio_mando then
-    local nueva = snapshot_pagina()
-    if pag_vieja ~= nil then
-      vuelca_diff(pag_vieja, nueva, "pagina buzon/globals")
+  local b71 = rb(P1B + 0x71)
+  local mando = b71 * 0x1000000 + rb(P1B + 0x72) * 0x10000
+             + rb(P1B + 0x73) * 0x100 + rb(P1B + 0x74)
+  if probe_cand == nil then
+    -- calibracion del ID
+    local w92 = rb(P1B + 0x92) * 0x100 + rb(P1B + 0x93)
+    if w92 ~= char_viejo then
+      loga(string.format(
+        "[f %d] CHAR P1: $92(word) %04X->%04X",
+        frame, char_viejo or 0, w92))
+      char_viejo = w92
     end
-    pag_vieja = nueva
-  end
+    -- watch de estado del struct P1 (la v1: $5F/$6B/FSM)
+    local f5f, f6b, fsm = rb(P1B + 0x5F), rb(P1B + 0x6B), rb(FSM_P1)
+    if fsm ~= fsm_viejo and frame > 60 then
+      loga(string.format("[f %d] FSM(P1): %02X -> %02X", frame, fsm_viejo or 0, fsm))
+    end
+    if f5f ~= f5f_viejo and frame > 60 then
+      loga(string.format("[f %d] P1 $5F: %02X -> %02X  (FSM=%02X $6B=%02X $71=%02X)",
+        frame, f5f_viejo or 0, f5f, fsm, f6b, b71))
+    end
+    if f6b ~= f6b_viejo and frame > 60 then
+      loga(string.format("[f %d] P1 $6B: %02X -> %02X", frame, f6b_viejo or 0, f6b))
+    end
+    fsm_viejo, f5f_viejo, f6b_viejo = fsm, f5f, f6b
 
+    if mando ~= mando_viejo then
+      if mando_viejo then
+        local mv71 = math.floor(mando_viejo / 0x1000000) % 0x100
+        loga(string.format(
+          "[f %d] MANDO: $71 %s->%s  $72=%02X $73=%02X $74=%02X  $5F=%02X  Y=%04X  $76=%02X  FSM=%02X",
+          frame, hex2(mv71), hex2(b71), rb(P1B + 0x72), rb(P1B + 0x73), rb(P1B + 0x74),
+          rb(P1B + 0x5F), rw(P1B + 0x44), rb(P1B + 0x76), rb(FSM_P1)))
+      end
+      if frame > 60 then
+        local nueva = snapshot_pagina()
+        if pag_vieja ~= nil then
+          vuelca_diff(pag_vieja, nueva, "pagina buzon/globals")
+        end
+        pag_vieja = nueva
+      end
+    end
+  end
   mando_viejo = mando
 end
 
