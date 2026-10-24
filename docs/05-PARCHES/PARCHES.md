@@ -1846,6 +1846,29 @@ corre; FF85B0 $A5 => a5==FF8400 (el write via a5 piso el abs);
 FF85B0 $0C => el stub corre pero a5 != FF8400 (los writes del FSM
 van a otro struct); FF85B0 $00 con eco presente => algo del juego
 borra FF85B0 por frame; sin eco => el hook no se ejecuta.
+VEREDICTO de la sentinela (sesion con 43, log del usuario): FFA0F4=$C0
+y FFA0F5=$A5 aparecieron (f 1993) => el stub CORRE; FF85B0 quedo en
+$0C constante => el write via ($1B0,a5) NO cayo en FF85B0 => el a5 que
+trae el hook NO es FF8400 (es otro struct, seguro el del buzon de
+input; los armadores escriben el mando falso de P1 por su cuenta).
+Aclaracion: $19C46 es a5-relativa ($B8(a5) = mana, en P1 = $FF84B8):
+con el a5 del hook cobraria el mana del struct equivocado.
+
+FIX v3 (la generadora actual): la FSM del doble-abajo queda ANCLADA al
+struct de P1 por swap temporal de a5:
+  FSM: push d1,d2,a5 (movem 48e7 6004); lea $FF8400,a5 (4b f9! el
+  $4d=f9 seria a6); todo el bloque FSM/fire a offsets a5-relativos;
+  SALIDA: movem (a7)+, d1-d2/a5 (4cdf 2006) restaura el a5 del hook
+  ANTES de clr.w d0 + rejugar move.b $76(a5),d0 + jmp $0155F4 (el
+  cuerpo del base espera el a5 original del contexto).
+Los 4 roms regenerados con esto; el 40 resultante: checksum $355F,
+sha256 5FA367783E48EADE1ED365F6E035EC0DCC95F9126B6077622E533A245DD9CEDF.
+Lecciones del emisor anadidas: lea $FF8400,a5 = 4b f9 (los 4d=f9 son
+a6); movem push con a5 en modo -(An): d1=bit14, d2=bit13, a5=bit2
+(6004); pop en modo (a7)+: d1=0002, d2=0004, a5=2000 (2006). El
+movea.l #imm,An NO se emite como 2b7c (eso es move.l #imm,(d16,A5)):
+usar LEA que ademas no toca flags.
+
 
 Prueba el dive (vertical y diagonal) y si el `$A0` vuelve a quedar
 huorfo el proximo paso es la ruta `$6B=6`: hookear el write-site del

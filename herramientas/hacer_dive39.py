@@ -59,9 +59,17 @@ def emit_stub(variant):
         return
     b(0x66, 'FSM')              # bne FSM (hay comando armado pendiente)
     d('4ef9000155f0')           # jmp $0155F0  (sin comando: el base sigue)
+    # LA SENTINELA PROBÓ: el a5 que trae el hook NO es FF8400 (es otro
+    # struct, probablemente el del buzón de input). La FSM del doble-abajo
+    # queda ANCLADA al struct de P1 via swap temporal de a5: push del a5
+    # original, a5 := $FF8400, todo el FSM a offsets a5-relativos (iguales
+    # a los del bloque $A0 del armador $192C8, que corre con a5=P1), y
+    # restauramos a5 antes de salir (el cuerpo en $0155F4 espera el a5
+    # original del contexto del hook).
     E('FSM')
-    d('48e76000')               # push d1,d2
-    d('12 2d 00 5f')            # move.b $5f(a5), d1
+    d('48 e7 60 04')            # push d1,d2,a5 (mascara predecrem: d1=d2+a5)
+    d('4b f9 00 ff 84 00')      # lea $FF8400, a5 (struct de P1; $49=a5, $4d=a6!)
+    d('12 2d 00 5f')            # move.b $5f(a5), d1   (= $FF845F, estado aire)
     d('0c 01 00 0e'); b(0x67,'RUN')   # $5F==$0E (cae)   -> RUN
     d('0c 01 00 0d'); b(0x67,'RUN')   # $5F==$0D (sube)  -> RUN
     d('0c 01 00 08'); b(0x67,'RUN')   # $5F==$08 (apex)  -> RUN
@@ -69,7 +77,7 @@ def emit_stub(variant):
     d('42 2d 01 b0'); b(0x60,'SALIDA')# fuera del aire: clr $1B0
     E('RUN')
     d('14 2d 01 b0')            # move.b $1b0(a5), d2
-    d('08 2d 00 01 00 71')      # btst.b #1, $71(a5)  (bit1 = abajo)
+    d('08 2d 00 01 00 71')      # btst.b #1, $71(a5)  (bit1 = abajo; $FF8471)
     b(0x66, 'PRES')
     d('0c 02 00 01'); b(0x66,'RST')   # sin abajo: si d2 != 1 -> reset
     d('1b 7c 00 02 01 b0'); b(0x60,'SALIDA')  # soltar el 1er abajo: armado
@@ -83,7 +91,7 @@ def emit_stub(variant):
         d('42 2d 01 b0')
     else:
         d('30 3c 00 04')            # move.w #4, d0
-        A('4eb9', 0x019C46)         # jsr $19C46 (cobra 4 de mana)
+        A('4eb9', 0x019C46)         # jsr $19C46 (cobra 4 de mana de $FF84B8)
         d('0c 00 00 00'); b(0x67,'RST')   # sin mana: reset y fuera
         d('2b 7c 00 00 00 00 00 10')      # move.l #0, $10(a5)
         d('2b 7c 00 04 80 00 00 14')      # move.l #$48000, $14(a5) = vel DOWN
@@ -97,7 +105,7 @@ def emit_stub(variant):
         E('RST')
         d('42 2d 01 b0')
     E('SALIDA')
-    d('4c df 00 06')            # pop d1,d2
+    d('4c df 20 06')            # pop d1,d2 y A5 (restaura el a5 del hook)
     # los bytes altos de d0 vienen sucios (los restauramos del push/y del
     # propio juego) y el cuerpo del base en $0155F4 hace movea.l d0,a2 y lee
     # la tabla en -$880(a2): sin limpiar d0, a2 = basura y el aplicador
