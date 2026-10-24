@@ -1776,3 +1776,54 @@ SHA1 `8EE393E692E1AF65EFC1F22B73E19E55B674585E`). El dive tiene que
 salir y costar 4 de mana. El dive puede salir para todos
 (diagnostico: el gate de personaje queda pendiente de la calibracion
 de `$92` de la sonda).
+
+Resultado de la 38: NO sale el dive y el usuario reporta roturas de
+regresion (los dashes laterales `<< >>` andan en el salto diagonal
+pero no en el vertical; el especial abajo-arriba-A dejo de salir).
+Diff completo de la 38 contra la base: UN solo hook + stub: hook en
+`$0155E8` = 6 bytes `4e f9 00 1a 07 80` (jmp, no jsr) que pisa
+`move.b $76(a5),d0; cmpi.b #$ff,d0` = el APLICADOR del mando falso
+del movimiento armado ( `$76`= indice del comando pendiente, `ff`=
+nada; el cuerpo carga `$71-$74/$c0-$c2` desde el struct apuntado).
+Dentro del applier: `$015592 bsr $0155e8` por frame. Hallazgos del
+dis del stub 38 + ronda de desensamblado:
+
+- `$192C8` = armador CON MANA certificado; su tail corre `bra $19C1C`
+  (runner de estado). El `$A0` sigue sin consumidor directo en el
+  china (las rutas vivas de los especiales per-char van por la
+  escalera `$6B` + bits `$73`: `$6B=6`+bit6=`$18A92` -> `$AA` con
+  mana `$C8` = el especial de personaje, `btst #6,$73` exige un mando
+  falso que solo escriben los armadores laterales `$1E852/$1E86E/
+  $1E88A`; el detector doble-abajo de la base escribe `$6B=6` PELADO
+  por eso muere silencioso en el btst -confirmado en el log f8414-).
+- `$19C46` = solo `sub` de mana sobre `$B8(a5)`, seguro llamar.
+- `$1B0(a5)` = byte LIBRE (unicos hits de `01 b0` en la base son
+  literales $1b0 de `$0D0D4`, no accesos a (d16,a5)).
+- el stub de la 38 llamaba `jsr $192C8` con d0 = `$92` (25D2) sin
+  restore antes del jsr: defensivamente incorrecto aunque `$192C8`
+  re-carga d0.
+
+=> ROM 39 (regenerado DESDE LA BASE LIMPIA con
+`herramientas/hacer_dive39.py`): hook `$0155E8` = `4e f9 00 1a 06 ae`
+jmp al stub nuevo en `$1A06AE` (hueco de ceros `$1A06AE-$1A0826`,
+377 bytes; el stub usa 180). Stub v3:
+  1. replica `move.b $76,d0; cmpi #$ff,d0`; FF -> `jmp $0155F0`
+     (el base sigue tal cual, d0/flags intactos).
+  2. FSM de doble-abajo en `$1B0` con gate `$5F in {0E,0D,08,07}`
+     (la 38 no tenia el `07` diagonal: por eso no armaba en el
+     salto diagonal).
+  3. fire = CLON INLINE del bloque `$A0` de `$192C8`: cobro
+     `move.w #4,d0; jsr $19C46` (sin mana no dispara), luego
+     `move.l #0,$10 / move.l #$48000,$14 / $5F=$A0 / $4C=0 /
+     $5D=$2F / clr $6B / $6C=0 / $1B0=0`. Nada de jsr al armador.
+  4. salida: pop d1-d2, rejuega `move.b $76,d0` (el base hace
+     `movea.w d0,a2`), `jmp $0155F4` (bypass del beq `$0155F0`:
+     ya se sabe que `$76!=ff`).
+Header checksum NO se toca (en la base ya sale inconsistente con el
+calculo; fix_checksum.py lo documenta como obsoleto en todos los
+dumps). SHA256
+`AA55275E354730D28DF85C77D2C7FA3F4F237B02A04A178BCC5E532439908B47`.
+Prueba el dive (vertical y diagonal) y si el `$A0` vuelve a quedar
+huorfo el proximo paso es la ruta `$6B=6`: hookear el write-site del
+detector base que deja `$6B=06` pelado y sumarle el mando falso
+(la via per-char `$18A92`/especiales de la escalera).
