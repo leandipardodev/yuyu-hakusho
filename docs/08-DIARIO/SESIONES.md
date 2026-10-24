@@ -1237,3 +1237,69 @@ salta): ES EL INIT DE NACIMIENTO DEL RECORD (todo en
   ROM 30 = SHA1 74791462D3E58B55678C18152D374C3E67F41B25, bisector
   31_ = 1357AA40F2A6BDB215073C0D5E8549E5772F1B93 (ahora amputa los
   DOS carry: $1A0752 y $1A0760, $64->$60).
+
+
+## S-2024-10-23b: el bisector del doble-abajo de Jin era INERTE (v2b)
+
+**Pedido:** *"crea una copia del rom chino limpio, al que no tiene nada, y
+agregale el doble-abajo"* (el dive de Jin de la ROM beta `md_yuyusfsw`).
+Base = `rom/base/yuyu_makyou_base.bin`, salida nueva = `rom/cambios/
+33_china_DOBLE_ABAJO_AIRE.bin`, el original no se toca.
+
+### Antes de entregar el ROM: el chequeo a mano mato la receta v2
+
+El stub v2 de `doble_abajo_aire` habia sido "verificado" solo en que sus
+instrucciones decodifican. Al desensamblar el ROM 33 armado con capstone
+y seguir el FLUJO, salieron DOS bugs de fabrica:
+
+1. **Los tres `beq` del gate de aire caian en `$1A07A4` = la MITAD del
+   `move.b $71(a5),d1`** (disp `.b` calculado con otra base): el reload
+   del mando quedaba muerto y el `btst #$1` leia el byte de `$5F` en su
+   lugar (con `$5F=$0E` el bit 1 esta a 1 = leia "abajo" caendo).
+2. **La FSM nunca leia `$A044`**: los `cmpi.b #$2, d2` comparaban el
+   `d2` recien-escrito con el inmediato => el `jsr $19408` (el disparo)
+   era inalcanzable: el bisector corrria sin romperse y NO HACIA NADA.
+   Si se hubiera entregado asi, el usuario lo probaba, no pasaba nada y
+   se quemaba una ronda de prueba.
+
+**Fix (v2b):** stub regenerado COMPLETO desde el script
+(`C:/leand-opencode/stubv2b.py`), instruccion por instruccion con
+capstone de arbitro y TODOS los targets de las 11 ramas verificados por
+aritmetica. El punto AIR se reordeno para que el disp `.b` aterrice
+exacto en el label, y la FSM arranca con `move.b $a044.w, d2`.
+
+**Lecciones nuevas (para `00-GUIA/TRAMPAS.md` mental):**
+- Una rama puede caer DENTRO de la instruccion siguiente sin que
+  capstone se queje: hay que seguir el flujo, no solo que decodifique
+  (`$4C bytes` del stub podian estar "ok" y ser inutiles).
+- Los opcodes de `move` con `(abs.w)` NO se arman de memoria:
+  `move.b (abs.w),dn` = `$1438` y `move.b dn,(abs.w)` = `$11C2`,
+  encontrados **por fuerza bruta sobre los 65536 opcodes** dejando que
+  capstone confirme el texto exacto. A mano me salieron al reves y el
+  roundtrip los cacho (dos veces: `$1099`/`$1239` no son nada).
+- El operando `(abs.w)` es UN word (`A044`), no un long con cero al
+  frente (le pase `00A044` y capstone rendia `$a0.w`).
+- El patcher (`patch_rom.py`) espera **un item por BYTE** (`new` de 2
+  hex): los items por instruccion multi-byte le explotan con
+  `ValueError: byte must be in range(0, 256)`.
+- El hook de `$155E8` con re-anclaje a `$155F0` arranco bien a la
+  primera (el stub re-ejecuta `move.b $76(a5),d0` + `cmpi.b #$ff,d0` y
+  el `movem` pop no ensucia los flags del `cmpi`).
+
+### El resultado
+
+- `rom/cambios/33_china_DOBLE_ABAJO_AIRE.bin` (v2b), SHA1
+  `80A34460F4DD93D6F2449392E30B5C64990B1F1B`: 126 parches, 108 bytes
+  distintos, checksum `$891E`. `verificar_desensamblado.py`: OK.
+  Chequeo a mano del hook + stub + re-anclaje en el ROM final: OK.
+- `datos/parches.json`: grupo `doble_abajo_aire` re-escrito (124 items,
+  uno por byte), `confianza` con la memoria de los dos bugs. Se arreglo
+  tambien una coma final de mas que dejaba el JSON roto (parse error).
+- `PARCHES.md`: nueva seccion `9.` con el asm completo del stub.
+- El bisector viejo `32_china_TEST_DOBLE_ABAJO_AIRE.bin` queda como
+  anti-ejemplo.
+
+**Pendiente:** el test del usuario en FBNeo (Jin: saltar y doble abajo
+en el aire). Y la receta final: el dive de la beta cobra el mismo mana
+que el movimiento aereo; el bisector usa el armador LIBRE `$19408`
+(el `$192C8` cobra 4 fijos).

@@ -1505,3 +1505,119 @@ no la seguridad.
   `$020202` + paleta 1. Bisector `31_china_TEST_AURA_SIN_SPAWN.bin`
   (amputa los DOS carry) = `1357AA40F2A6BDB215073C0D5E8549E5772F1B93`).
 
+
+
+## 9. EL DESCENSO VELOZ DE JIN (el bisector del doble-abajo, v2b)
+
+Pedido: reproducir el move del Jin de la ROM beta
+(`netwave/md_yuyusfsw.zip`): **doble ABAJO en el aire = dive** (descenso
+veloz). En la beta sale "si estoy en el aire"; la version final lo limito.
+El bisector = la receta minima para SABER si el dive dispara; no es el
+grupo final.
+
+### El enganche (hook del cargador de mando `$155E8`)
+
+El hook v1 corria en el runner de mando `$182A2` y NO FUNCIONA, y ademas
+el concepto estaba mal: la escalera de comandos `$15CB0` compara `$5F`
+contra `$0D/$0E` al principio y hace `rts` inmediato para el aire, asi
+que el runner con laterales nunca corre en el aire. El hook v2 se pone
+en la rutina que carga el mando en `$71/$72/$73` (`$155E8`, llamada por
+`bsr` desde `$15592`), que corre SIEMPRE incluido en el aire, con
+`a5` = struct del jugador. En ese punto `$71` trae el mando del frame
+ANTERIOR y **bit 1 de `$71` = ABAJO** (verificado en `$13B86`). El hook
+camina sobre `move.b $76(a5),d0` + `cmpi.b #$ff,d0` (8 bytes): el stub
+los re-ejecuta y re-entra en `$155F0` (el `beq.w`) con los flags recien
+puestos.
+
+### La FSM del doble-tap (`$A044`, WRAM)
+
+`$A042` bits 5-7 y `$A043` estan reservados por el aura; `$A044` nadie
+lo referencia en todo el desensamblado. Estado: 0 = nada, 1 = abajo
+(apretado), 2 = ya solto una vez, y **el disparo es el segundo abajo**
+con el estado en 2. Gate de aire = `$5F` = `$0D` (subida) / `$0E`
+(caida) / `$08` (salto). Gate de personaje = `$92(a5)` (puntero
+tabla_30) == `$25D2` = solo Jin. El disparo hace `jsr $19408` = el
+armador del dive que la IA usa (gratis, sin mana; el `$192C8` cobra 4
+via `$19C46` y queda para el grupo final si el usuario pide el mana).
+
+### El stub (`$1A0780-$1A07F3`, 116 bytes; hueco libre documentado hasta `$1A0826`)
+
+    $1A0780  movem.l  d1-d2, -(a7)
+    $1A0784  move.b   $5f(a5), d1      ; estado de la FSM del juego
+    $1A0788  cmpi.b   #$e, d1          ; caida?
+    $1A078C  beq.s    $1A07A0
+    $1A078E  cmpi.b   #$d, d1          ; subida?
+    $1A0792  beq.s    $1A07A0
+    $1A0794  cmpi.b   #$8, d1          ; salto?
+    $1A0798  beq.s    $1A07A0
+    $1A079A  clr.b    $a044.w          ; no es aire: resetea la FSM
+    $1A079E  bra.s    $1A07E2          ; -> al tail
+    $1A07A0  move.b   $71(a5), d1      ; EL MANDO (bit 1 = abajo)
+    $1A07A4  move.w   $92(a5), d0      ; el personaje
+    $1A07A8  cmpi.w   #$25d2, d0       ; solo Jin
+    $1A07AC  bne.s    $1A07D8
+    $1A07AE  move.b   $a044.w, d2      ; estado viejo de la FSM
+    $1A07B2  btst.b   #$1, d1          ; abajo?
+    $1A07B6  bne.s    $1A07C2
+    $1A07B8  cmpi.b   #$1, d2          ; estado 1 (abajo) y solto
+    $1A07BC  bne.s    $1A07D2          ; -> 0
+    $1A07BE  moveq    #$2, d2          ; -> 2 (suelto una vez)
+    $1A07C0  bra.s    $1A07DE
+    $1A07C2  cmpi.b   #$2, d2          ; abajo Y estado 2: DISPARA
+    $1A07C6  bne.s    $1A07D6          ; -> 1 (llevando abajo)
+    $1A07C8  jsr      $19408.l         ; el armador del dive de la IA
+    $1A07CE  moveq    #$1, d2
+    $1A07D0  bra.s    $1A07DE
+    $1A07D2  moveq    #$0, d2
+    $1A07D4  bra.s    $1A07DE
+    $1A07D6  moveq    #$1, d2
+    $1A07D8  clr.b    $a044.w          ; no es Jin: resetea
+    $1A07DC  bra.s    $1A07E2
+    $1A07DE  move.b   d2, $a044.w      ; guarda el estado
+    $1A07E2  move.b   $76(a5), d0      ; re-pone lo que tapo el hook
+    $1A07E6  cmpi.b   #$ff, d0
+    $1A07EA  movem.l  (a7)+, d1-d2
+    $1A07EE  jmp      $155f0.l         ; el re-anclaje del hook (6 bytes: 4EF9 0001 55F0)
+
+(+ los bytes de cada instruccion estan en `parches.json`, item por byte).
+
+### Los DOS bugs del stub v2 (por eso esta version v2b)
+
+1. **Los tres `beq` del gate de aire aterrizaban en `$1A07A4`** = la
+   MITAD del `move.b $71(a5),d1` (el disp del `.b` calculado con otra
+   base). El reload del mando quedaba MUERTO y el `btst #$1` leia el
+   byte de `$5F` en su lugar (con `$5F=$0E` el bit 1 esta a 1: leia
+   "abajo" caendo). Una rama puede caer DENTRO de la instruccion
+   siguiente si el disp sale mal: **el disp de un `Bcc.s` es relativo a
+   `addr+2`** (la direccion del byte del disp), como los `.w`.
+2. **La FSM nunca leia `$A044`**: comparaba `d2` recien-escrito contra
+   `#2`, el `jsr $19408` era inalcanzable y el bisector entero era
+   INERTE (corria sin romperse y no hacia nada). El fix:
+   `move.b $a044.w, d2` al arranque de la FSM.
+
+**Leccion re-vista**: capstone solo certifica que las instrucciones
+DECODIFICAN, no que hagan lo que la intencion dice. Lo que SI bajo el
+roundtrip esta vez: los `move` con `(abs.w)` se armaron con los bits y
+no de memoria (`move.b (abs.w),dn` = `$1438` y `move.b dn,(abs.w)` =
+`$11C2`, ambos ENCONTRADOS por fuerza bruta sobre los 65536 opcodes con
+capstone de arbitro; a mano me habian salido al reves y capstone los
+cacho). Y el operando `(abs.w)` = UN word (`A044`), no tres bytes.
+
+### El resultado
+
+- `rom/cambios/33_china_DOBLE_ABAJO_AIRE.bin` = la base china +
+  `doble_abajo_aire` (v2b), SHA1
+  `80A34460F4DD93D6F2449392E30B5C64990B1F1B` (126 parches, 108 bytes
+  distintos). `verificar_desensamblado.py`: OK. Chequeo a mano del
+  hook, del stub completo y del re-anclaje con capstone en el ROM
+  final: OK.
+- El bisector viejo `32_china_TEST_DOBLE_ABAJO_AIRE.bin` queda como
+  anti-ejemplo (stub inerte).
+- LIMITACIONES (igual que el bisector): no exige ventana de tiempo
+  entre los dos abajos, la FSM es global (dos Jin la comparten), y NO
+  cubre el estado de flotar `$30` (ahi el dive lo dispara la maquina
+  del flotar con `$48/$4C`). El dive del bisector no cobra mana (el
+  gasto "igual que el movimiento aereo" de la beta va en la receta
+  final).
+- **Pendiente: el test del usuario en FBNeo** (Jin vs CPU: saltar y
+  doble abajo en el aire).

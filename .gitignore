@@ -26,6 +26,12 @@
 # ---------------------------------------------------------------------------
 /.rom_path
 
+# ---------------------------------------------------------------------------
+# ROMs externas de referencia (betas, protos, otras regiones): misma politica
+# de copyright que rom/: NO distribuir.
+# ---------------------------------------------------------------------------
+/netwave/
+
 # Cach autogenerada por Godot (se regenera al abrir el proyecto)
 .godot/
 *.import
