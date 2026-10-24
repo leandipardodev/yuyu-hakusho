@@ -126,9 +126,19 @@ def armar(nombre, cod):
     assert len(hook) == 6
     rom[HOOK:HOOK+6] = hook
     rom[STUB:STUB+len(cod)] = cod
+    # el juego VERIFICA el checksum Genesis al bootear (probado: la 38 con
+    # su checksum recalculado arranca, y sin recalcular da rojo en el logo).
+    # recalculo sobre el contenido parcheado y lo escribo en $018E.
+    s = 0
+    for o in range(0x200, len(rom)-1, 2):
+        s += (rom[o] << 8) | rom[o+1]
+    rom[0x18E:0x190] = struct.pack('>H', s & 0xffff)
+    verif = struct.unpack('>H', bytes(rom[0x18e:0x190]))[0]
+    assert verif == (s & 0xffff)
     ruta = DIR_SAL + '\\' + nombre
     io.open(ruta, 'wb').write(bytes(rom))
-    print('%s -> %d bytes  sha256 %s' % (nombre, len(rom), hashlib.sha256(bytes(rom)).hexdigest().upper()))
+    print('%s -> %d bytes  checksum $%04X  sha256 %s' % (nombre, len(rom), s & 0xffff,
+          hashlib.sha256(bytes(rom)).hexdigest().upper()))
 
 
 # chequeo de sanidad del checksum contra la base (solo INFORMA, no escribe)
@@ -137,7 +147,8 @@ alm = struct.unpack('>H', rom_base[0x18e:0x190])[0]
 s = 0
 for o in range(0x200, len(rom_base)-1, 2):
     s += (rom_base[o] << 8) | rom_base[o+1]
-print('base: checksum almacenado $%04X, calculado $%04X (no lo tocamos)' % (alm, s & 0xffff))
+print('base: checksum almacenado $%04X, calculado $%04X (%s)' % (alm, s & 0xffff,
+      'OK, se recalcula tras parchear' if alm == (s & 0xffff) else 'NO CUADRA'))
 
 for nombre, variante in [('40_china_DIVE_A0INLINE_v2.bin', 'full'),
                          ('41_china_DIVE_DIAG_NOFIRE.bin', 'nofire'),
