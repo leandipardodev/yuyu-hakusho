@@ -1490,3 +1490,40 @@ asesino del doble-arriba; el dive muerto va por el gate de personaje
   si la 37 dispara el dive. Con el user jugando Jin saldra su $92; con
   otra eleccion de personaje saldra otro $92: la distancia entre ambos
   NO indicara el campo, pero el VALOR de Jin si entra en la receta.
+
+## S-2024-10-24 (apéndice 4) -- El fire por $19408 mete en el estado raro:
+el disparo correcto del FINAL es el armador CON MANA $192C8
+
+- Test del usuario de la **ROM 37** (sin gate de personaje, fire por el
+  armador GRA-TIS $19408): "no sale el dive" Y ADEMAS el movimiento
+  quedo limitado: "solo puedo tirar habilidades y moverme horizontal y
+  para arriba con up up cuando salto en diagonal". INTERPRETACION: el
+  fire DID correr (algo se armo) pero el estado $5F=$A0 queda con una
+  maquina incompleta en el FINAL -> el personaje cayo en un modo
+  recortado. La leccion: el armador gratis `$19408` NO es el arcane del
+  beta para el FINAL; es un caso HUÉRFANO con otra pinta.
+- DESCUBRIMIENTO del dia (por releer el log viejo de la sonda v1): en
+  la base limpia, el frame SIGUIENTE al segundo abajo en el aire
+  (f368) `$6B` pasa `00 -> 06`. Busqueda de quien escribe `$6B=6`:
+  tres hits que vestian en una FILA de "armadores de movimiento aereo"
+  `$1E60E-$1E8A4`: bloques que escriben mando FALSO ($10/$20/$40 en
+  `$71/$72(/$73)`) + `$6B=#1..#6` (solo combinatorias LATERALES:
+  $6B=1..6 x tres direcciones) + tail comun `$1E8A6` (tst $61 facing +
+  bset bit2/bit3 lateral comparando X). El consumidor de esos bits
+  esta en la escalera de comandos (`btst #$4/5/6, $71(a5)` en
+  `$015C3E/$015C8E/$015CC2/$015D78/$015D84`). CERO llamadas directas a
+  la fila (despacho computado) y el DIVE (abajo puro, sin lateral) no
+  tiene su propio bloque: el final lo recorto de ahi.
+- EL FIRE CORRECTO: el armador CON MANA `$192C8` de la base china,
+  CERTIFICADO con el dump: `move.w #4,d0; bsr $19c46` (cobra 4, el
+  mismo gasto del movimiento aereo que pide la receta final) + `beq`
+  fallback + `$10=$00000000/$14=$00048000/$5f=$a0/$4c=0` -> tail
+  `$19350`. Forma IDENTICA al `$12A7E` de la beta. El check de mana
+  ADENTRO lo hace SEGURO (sin mana: fallback limpio, sin estado raro).
+- Accion: **ROM 38** `38_china_DOBLE_ABAJO_MANAFIRE.bin` (grupo
+  `doble_abajo_manafire`, v2d sin gate de personaje + fire por
+  `$192C8`), SHA1 `8EE393E692E1AF65EFC1F22B73E19E55B674585E`,
+  verificadas OK. TEST: con Jin en el aire, doble-abajo: el dive tiene
+  que SALIR y costar 4 de maná (el nivel del maná se ve en la barra).
+  Aun sin gate de personaje: si sale, queda cavar el ID de personaje
+  real del struct de la china (la sonda v3 vuelca el word `$92`).

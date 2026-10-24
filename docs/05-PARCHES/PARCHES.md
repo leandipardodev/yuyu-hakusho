@@ -1756,3 +1756,23 @@ SHA1 `BE2B4CE71BCB0A6BAC84D00A38763BD9254178C7`): si ahi el dive SALE,
 el gate era el asesino y queda cavar el ID de personaje REAL del
 struct de la china (la sonda v3 calibra el word `$92` del P1 en el
 mismo log). El dive en la 37 puede salir para todos (diagnostico).
+Resultado: NO sale, y el movimiento queda limitado (solo
+habilidades/horizontal/up diagonal): el fire por el armadorGratis
+`$19408` mete en el estado `$A0` con la maquina del final
+incompleta. Re-lectura del log viejo de la sonda: el frame despues del
+segundo abajo, `$6B` pasa `00->06` en la base: quien escribe `$6B=6`
+vive en la FILA de armadores aereos `$1E60E-$1E8A4` (mando falso
+`$10/$20/$40` + `$6B=#1..#6`, solo laterales; el consumidor de esos
+bits en la escalera `$15C3E/8E/C2/D78`; cero llamadas directas,
+despacho computado; el dive = abajo PURO = no tiene bloque: el final
+lo recorto). El fire correcto del final = el armador CON MANA
+`$192C8` de la china, CERTIFICADO: `move.w #4,d0; bsr $19c46` (cobra
+4, el mismo gasto del movimiento aereo), `beq` fallback, `$10=0/
+$14=$48000/$5f=$a0/$4c=0`, tail `$19350` - forma identica al `$12A7E`
+de la beta; el check adentro lo hace seguro sin mana.
+=> `doble_abajo_manafire` => `rom/cambios/
+38_china_DOBLE_ABAJO_MANAFIRE.bin` (v2d sin gate + fire por `$192C8`,
+SHA1 `8EE393E692E1AF65EFC1F22B73E19E55B674585E`). El dive tiene que
+salir y costar 4 de mana. El dive puede salir para todos
+(diagnostico: el gate de personaje queda pendiente de la calibracion
+de `$92` de la sonda).
