@@ -1803,7 +1803,7 @@ dis del stub 38 + ronda de desensamblado:
   restore antes del jsr: defensivamente incorrecto aunque `$192C8`
   re-carga d0.
 
-=> ROM 39 (regenerado DESDE LA BASE LIMPIA con
+=> ROM 39/40 (regenerado DESDE LA BASE LIMPIA con
 `herramientas/hacer_dive39.py`): hook `$0155E8` = `4e f9 00 1a 06 ae`
 jmp al stub nuevo en `$1A06AE` (hueco de ceros `$1A06AE-$1A0826`,
 377 bytes; el stub usa 180). Stub v3:
@@ -1819,10 +1819,31 @@ jmp al stub nuevo en `$1A06AE` (hueco de ceros `$1A06AE-$1A0826`,
   4. salida: pop d1-d2, rejuega `move.b $76,d0` (el base hace
      `movea.w d0,a2`), `jmp $0155F4` (bypass del beq `$0155F0`:
      ya se sabe que `$76!=ff`).
-Header checksum NO se toca (en la base ya sale inconsistente con el
-calculo; fix_checksum.py lo documenta como obsoleto en todos los
-dumps). SHA256
-`AA55275E354730D28DF85C77D2C7FA3F4F237B02A04A178BCC5E532439908B47`.
+Header checksum NO se toca: con el algoritmo de `fix_checksum.py`
+sobre NUESTRA base, almacenado $337B == calculado $337B (el $4A36 de
+la referencia era de otros dumps; un valor "inconsistente" que se
+lamenta en la nota de esa herramienta fue lecturas sobre un array
+corrupto: solo aviso).
+
+`rom/cambios/39_china_DIVE_A0INLINE.bin` (nombre viejo, misma
+generacion, SHA256 `AA55275E...908B47`): el reporte del usuario de
+"pantalla roja en el logo Sega" sucedio mientras la primera corrida
+del generador (con un `jmp` del hook de 5 bytes que CORRIO TODO el
+rom un byte) dejo en el disco un 39 corrompido por minutos; el nombre
+se repeario varias veces en la misma ruta y la sesion del emulador
+puede haber cacheado el corrupto. Para descartar eso y para bisectar:
+`herramientas/hacer_dive39.py` ahora genera TRES roms
+- `40_china_DIVE_A0INLINE_v2.bin` (stub completo; SHA256
+  `AA55275E354730D28DF85C77D2C7FA3F4F237B02A04A178BCC5E532439908B47`,
+  igual a la 39 verificada),
+- `41_china_DIVE_DIAG_NOFIRE.bin` (FSM completa pero el disparo
+  deshabilitado: diagnostica si el crash/carcamo viene del fire),
+- `42_china_DIVE_DIAG_SHIM.bin` (paso puro: replay de move.b $76/d0
+  + cmpi + jmp $0155F0, equivalente al camino normal de la 38 sin
+  FSM: diagnostica si el hook mismo es el delincuente).
+Orden de prueba: 40 -> 41 -> 42 (y si el shim tambien peta rojo, el
+problema es la region $1A06AE y se muda el stub).
+
 Prueba el dive (vertical y diagonal) y si el `$A0` vuelve a quedar
 huorfo el proximo paso es la ruta `$6B=6`: hookear el write-site del
 detector base que deja `$6B=06` pelado y sumarle el mando falso
