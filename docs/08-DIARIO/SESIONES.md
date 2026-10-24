@@ -1527,3 +1527,37 @@ el disparo correcto del FINAL es el armador CON MANA $192C8
   que SALIR y costar 4 de maná (el nivel del maná se ve en la barra).
   Aun sin gate de personaje: si sale, queda cavar el ID de personaje
   real del struct de la china (la sonda v3 vuelca el word `$92`).
+
+## S-2024-10-24b (apéndice 5) -- El estado $A0 está huérfano en el china;
+la lectura del struct depende del DOMINIO de memoria del emulador
+
+- ESCANEO de consumidores del grupo del dive: `cmpi.b #$a0/$a1/$a2/$a3,
+  $5f(a5)` (y variantes a2/a3/a6, y cargas `move.b $5f(a5),d0/d1/d2`):
+  **NINGUNA**. Y el control de sanidad confirma que la forma del
+  pattern SÍ existe porque hay hits para otros estados del mismo byte:
+  `$0D` -> `$015CD4/$019D3C`, `$0E` -> `$015CDE/$019D34`, `$30` ->
+  `$01A0D8`, `$28` -> `$01A0C8/$01A17E`, `$29` -> `$019CF4/$019D44`,
+  `$2A` -> `$019D4C` (los dos primeros son la escalera de comandos).
+  CONCLUSION: en el FINAL el estado `$A0` que arma el armador
+  (`$192C8`/`$19408`) no tiene máquina de consumo directa - por eso el
+  personaje entra en un modo recortado y no hace el descenso. El
+  despacho por tabla no se descarta, pero no hay nada por comparación.
+  La ruta alternativa vuelve a ser la maquinaria `$6B=1..6` de la fila
+  `$1E60E-$1E8A4` (la base MISMA ya reaccionó al doble-abajo con
+  `$6B=06` en el log v1, f368).
+- ENTORNO: el usuario migro las sondas de FBNeo a **BizHawk**. En
+  BizHawk la lectura default NO mapea `0xFF8400` (dominio de memoria
+  distinto); la v3 creía el fallback FBNeo (por eso el header mostraba
+  `bases P1=008400`) y leyó **basura**: el `$92=$3B41` del paste NO es
+  confiable. NINGUN dato del run v3 en BizHawk vale.
+- HERRAMIENTA: `sonda_doble_bajo.lua` v4 - autodeteccion de dominio
+  para BizHawk: lista dominios (nombre+tamano), arma candidates
+  ("68000"/"68k"/"main ram"/"mainram"/"work ram"/"wram"/"bus"), traduce
+  direcciones (dominio 64KB -> offset -0xFF0000; dominio grande/bus ->
+  0), y hace un PROBE f30-f300: puntua cual lectura del `$5F` del P1
+  da EXACTAMENTE los estados del menu boot (`28/29/2A/30`, medidos en
+  el log v1 real) - la basura casi nunca iguala ese set exacto. Fija
+  el ganador con `memory.use_memory_domain` + offset e imprime scores.
+  `DOMINIO_FIJO` arriba permite forzar el dominio a mano si todo
+  falla. Si `io.open` no existe en BizHawk, avisa y todo sale a la
+  consola (copiarla entera).
