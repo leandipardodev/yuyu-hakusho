@@ -1456,3 +1456,37 @@ sonda de BizHawk (`sonda_doble_bajo.lua`) puede leer `$FF85B0` (P1) y
   2) ROM 36: si el doble-arriba TAMBIEN muere => el asesino NO es la
      escritura de `$1B0` (van los reads/flujo/ciclos).
   3) el dive NO sale en ninguna de las dos (a propósito).
+
+## S-2024-10-24 (apéndice 3) -- ROM 35 positiva: la puerta del slot era el
+asesino del doble-arriba; el dive muerto va por el gate de personaje
+
+- Test del usuario de la **ROM 35** (v2d-gate76): **anda TODO menos el
+  dive** (doble-arriba y tornado VIVEN). CONFIRMADO: la v2c mataba con
+  la escritura en slots inactivos/otros a5; la v2d lo arregla. Queda el
+  dive sin disparar, con el gate de slot OK.
+- Las tres compuertas restantes de la FSM y su estado:
+  1. `$5F` de aire (`$0D/$0E/$08`): CERTIFICADO para el ROM real por el
+     log viejo de la sonda (transiciones `00->0D->08` y `$71 bit1=abajo`
+     `$71=02` en pleno salto).
+  2. El armador `jsr $19408`: CERTIFICADO para el ROM real: el dump del
+     `$19408` de la china es IDENTICO instruccion por instruccion al
+     `$12BAE` de la beta (el armador GRATIS del dive: `move.l #$0,$10`,
+     `move.l #$48000,$14`, `move.b #$a0,$5f`, `$4c=0`, `$5d=$31/32`,
+     `clr $6b/$6c`). El que cobra mana (`bsr $19c46`) tambien existe en
+     la base (`$193C0` llama a `$19C46`).
+  3. El gate de personaje ($92(a5) word == $25D2): SIN PRUEBA y con
+     evidencia en contra: cero instrucciones del ROM china tocan
+     `$92(a5)` (escaneo lineal completo), y ninguna llamada directa a
+     `$19408`/`$192C8` existe en el china (el armador se invoca por
+     rutas computadas). El `$25D2` es el word bajo del POINTER de Jin a
+     su tabla de moves (`$0125D2`) en el build J, transplantado.
+- Accion: **ROM 37** `37_china_DOBLE_ABAJO_SINGATE92.bin` (grupo
+  `doble_abajo_singate92`): la v2d con el `bne` del gate de personaje
+  reemplazado por 2 nops (`cmpi` queda pero inerte). El dive PODRA
+  salir para cualquier personaje en este ROM (es diagnostico). SHA1
+  `BE2B4CE71BCB0A6BAC84D00A38763BD9254178C7`, verificadas OK.
+- La sonda v3 ahora tambien calibra: vuelca el word `$92` del P1 cada
+  vez que cambia, para cavar el ID de personaje REAL del struct china
+  si la 37 dispara el dive. Con el user jugando Jin saldra su $92; con
+  otra eleccion de personaje saldra otro $92: la distancia entre ambos
+  NO indicara el campo, pero el VALOR de Jin si entra en la receta.

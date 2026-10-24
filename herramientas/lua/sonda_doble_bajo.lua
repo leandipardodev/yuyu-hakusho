@@ -57,6 +57,7 @@ end
 
 local pag_vieja      -- snapshot anterior de la pagina
 local mando_viejo    -- los 4 bytes de mando del frame anterior
+local char_viejo     -- el word $92 del P1 para la calibracion del ID
 local frame = 0
 
 local function lee_mando()
@@ -102,6 +103,14 @@ local function on_frame()
   local b71, b72, b73, b74 = lee_mando()
   local mando = b71 * 0x1000000 + b72 * 0x10000 + b73 * 0x100 + b74
   local cambio_mando = (mando ~= mando_viejo)
+
+  -- calibracion del ID de personaje: word en $92 del struct del P1
+  local w92 = rb(P1B + 0x92) * 0x100 + rb(P1B + 0x93)
+  if w92 ~= char_viejo then
+    loga(string.format("[f %d] CHAR P1: $92(word) %04X->%04X  ( esperado $25D2 para Jin en el build J )",
+      frame, char_viejo or 0, w92))
+    char_viejo = w92
+  end
 
   if cambio_mando and mando_viejo then
     local mv71 = math.floor(mando_viejo / 0x1000000) % 0x100

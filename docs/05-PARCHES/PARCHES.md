@@ -1735,3 +1735,24 @@ bytes libres):
   receta final = v2d. Si la 36 TAMBIEN mata el doble-arriba => no es
   la escritura de `$1B0`. El dive no sale en ninguna de las dos (a
   proposito).
+
+### RESULTADO de la 35 y el gate de personaje muerto (ROM 37)
+
+Test de la 35: **anda TODO menos el dive** (doble-arriba y tornado
+viven). El gate del slot era el asesino del doble-arriba: CONFIRMADO.
+Compuertas restantes de la FSM: (1) `$5F` aire `$0D/$0E/$08` +
+`$71` bit1=abajo: CERTIFICADOS por el log de la sonda del usuario; (2)
+el armador `jsr $19408`: CERTIFICADO en el ROM real (dump del `$19408`
+de la china IDENTICO al `$12BAE` de la beta, el armador gratis; el que
+cobra mana usa `bsr $19c46` y la base lo llama en `$193C0`); (3) el
+gate de personaje `$92=$25D2`: **SIN PRUEBA y con evidencia en
+contra** — cero instrucciones del ROM china tocan `$92(a5)` y cero
+llamadas directas a `$19408`/`$192C8` existen (el armador se invoca
+por rutas computadas). El `$25D2` es el word bajo del pointer de Jin
+a su tabla de moves (`$0125D2`) del build J, transplantado.
+=> `doble_abajo_singate92` => `rom/cambios/
+37_china_DOBLE_ABAJO_SINGATE92.bin` (v2d con el `bne` del gate en nops,
+SHA1 `BE2B4CE71BCB0A6BAC84D00A38763BD9254178C7`): si ahi el dive SALE,
+el gate era el asesino y queda cavar el ID de personaje REAL del
+struct de la china (la sonda v3 calibra el word `$92` del P1 en el
+mismo log). El dive en la 37 puede salir para todos (diagnostico).
