@@ -311,6 +311,25 @@ local function on_frame()
         pag_vieja = nueva
       end
     end
+
+    -- OSD EN PANTALLA: lo que importa se ve EN EL JUEGO, sin consola
+    pcall(function()
+      local aire = (f5f == 0x0D or f5f == 0x08 or f5f == 0x0E)
+      local bajo = (b71 % 4 >= 2)   -- bit1 de $71 = abajo
+      gui.drawText(10, 10, string.format("SONDA v5 | 5F=%02X %s | FSM=%d | %s",
+        f5f, aire and "AIRE" or "PISO", fsm, bajo and "ABAJO" or "-"),
+        0xFFFFFFFF, 0x80000000, 14)
+      if aire and fsm == 0 then
+        gui.drawText(10, 34, "AIRE: tocá ABAJO, soltá, tocá de nuevo",
+          0xFFFFFF00, 0x80000000, 18)
+      elseif aire and fsm == 1 then
+        gui.drawText(10, 34, "soltá ABAJO y tocá otra vez!",
+          0xFF00FF00, 0x80000000, 18)
+      elseif aire and fsm == 2 then
+        gui.drawText(10, 34, "ARMADO: tocá ABAJO = DIVE!",
+          0xFFFF8000, 0x80000000, 20)
+      end
+    end)
   end
   mando_viejo = mando
 end
