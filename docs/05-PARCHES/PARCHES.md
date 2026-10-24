@@ -1700,3 +1700,38 @@ detector del doble-tap TIENE que aparecer en el log; ese byte se
 compara entre ROMs y se sabe que hay que respetar. El log va a
 `C:/Users/leand/AppData/Local/Temp/opencode/sonda_doble_bajo.log`
 (tambien vuelca `$71-$74`, `$5F`, Y y la FSM `$FF85B0` del P1).
+
+### El hook es inocente y los bisectores v2d/v2e
+
+Test de la ROM 34: **anda todo menos el doble-abajo** (el dive no esta
+en la 34 a proposito): el hook del cargador es INOCENTE; doble-arriba
+y tornado viven con el hook puesto. Sentencia de los dos
+`bclr.b d0,$1b0(a0)` de la china: son data (tablas ascendentes). Y la
+re-auditoria del stub v2c por capstone: la logica es correcta. El
+descubrimiento: el stub v2c **escribe `$1B0(a5)` en TODAS las llamadas
+del cargador ANTES del chequeo de slot activo** (`$76(a5) == $FF` =>
+el camino de fabrica va al `$156D0`, clr de `$71-$73`/`$C0-$C2`). El
+`a5` llega por registros (no hay `lea` directos de las bases salvo
+`$FFFF8400` en `$010D2E`): no puedo certificar todos los valores.
+
+Dos bugs nuevos de generacion a mano, cachados por el arbitro capstone:
+- `$112D` NO es `move.b (d16,a5),d1`; el correcto es `$122D` (la receta
+  `0x10+reg` solo casaba por suerte con d0=`$102D`).
+- Un `beq.w` del `$1A0780` al `$156D0` es ILEGAL: el disp queda fuera
+  del rango ±32K (los objetivos a 1.6 MB no se alcanzan volando). El
+  bypass de inactivos lo sigue haciendo el `beq.w` de fabrica en
+  `$155F0` con los flags que re-arma el cmpi de la cola.
+
+Los bisectores (ambos armados y verificados, hueco `$1A0780`, 167
+bytes libres):
+- `doble_abajo_gate76` => `rom/cambios/35_china_DOBLE_ABAJO_GATE76.bin`
+  (ROM 35, v2d 128 bytes, SHA1 `3E080D285FC9C71003FAC9845C7F832EC621DAA4`):
+  la FSM solo corre con slot activo (`$76(a5) != $FF`).
+- `doble_abajo_sinesc` => `rom/cambios/36_china_DOBLE_ABAJO_SINESC.bin`
+  (ROM 36, v2e 118 bytes, SHA1 `399DC091BCA546EB56633A458C23A5A7AB983180`):
+  el cuerpo v2c sin escribir `$1B0` para nada (nops/clr d2; jsr
+  inalcanzable).
+- Test: SIEMPRE arranque en frio. Si la 35 arregla el doble-arriba =>
+  receta final = v2d. Si la 36 TAMBIEN mata el doble-arriba => no es
+  la escritura de `$1B0`. El dive no sale en ninguna de las dos (a
+  proposito).

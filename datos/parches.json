@@ -4067,6 +4067,1328 @@
           "new": "F0"
         }
       ]
+    },
+    "doble_abajo_gate76": {
+      "desc": "v2d (gate del slot ACTIVE): la FSM del doble-abajo SOLO corre si el slot esta activo ($76(a5) != $FF). La v2c escribia $1B0(a5) en TODAS las llamadas del cargador ANTES de saber si a5 era un struct de jugador real. Con slot inactivo se replica el camino de fabrica exacto (beq.w al $156D0 del propio juego). Si con este ROM el doble-arriba vive y con la 33 (v2c) murio, el asesino era la escritura en slots inactivos/otros a5.",
+      "confianza": "CODIGO (arbitro capstone instruccion por instruccion)",
+      "bytes": [
+        {
+          "addr": "0x0155E8",
+          "old": "10",
+          "new": "4E"
+        },
+        {
+          "addr": "0x0155E9",
+          "old": "2D",
+          "new": "F9"
+        },
+        {
+          "addr": "0x0155EA",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x0155EB",
+          "old": "76",
+          "new": "1A"
+        },
+        {
+          "addr": "0x0155EC",
+          "old": "0C",
+          "new": "07"
+        },
+        {
+          "addr": "0x0155ED",
+          "old": "00",
+          "new": "80"
+        },
+        {
+          "addr": "0x0155EE",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x0155EF",
+          "old": "FF",
+          "new": "FF"
+        },
+        {
+          "addr": "0x1A0780",
+          "old": "00",
+          "new": "10"
+        },
+        {
+          "addr": "0x1A0781",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A0782",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0783",
+          "old": "00",
+          "new": "76"
+        },
+        {
+          "addr": "0x1A0784",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A0785",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0786",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0787",
+          "old": "00",
+          "new": "FF"
+        },
+        {
+          "addr": "0x1A0788",
+          "old": "00",
+          "new": "67"
+        },
+        {
+          "addr": "0x1A0789",
+          "old": "00",
+          "new": "68"
+        },
+        {
+          "addr": "0x1A078A",
+          "old": "00",
+          "new": "48"
+        },
+        {
+          "addr": "0x1A078B",
+          "old": "00",
+          "new": "E7"
+        },
+        {
+          "addr": "0x1A078C",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A078D",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A078E",
+          "old": "00",
+          "new": "12"
+        },
+        {
+          "addr": "0x1A078F",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A0790",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0791",
+          "old": "00",
+          "new": "5F"
+        },
+        {
+          "addr": "0x1A0792",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A0793",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A0794",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0795",
+          "old": "00",
+          "new": "0E"
+        },
+        {
+          "addr": "0x1A0796",
+          "old": "00",
+          "new": "67"
+        },
+        {
+          "addr": "0x1A0797",
+          "old": "00",
+          "new": "12"
+        },
+        {
+          "addr": "0x1A0798",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A0799",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A079A",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A079B",
+          "old": "00",
+          "new": "0D"
+        },
+        {
+          "addr": "0x1A079C",
+          "old": "00",
+          "new": "67"
+        },
+        {
+          "addr": "0x1A079D",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A079E",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A079F",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07A0",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07A1",
+          "old": "00",
+          "new": "08"
+        },
+        {
+          "addr": "0x1A07A2",
+          "old": "00",
+          "new": "67"
+        },
+        {
+          "addr": "0x1A07A3",
+          "old": "00",
+          "new": "06"
+        },
+        {
+          "addr": "0x1A07A4",
+          "old": "00",
+          "new": "42"
+        },
+        {
+          "addr": "0x1A07A5",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A07A6",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07A7",
+          "old": "00",
+          "new": "B0"
+        },
+        {
+          "addr": "0x1A07A8",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07A9",
+          "old": "00",
+          "new": "44"
+        },
+        {
+          "addr": "0x1A07AA",
+          "old": "00",
+          "new": "12"
+        },
+        {
+          "addr": "0x1A07AB",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A07AC",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07AD",
+          "old": "00",
+          "new": "71"
+        },
+        {
+          "addr": "0x1A07AE",
+          "old": "00",
+          "new": "30"
+        },
+        {
+          "addr": "0x1A07AF",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A07B0",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07B1",
+          "old": "00",
+          "new": "92"
+        },
+        {
+          "addr": "0x1A07B2",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A07B3",
+          "old": "00",
+          "new": "40"
+        },
+        {
+          "addr": "0x1A07B4",
+          "old": "00",
+          "new": "25"
+        },
+        {
+          "addr": "0x1A07B5",
+          "old": "00",
+          "new": "D2"
+        },
+        {
+          "addr": "0x1A07B6",
+          "old": "00",
+          "new": "66"
+        },
+        {
+          "addr": "0x1A07B7",
+          "old": "00",
+          "new": "2C"
+        },
+        {
+          "addr": "0x1A07B8",
+          "old": "00",
+          "new": "14"
+        },
+        {
+          "addr": "0x1A07B9",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A07BA",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07BB",
+          "old": "00",
+          "new": "B0"
+        },
+        {
+          "addr": "0x1A07BC",
+          "old": "00",
+          "new": "08"
+        },
+        {
+          "addr": "0x1A07BD",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07BE",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07BF",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07C0",
+          "old": "00",
+          "new": "66"
+        },
+        {
+          "addr": "0x1A07C1",
+          "old": "00",
+          "new": "0A"
+        },
+        {
+          "addr": "0x1A07C2",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A07C3",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x1A07C4",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07C5",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07C6",
+          "old": "00",
+          "new": "66"
+        },
+        {
+          "addr": "0x1A07C7",
+          "old": "00",
+          "new": "14"
+        },
+        {
+          "addr": "0x1A07C8",
+          "old": "00",
+          "new": "74"
+        },
+        {
+          "addr": "0x1A07C9",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x1A07CA",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07CB",
+          "old": "00",
+          "new": "1E"
+        },
+        {
+          "addr": "0x1A07CC",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A07CD",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x1A07CE",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07CF",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x1A07D0",
+          "old": "00",
+          "new": "66"
+        },
+        {
+          "addr": "0x1A07D1",
+          "old": "00",
+          "new": "0E"
+        },
+        {
+          "addr": "0x1A07D2",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A07D3",
+          "old": "00",
+          "new": "B9"
+        },
+        {
+          "addr": "0x1A07D4",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07D5",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07D6",
+          "old": "00",
+          "new": "94"
+        },
+        {
+          "addr": "0x1A07D7",
+          "old": "00",
+          "new": "08"
+        },
+        {
+          "addr": "0x1A07D8",
+          "old": "00",
+          "new": "74"
+        },
+        {
+          "addr": "0x1A07D9",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07DA",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07DB",
+          "old": "00",
+          "new": "0E"
+        },
+        {
+          "addr": "0x1A07DC",
+          "old": "00",
+          "new": "74"
+        },
+        {
+          "addr": "0x1A07DD",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07DE",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07DF",
+          "old": "00",
+          "new": "0A"
+        },
+        {
+          "addr": "0x1A07E0",
+          "old": "00",
+          "new": "74"
+        },
+        {
+          "addr": "0x1A07E1",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07E2",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07E3",
+          "old": "00",
+          "new": "06"
+        },
+        {
+          "addr": "0x1A07E4",
+          "old": "00",
+          "new": "42"
+        },
+        {
+          "addr": "0x1A07E5",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A07E6",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07E7",
+          "old": "00",
+          "new": "B0"
+        },
+        {
+          "addr": "0x1A07E8",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07E9",
+          "old": "00",
+          "new": "04"
+        },
+        {
+          "addr": "0x1A07EA",
+          "old": "00",
+          "new": "1B"
+        },
+        {
+          "addr": "0x1A07EB",
+          "old": "00",
+          "new": "42"
+        },
+        {
+          "addr": "0x1A07EC",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07ED",
+          "old": "00",
+          "new": "B0"
+        },
+        {
+          "addr": "0x1A07EE",
+          "old": "00",
+          "new": "4C"
+        },
+        {
+          "addr": "0x1A07EF",
+          "old": "00",
+          "new": "DF"
+        },
+        {
+          "addr": "0x1A07F0",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07F1",
+          "old": "00",
+          "new": "06"
+        },
+        {
+          "addr": "0x1A07F2",
+          "old": "00",
+          "new": "10"
+        },
+        {
+          "addr": "0x1A07F3",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A07F4",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07F5",
+          "old": "00",
+          "new": "76"
+        },
+        {
+          "addr": "0x1A07F6",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A07F7",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07F8",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07F9",
+          "old": "00",
+          "new": "FF"
+        },
+        {
+          "addr": "0x1A07FA",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A07FB",
+          "old": "00",
+          "new": "F9"
+        },
+        {
+          "addr": "0x1A07FC",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07FD",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07FE",
+          "old": "00",
+          "new": "55"
+        },
+        {
+          "addr": "0x1A07FF",
+          "old": "00",
+          "new": "F0"
+        }
+      ]
+    },
+    "doble_abajo_sinesc": {
+      "desc": "v2e (bisector SIN escrituras): el cuerpo v2c EXACTO pero sin tocar $1B0(a5) para nada (los 4 sitios: 2 clr, 1 load, 1 store => nops o clr.b d2, MISMA longitud, mismas ramas. mismos reads de $5F/$71/$92). El jsr $19408 queda pero es inalcanzable. Si con este ROM el doble-arriba TAMBIEN muere, el asesino NO es la escritura de $1B0.",
+      "confianza": "CODIGO (arbitro capstone instruccion por instruccion)",
+      "bytes": [
+        {
+          "addr": "0x0155E8",
+          "old": "10",
+          "new": "4E"
+        },
+        {
+          "addr": "0x0155E9",
+          "old": "2D",
+          "new": "F9"
+        },
+        {
+          "addr": "0x0155EA",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x0155EB",
+          "old": "76",
+          "new": "1A"
+        },
+        {
+          "addr": "0x0155EC",
+          "old": "0C",
+          "new": "07"
+        },
+        {
+          "addr": "0x0155ED",
+          "old": "00",
+          "new": "80"
+        },
+        {
+          "addr": "0x0155EE",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x0155EF",
+          "old": "FF",
+          "new": "FF"
+        },
+        {
+          "addr": "0x1A0780",
+          "old": "00",
+          "new": "48"
+        },
+        {
+          "addr": "0x1A0781",
+          "old": "00",
+          "new": "E7"
+        },
+        {
+          "addr": "0x1A0782",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A0783",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0784",
+          "old": "00",
+          "new": "12"
+        },
+        {
+          "addr": "0x1A0785",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A0786",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0787",
+          "old": "00",
+          "new": "5F"
+        },
+        {
+          "addr": "0x1A0788",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A0789",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A078A",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A078B",
+          "old": "00",
+          "new": "0E"
+        },
+        {
+          "addr": "0x1A078C",
+          "old": "00",
+          "new": "67"
+        },
+        {
+          "addr": "0x1A078D",
+          "old": "00",
+          "new": "12"
+        },
+        {
+          "addr": "0x1A078E",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A078F",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A0790",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0791",
+          "old": "00",
+          "new": "0D"
+        },
+        {
+          "addr": "0x1A0792",
+          "old": "00",
+          "new": "67"
+        },
+        {
+          "addr": "0x1A0793",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A0794",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A0795",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A0796",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A0797",
+          "old": "00",
+          "new": "08"
+        },
+        {
+          "addr": "0x1A0798",
+          "old": "00",
+          "new": "67"
+        },
+        {
+          "addr": "0x1A0799",
+          "old": "00",
+          "new": "06"
+        },
+        {
+          "addr": "0x1A079A",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A079B",
+          "old": "00",
+          "new": "71"
+        },
+        {
+          "addr": "0x1A079C",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A079D",
+          "old": "00",
+          "new": "71"
+        },
+        {
+          "addr": "0x1A079E",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A079F",
+          "old": "00",
+          "new": "44"
+        },
+        {
+          "addr": "0x1A07A0",
+          "old": "00",
+          "new": "12"
+        },
+        {
+          "addr": "0x1A07A1",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A07A2",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07A3",
+          "old": "00",
+          "new": "71"
+        },
+        {
+          "addr": "0x1A07A4",
+          "old": "00",
+          "new": "30"
+        },
+        {
+          "addr": "0x1A07A5",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A07A6",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07A7",
+          "old": "00",
+          "new": "92"
+        },
+        {
+          "addr": "0x1A07A8",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A07A9",
+          "old": "00",
+          "new": "40"
+        },
+        {
+          "addr": "0x1A07AA",
+          "old": "00",
+          "new": "25"
+        },
+        {
+          "addr": "0x1A07AB",
+          "old": "00",
+          "new": "D2"
+        },
+        {
+          "addr": "0x1A07AC",
+          "old": "00",
+          "new": "66"
+        },
+        {
+          "addr": "0x1A07AD",
+          "old": "00",
+          "new": "2C"
+        },
+        {
+          "addr": "0x1A07AE",
+          "old": "00",
+          "new": "42"
+        },
+        {
+          "addr": "0x1A07AF",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x1A07B0",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A07B1",
+          "old": "00",
+          "new": "71"
+        },
+        {
+          "addr": "0x1A07B2",
+          "old": "00",
+          "new": "08"
+        },
+        {
+          "addr": "0x1A07B3",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07B4",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07B5",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07B6",
+          "old": "00",
+          "new": "66"
+        },
+        {
+          "addr": "0x1A07B7",
+          "old": "00",
+          "new": "0A"
+        },
+        {
+          "addr": "0x1A07B8",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A07B9",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x1A07BA",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07BB",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07BC",
+          "old": "00",
+          "new": "66"
+        },
+        {
+          "addr": "0x1A07BD",
+          "old": "00",
+          "new": "14"
+        },
+        {
+          "addr": "0x1A07BE",
+          "old": "00",
+          "new": "74"
+        },
+        {
+          "addr": "0x1A07BF",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x1A07C0",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07C1",
+          "old": "00",
+          "new": "1E"
+        },
+        {
+          "addr": "0x1A07C2",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A07C3",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x1A07C4",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07C5",
+          "old": "00",
+          "new": "02"
+        },
+        {
+          "addr": "0x1A07C6",
+          "old": "00",
+          "new": "66"
+        },
+        {
+          "addr": "0x1A07C7",
+          "old": "00",
+          "new": "0E"
+        },
+        {
+          "addr": "0x1A07C8",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A07C9",
+          "old": "00",
+          "new": "B9"
+        },
+        {
+          "addr": "0x1A07CA",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07CB",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07CC",
+          "old": "00",
+          "new": "94"
+        },
+        {
+          "addr": "0x1A07CD",
+          "old": "00",
+          "new": "08"
+        },
+        {
+          "addr": "0x1A07CE",
+          "old": "00",
+          "new": "74"
+        },
+        {
+          "addr": "0x1A07CF",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07D0",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07D1",
+          "old": "00",
+          "new": "0E"
+        },
+        {
+          "addr": "0x1A07D2",
+          "old": "00",
+          "new": "74"
+        },
+        {
+          "addr": "0x1A07D3",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07D4",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07D5",
+          "old": "00",
+          "new": "0A"
+        },
+        {
+          "addr": "0x1A07D6",
+          "old": "00",
+          "new": "74"
+        },
+        {
+          "addr": "0x1A07D7",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07D8",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07D9",
+          "old": "00",
+          "new": "06"
+        },
+        {
+          "addr": "0x1A07DA",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A07DB",
+          "old": "00",
+          "new": "71"
+        },
+        {
+          "addr": "0x1A07DC",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A07DD",
+          "old": "00",
+          "new": "71"
+        },
+        {
+          "addr": "0x1A07DE",
+          "old": "00",
+          "new": "60"
+        },
+        {
+          "addr": "0x1A07DF",
+          "old": "00",
+          "new": "04"
+        },
+        {
+          "addr": "0x1A07E0",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A07E1",
+          "old": "00",
+          "new": "71"
+        },
+        {
+          "addr": "0x1A07E2",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A07E3",
+          "old": "00",
+          "new": "71"
+        },
+        {
+          "addr": "0x1A07E4",
+          "old": "00",
+          "new": "10"
+        },
+        {
+          "addr": "0x1A07E5",
+          "old": "00",
+          "new": "2D"
+        },
+        {
+          "addr": "0x1A07E6",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07E7",
+          "old": "00",
+          "new": "76"
+        },
+        {
+          "addr": "0x1A07E8",
+          "old": "00",
+          "new": "0C"
+        },
+        {
+          "addr": "0x1A07E9",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07EA",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07EB",
+          "old": "00",
+          "new": "FF"
+        },
+        {
+          "addr": "0x1A07EC",
+          "old": "00",
+          "new": "4C"
+        },
+        {
+          "addr": "0x1A07ED",
+          "old": "00",
+          "new": "DF"
+        },
+        {
+          "addr": "0x1A07EE",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07EF",
+          "old": "00",
+          "new": "06"
+        },
+        {
+          "addr": "0x1A07F0",
+          "old": "00",
+          "new": "4E"
+        },
+        {
+          "addr": "0x1A07F1",
+          "old": "00",
+          "new": "F9"
+        },
+        {
+          "addr": "0x1A07F2",
+          "old": "00",
+          "new": "00"
+        },
+        {
+          "addr": "0x1A07F3",
+          "old": "00",
+          "new": "01"
+        },
+        {
+          "addr": "0x1A07F4",
+          "old": "00",
+          "new": "55"
+        },
+        {
+          "addr": "0x1A07F5",
+          "old": "00",
+          "new": "F0"
+        }
+      ]
     }
   },
   "instrumentacion": {

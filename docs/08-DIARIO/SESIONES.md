@@ -1408,3 +1408,51 @@ sonda de BizHawk (`sonda_doble_bajo.lua`) puede leer `$FF85B0` (P1) y
   1) base limpia con sonda (línea de base del detector),
   2) ROM 34 con sonda,
   3) ROM 33 con sonda.
+
+## S-2024-10-24 (apéndice 2) -- ROM 34: el hook es inocente; bisectores v2d/v2e
+
+- Test del usuario de la **ROM 34** (diag, stub de pasamanos): **anda TODO
+  menos el doble-abajo** (el dive no está en la 34, a propósito). O sea:
+  doble-arriba y tornado VIVEN con el hook de `$155E8` puesto => **el
+  hook del cargador es inocente**. El culpable queda entre lo único que
+  la v2b/v2c agregan sobre la 34: la FSM que lee `$5F`/`$71`/`$92` y
+  **escribe `$1B0(a5)`**.
+- Sentencia de los dos `bclr.b d0,$1b0(a0)` de la china
+  (`$0BCAAE`/`$0C229E`): son DATA (tablas ascendentes `$0000, $0180,
+  $01A0, $01A8, $01B0, $01B8, $01C0...` capstone las abordaba
+  desalineado). `$1B0(a5)` por fichaje directo NO tiene dueño.
+- Re-auditoría del stub v2c de la ROM 33 (disasm del ROM final): la
+  lógica es CORRECTA (push/pop equilibrados, d0 re-cargado en la cola,
+  flags re-armados por el cmpi re-ejecutado, ramas con disp
+  aritmética-destructiva verificada por capstone).
+- DESCUBRIMIENTO del día: el stub v2c **escribe `$1B0(a5)` en TODAS las
+  llamadas del cargador, ANTES de que el juego verifique si el slot
+  está activo** (`$76(a5) == $FF` = desocupado; el camino de fabrica
+  va al `beq.w $156D0` que hace clr de `$71-$73`/`$C0-$C2` y llama a
+  `$1CC8A`). El pasamanos de la 34 no escribe NADA; la v2c escribe
+  con el `a5` que venga. Y las bases del struct no se cargan nunca como
+  constantes directas salvo `$FFFF8400` una vez (`$010D2E`): el `a5`
+  llega por registros/punteros, no puedo certificar TODOS los valores.
+- Dos bugs NUEVOS de generación a mano, cachados por el árbitro
+  capstone en el primer montaje: (1) `$112D` NO es `move.b (d16,a5),d1`
+  (el correcto es `$122D`; la receta `0x10+reg` solo casaba por suerte
+  con d0=`$102D`); (2) un `beq.w` del `$1A0780` al `$156D0` es
+  ILEGAL (disp fuera del rango ±32K: el objetivo queda a 1.6 MB; los
+  `.s`/`.w` relativos no alcanzan volando al otro lado del mapa). El
+  bypass de inactivo lo hace el `beq.w` de fabrica en `$155F0`, como
+  la v2c: los los flags los re-arma el cmpi de la cola.
+- Bisectores armados y verificados:
+  - **ROM 35** `35_china_DOBLE_ABAJO_GATE76.bin` (grupo
+    `doble_abajo_gate76`, v2d 128 bytes): la FSM solo corre si el slot
+    está activo (`$76(a5) != $FF`; inactivos van derecho a la cola sin
+    push/pop ni escritura). SHA1 `3E080D285FC9C71003FAC9845C7F832EC621DAA4`.
+  - **ROM 36** `36_china_DOBLE_ABAJO_SINESC.bin` (grupo
+    `doble_abajo_sinesc`, v2e 118 bytes): el cuerpo v2c EXACTO sin
+    escribir `$1B0` (nops/clr d2 en los 4 sitios; jsr intacto pero
+    inalcanzable). SHA1 `399DC091BCA546EB56633A458C23A5A7AB983180`.
+- Matriz del test (SIEMPRE arranque en frío):
+  1) ROM 35: si el doble-arriba VIVE => el asesino era la escritura en
+     slots inactivos/otros `a5` => la receta final es la v2d-gateada.
+  2) ROM 36: si el doble-arriba TAMBIEN muere => el asesino NO es la
+     escritura de `$1B0` (van los reads/flujo/ciclos).
+  3) el dive NO sale en ninguna de las dos (a propósito).
