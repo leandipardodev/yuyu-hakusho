@@ -191,9 +191,27 @@ local function cerrar_probe()
 end
 
 local function titulo()
+  -- identidad del ROM cargado: checksum del header ($018E) leido DOCTO
+  -- del dominio de cartucho (no cambia el dominio activo)
+  local cs, nom = 0, "???"
+  pcall(function()
+    cs = memory.read_u16(0x18E, "MD CART")
+  end)
+  local builds = {
+    [0x337B] = "base (SIN parche!)",
+    [0x355F] = "40 DIVE FSM-v3 (el del test)",
+    [0x1C10] = "41 NOFIRE diag",
+    [0x2F25] = "42 SHIM diag",
+    [0x54F1] = "43 SENTINELA diag (no es el del test!)"
+  }
+  if builds[cs] then nom = builds[cs] end
   loga(string.format(
-    "SONDA v%s | modo=%s dominio=%s tam=%d | addr=%+d | bases P1=%06X P2=%06X | pagina %06X-%06X | FSM P1=%06X",
-    VERSION, modo, tostring(DOMINIO), TAMDOM, OFF, P1B, P2B, PAG_DESDE, PAG_HASTA, FSM_P1))
+    "SONDA v%s | ROM=%s ($%04X) | modo=%s dominio=%s tam=%d | addr=%+d | bases P1=%06X P2=%06X | pagina %06X-%06X | FSM P1=%06X",
+    VERSION, nom, cs, modo, tostring(DOMINIO), TAMDOM, OFF, P1B, P2B, PAG_DESDE, PAG_HASTA, FSM_P1))
+  if cs ~= 0x355F then
+    loga("(!) ATENCION: el ROM cargado NO es el 40 del FSM-v3. Cerrar")
+    loga("    BizHawk y abrir rom\\cambios\\40_china_DIVE_A0INLINE_v2.bin")
+  end
 end
 
 -- ---- el resto ---------------------------------------------------------
