@@ -1303,3 +1303,73 @@ exacto en el label, y la FSM arranca con `move.b $a044.w, d2`.
 en el aire). Y la receta final: el dive de la beta cobra el mismo mana
 que el movimiento aereo; el bisector usa el armador LIBRE `$19408`
 (el `$192C8` cobra 4 fijos).
+
+
+## S-2024-10-24: el doble-abajo mato el doble-arriba (el buzon, la v2c `1B0(a5)`)
+
+**Reporte del usuario de la v2b (ROM 33, SHA1 `80A34460...`):**
+*"no funciona y no solo eso sino que desactivaste el arriba arriba y la
+habilidad de tornado abajo arriba A o B"*.
+
+### El dato que cerro el caso
+
+El doble-arriba (super salto) y el tornado (abajo+arriba A/B) de Jin son
+**movimientos por DOBLE-PULSACION**, la misma familia que el dive. Mi
+receta v2b corria `clr.b $a044.w` por frame y el estado de la FSM
+vivaba en `$A044` = `$FFA044` (el operando `$A044` en abs.wSign-extends
+por el bit alto: la RAM del 68K). Dos fuats que se combinaron:
+
+1. **El grep no basta**: escaneo por bytes de los operandos `A0 44` en
+   la base = 12 hits, TODOS en data, cero instrucciones. El listado del
+   68k no toca `$FFA044`. MI conclusión "nadie lo referencia" era
+   tecnicamente cierta... **y aun asi alguien lo usa**: la region
+   `$FFA040-$FFA0FF` es la zona del buzon con el Z80 (el steal,
+   `$FFA014` stage, `$FFA030` la peticion, `$FFA036-$038` el allocator
+   del pool, `$FFA066`+ globals...) y el otro lado del buzon (el Z80)
+   no aparece en el listado del 68k. `$FFA044` = el detector de
+   doble-pulsacion del juego (por eso el clr lo APAGO: doble-arriba
+   muerto, tornado muerto, y el propio dive tampoco salia porque
+   peleaba contra la FSM del dueno).
+2. **La leccion que faltaba en el cuaderno**: para un byte de WRAM el
+   grep de`una sola cara del buzon NO es la prueba; la prueba es el
+   EFECTO COLATERAL en juego. El aura habia tenido suerte/validacion
+   positiva (bits 5-7 de `$A042` y `$A043` anduvieron), pero ese curro
+   no era transferible a cualquier byte de la zona.
+
+### El fix (v2c): el estado vive en el PROPIO struct del jugador
+
+- **Censo de `(d,a5)`** sobre el listado (132 disps de `$000` a `$76DE`)
+  + **cobertura conservadora D..D+3** (por si cada disp esta dentro de
+  un acceso long): los runs de bytes sin referencia dentro de `$000-$1FF`
+  del struct = `$0A0-$0A7`, `$0DA-$10F`, `$115-$128`, `$12D-$181` y
+  **`$186-$1FF` (122 bytes)**. Elegi **`$1B0(a5)`** (interior del run).
+  Cierre: cero hits en codigo de los absolutos `$85B0`/`$89B0`/`$8DB0`/
+  `$91B0` (RAM `$FF8xB0` = slot+`$1B0`); los 7/6/4/6 hits que tiran los
+  bytes son de data del banco `$28+`.
+- `$1B0(a5)` = por PERSONAJE: la limitacion "dos Jin comparten FSM"
+  tambien se arregla de yapa.
+- El stub NO toca la WRAM: el clr de reset ahora es `clr.b $1b0(a5)`,
+  el load del estado es `move.b $1b0(a5), d2` (`$142D`), el guardado es
+  `move.b d2, $1b0(a5)` (`$1B42`), opcodes encontrados por fuerza bruta
+  con capstone de arbitro (mismo metodo del dia anterior).
+- El censo y el cobren: `C:/leand-opencode/censo_a5.py` y
+  `libre_a5.py`; el stub v2c sale de `stubv2b.py` re-editado.
+
+### El resultado
+
+- `rom/cambios/33_china_DOBLE_ABAJO_AIRE.bin` (v2c), SHA1
+  `A77F5611C235EDB29E348CA6E4DDF064BEB68732`, checksum `$182D`,
+  `verificar_desensamblado.py` OK + chequeo a mano con capstone del
+  hook y del stub en el ROM final.
+- `datos/parches.json`: el grupo re-escrito de nuevo (124 items) con la
+  historia v2c en `confianza`.
+- `PARCHES.md` §9: la FSM ya no es `$A044`; nota nueva de aviso al AURA
+  (la misma zona del buzon).
+- Anti-ejemplos: `32_` (v2 inerte) y la v2b `80A34460...` (estado en
+  `$A044`).
+
+**Pendiente:** re-test del usuario (el doble-arriba y el tornado tienen
+que VOLVER; el dive tiene que salir). Si el dive sigue sin salir con el
+doble-arriba funcionando, la FSM `$1B0(a5)` queda como instrumento: la
+sonda de BizHawk (`sonda_doble_bajo.lua`) puede leer `$FF85B0` (P1) y
+`$FF89B0` (P2) para ver el estado de la FSM frame a frame.

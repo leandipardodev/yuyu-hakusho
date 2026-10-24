@@ -1780,7 +1780,7 @@
     },
     "doble_abajo_aire": {
       "desc": "BISECTOR v2 DEL DESCENSO VELOZ DE JIN (DOBLE ABAJO EN EL AIRE). El intento v1 (hook en $182A2, runner de mando) NO FUNCIONO Y ADEMAS CONCEPTO MAL: la escalera de comandos ($15CB0) compara $5F contra $0D/$0E al principio y hace rts inmediato para el aire, asi que el runner con laterales nunca corre en el aire. v2 cambia de ancla: se engancha la RUTINA QUE CARGA EL MANDO EN $71/$72/$73 ($155E8, llamada por bsr desde $15592), que corre SIEMPRE, incluido en el aire, con a5 = estructura del jugador; en ese punto $71 trae el byte del mando del frame anterior y bit1 de $71 = ABAJO (verificado en $13B86: btst bit0 suma Y al $44, bit1 lo baja, bit2/3 son laterales que ponen $6E/$6F... en $61 el facing). QUE HACE EL STUB ($1A0780, 114 bytes, hueco libre $1A0780-$1A0826 del banco 1, el techo del grupo veneno_aura sigue en $1A077F): 1) movem d1-d2 push para no ensuciar los registros del cargador; 2) gate de aire: $5F=$0E caida / $0D subida / $08 salto; si no es aire limpia la FSM y devuelve el control al cargador; 3) gate de personaje: $92(a5) (puntero tabla_30) == $25D2 = solo Jin; 4) FSM del doble-tap en el byte WRAM $A044 (la $A043 esta RESERVADA por el contador de P2 del veneno_aura, por eso se usa $A044, que el listado no referencia en ningun lado): estado 0 = nada, 1 = primer abajo (o venir sostenido del piso), 2 = ya solto una vez, disparo al segundo abajo; el disparo hace jsr $19408 = el ARMADOR DEL DIVE QUE LA IA USA por el selector $4C==0 de $1B98A/1B9A4: $5F=$A0, vel.x=0, vel.y=$48000 (abajo rapido). Es la version SIN MANA del $192C8 (que cobra 4 via $19C46): el bisector no cobra, si funciona se pasa al $192C8 en el grupo final; 5) despues repone el flujo del cargador (move.b $76(a5),d0 + cmpi.b #$ff,d0 + movem pop + jmp $155F0, justo antes del beq y del movea d0,a2). LIMITACIONES DEL BISECTOR: no exige ventana de tiempo entre los dos abajos (solo exige que haya soltado en el medio), el estado de la FSM en $A044 es global (si DOS Jin juegan se comparten), y no cubre el estado de flotar $30 (ahi el dive lo dispara la maquina del flotar con $48/$4C, no esta enganchado). El hook de $155E8 camina sobre el move.b $76, d0 / cmpi.b #$ff, d0 originales: el stub los re-ejecuta antes de volver, y los 8 bytes del hook usan como relleno de los ultimos 2 bytes el mismo 0c 00 del cmpi muerto para que el ROM se vea natural. Nada toca $182A2 (el hook v1 se revierte), ni el listado de comandos, ni los decodificadores por $6B.",
-      "confianza": "CODIGO (stub regenerado COMPLETO desde el script y validado instruccion por instruccion con capstone + targets de las 11 ramas verificados numericamente; el hook de $155E8 sin cambios). v2b CORRIGE los DOS bugs de fabrica: (1) los beq del gate de aire aterrizaban en $1A07A4 = la MITAD del move.b $71(a5),d1 (disp calculado con la base del FIN de la instruccion): el reload del mando quedaba muerto y el btst #$1 leia el byte de $5F (bit1=$0E=1: siempre 'abajo' caendo); el fix reordena el flujo para que el disp .b caiga exacto en el label. (2) la FSM nunca leia $A044: comparaba el d2 recien-escrito (movem scratch) contra #2, el jsr $19408 era inalcanzable y el bisector entero inerte; el fix agrega el move.b $a044.w, d2 al arranque de la FSM. ADEMAs los dos opcodes de move con (abs.w) se armaron con los BITS y no de memoria ($1099 = move.b (abs.w),dn y $1E42 = move.b dn,(abs.w)); la primera version los tenia al reves y el roundtrip con capstone lo cacho. FSM: 0=nada, 1=abajo, 2=solto una vez, disparo con el segundo abajo; en Jin-only ($92=$25D2); gate de aire $5F=$0D/$0E/$08; suelta $A044 al 0 si no esta en aire. Falta el test del usuario.",
+      "confianza": "CODIGO v2c (stub regenerado COMPLETO desde el script y validado instruccion por instruccion con capstone + targets de las ramas verificados numericamente; el hook de $155E8 sin cambios). v2b CORRIGE los DOS bugs de fabrica: (1) los beq del gate de aire aterrizaban en $1A07A4 = la MITAD del move.b $71(a5),d1 (disp calculado con la base incorrecta): el reload del mando quedaba muerto y el btst #$1 leia el byte de $5F (bit1=$0E=1: siempre 'abajo' caendo); el fix reordena el flujo para que el disp .b caiga exacto en el label. (2) la FSM nunca leia su estado: comparaba el d2 recien-escrito (movem scratch) contra #2, el jsr $19408 era inalcanzable y el bisector entero inerte; el fix agrega el load del estado al arranque de la FSM. Los opcodes de move se armaron con los BITS y no de memoria (encontrados por fuerza bruta sobre los 65536 opcodes con capstone de arbitro). NUEVO EN v2c: el estado de la FSM ya NO va en la WRAM $FFA044 (aunque el 68K no la referencia en el listado, EN JUEGO el clr de la v2b APAGO el doble-arriba (super salto) y el tornado abajo-arriba+A/B de Jin: la $FFA040-$FFA0FF es zona del buzon con el Z80, el byte tiene OTRO dueno invisible). Ahora el estado vive en $1B0(a5) = un byte del PROPIO struct del jugador (run $186-$1FF del censo de (d,a5): no lo toca ni una instruccion directa ni un long de los usados), PER-PERSONAJE (ademas arregla la limitacion de dos Jin compartiendo FSM). FSM: 0=nada, 1=abajo, 2=solto una vez, disparo con el segundo abajo; en Jin-only ($92=$25D2); gate de aire $5F=$0D/$0E/$08; suelta al 0 si no esta en aire. Falta el test del usuario.",
       "bytes": [
         {
           "addr": "0x0155E8",
@@ -1960,17 +1960,17 @@
         {
           "addr": "0x1A079B",
           "old": "00",
-          "new": "38"
+          "new": "2D"
         },
         {
           "addr": "0x1A079C",
           "old": "00",
-          "new": "A0"
+          "new": "01"
         },
         {
           "addr": "0x1A079D",
           "old": "00",
-          "new": "44"
+          "new": "B0"
         },
         {
           "addr": "0x1A079E",
@@ -2060,17 +2060,17 @@
         {
           "addr": "0x1A07AF",
           "old": "00",
-          "new": "38"
+          "new": "2D"
         },
         {
           "addr": "0x1A07B0",
           "old": "00",
-          "new": "A0"
+          "new": "01"
         },
         {
           "addr": "0x1A07B1",
           "old": "00",
-          "new": "44"
+          "new": "B0"
         },
         {
           "addr": "0x1A07B2",
@@ -2270,17 +2270,17 @@
         {
           "addr": "0x1A07D9",
           "old": "00",
-          "new": "38"
+          "new": "2D"
         },
         {
           "addr": "0x1A07DA",
           "old": "00",
-          "new": "A0"
+          "new": "01"
         },
         {
           "addr": "0x1A07DB",
           "old": "00",
-          "new": "44"
+          "new": "B0"
         },
         {
           "addr": "0x1A07DC",
@@ -2295,22 +2295,22 @@
         {
           "addr": "0x1A07DE",
           "old": "00",
-          "new": "11"
+          "new": "1B"
         },
         {
           "addr": "0x1A07DF",
           "old": "00",
-          "new": "C2"
+          "new": "42"
         },
         {
           "addr": "0x1A07E0",
           "old": "00",
-          "new": "A0"
+          "new": "01"
         },
         {
           "addr": "0x1A07E1",
           "old": "00",
-          "new": "44"
+          "new": "B0"
         },
         {
           "addr": "0x1A07E2",

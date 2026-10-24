@@ -1529,16 +1529,36 @@ camina sobre `move.b $76(a5),d0` + `cmpi.b #$ff,d0` (8 bytes): el stub
 los re-ejecuta y re-entra en `$155F0` (el `beq.w`) con los flags recien
 puestos.
 
-### La FSM del doble-tap (`$A044`, WRAM)
+### La FSM del doble-tap (`$1B0(a5)`, un byte del PROPIO struct, v2c)
 
-`$A042` bits 5-7 y `$A043` estan reservados por el aura; `$A044` nadie
-lo referencia en todo el desensamblado. Estado: 0 = nada, 1 = abajo
-(apretado), 2 = ya solto una vez, y **el disparo es el segundo abajo**
-con el estado en 2. Gate de aire = `$5F` = `$0D` (subida) / `$0E`
-(caida) / `$08` (salto). Gate de personaje = `$92(a5)` (puntero
-tabla_30) == `$25D2` = solo Jin. El disparo hace `jsr $19408` = el
-armador del dive que la IA usa (gratis, sin mana; el `$192C8` cobra 4
-via `$19C46` y queda para el grupo final si el usuario pide el mana).
+Estado: 0 = nada, 1 = abajo (apretado), 2 = ya solto una vez, y **el
+disparo es el segundo abajo** con el estado en 2. Gate de aire = `$5F` =
+`$0D` (subida) / `$0E` (caida) / `$08` (salto). Gate de personaje =
+`$92(a5)` (puntero tabla_30) == `$25D2` = solo Jin. El disparo hace
+`jsr $19408` = el armador del dive que la IA usa (gratis, sin mana; el
+`$192C8` cobra 4 via `$19C46` y queda para el grupo final si el usuario
+pide el mana).
+
+**POR QUE YA NO VA EN LA WRAM `$A044` (el reporte del usuario de la
+v2b):** *"no funciona el dive y ademas desactivaste el arriba arriba y
+la habilidad de tornado abajo arriba A o B"*. El dives no salia y los
+otros DOS movimientos por DOBLE-PULSACION del juego morian. Causa: el
+`clr.b $a044.w` del stub por frame. `$A044` = `$FFA044` (el operando
+abs.w sign-extends por el bit alto); el 68K NO la referencia en el
+listado (escaneo: 12 hits de los bytes `A0 44` en la base, todos en
+data; cero instrucciones), pero la writeln `$FFA040-$FFA0FF` es la zona
+del buzon con el Z80 y ese byte tiene OTRO DUEo INVISIBLE (el detector
+de doble-pulsacion del juego). La regla: **un byte de WRAM proclamado
+"libre" por el listado puede tener dueno del otro lado del buzon: hay
+que validarlo por EFECTO COLATERAL en juego, no solo por grep.**
+
+**El byte nuevo: `$1B0(a5)`** = un byte del PROPIO struct del jugador,
+sacado del CENSO de todos los `(d,a5)` del listado (132 disps) +
+cobre conservador (`D..D+3` por si cada disp esta dentro de un long):
+el run libre `$186-$1FF` (122 bytes). Ventaja extra: **la FSM es ahora
+POR PERSONAJE** (limite "dos Jin se comparten" resuelto). El censo y el
+cobren se volvieron a correr en la fecha; los disps usados mas cercanos
+a `$1B0` estan en `$18` y `$1A2` fuera del run.
 
 ### El stub (`$1A0780-$1A07F3`, 116 bytes; hueco libre documentado hasta `$1A0826`)
 
@@ -1550,13 +1570,13 @@ via `$19C46` y queda para el grupo final si el usuario pide el mana).
     $1A0792  beq.s    $1A07A0
     $1A0794  cmpi.b   #$8, d1          ; salto?
     $1A0798  beq.s    $1A07A0
-    $1A079A  clr.b    $a044.w          ; no es aire: resetea la FSM
+    $1A079A  clr.b    $1b0(a5)         ; no es aire: resetea la FSM
     $1A079E  bra.s    $1A07E2          ; -> al tail
     $1A07A0  move.b   $71(a5), d1      ; EL MANDO (bit 1 = abajo)
     $1A07A4  move.w   $92(a5), d0      ; el personaje
     $1A07A8  cmpi.w   #$25d2, d0       ; solo Jin
     $1A07AC  bne.s    $1A07D8
-    $1A07AE  move.b   $a044.w, d2      ; estado viejo de la FSM
+    $1A07AE  move.b   $1b0(a5), d2     ; estado viejo de la FSM
     $1A07B2  btst.b   #$1, d1          ; abajo?
     $1A07B6  bne.s    $1A07C2
     $1A07B8  cmpi.b   #$1, d2          ; estado 1 (abajo) y solto
@@ -1571,9 +1591,9 @@ via `$19C46` y queda para el grupo final si el usuario pide el mana).
     $1A07D2  moveq    #$0, d2
     $1A07D4  bra.s    $1A07DE
     $1A07D6  moveq    #$1, d2
-    $1A07D8  clr.b    $a044.w          ; no es Jin: resetea
+    $1A07D8  clr.b    $1b0(a5)         ; no es Jin: resetea
     $1A07DC  bra.s    $1A07E2
-    $1A07DE  move.b   d2, $a044.w      ; guarda el estado
+    $1A07DE  move.b   d2, $1b0(a5)     ; guarda el estado
     $1A07E2  move.b   $76(a5), d0      ; re-pone lo que tapo el hook
     $1A07E6  cmpi.b   #$ff, d0
     $1A07EA  movem.l  (a7)+, d1-d2
@@ -1606,18 +1626,27 @@ cacho). Y el operando `(abs.w)` = UN word (`A044`), no tres bytes.
 ### El resultado
 
 - `rom/cambios/33_china_DOBLE_ABAJO_AIRE.bin` = la base china +
-  `doble_abajo_aire` (v2b), SHA1
-  `80A34460F4DD93D6F2449392E30B5C64990B1F1B` (126 parches, 108 bytes
-  distintos). `verificar_desensamblado.py`: OK. Chequeo a mano del
-  hook, del stub completo y del re-anclaje con capstone en el ROM
-  final: OK.
-- El bisector viejo `32_china_TEST_DOBLE_ABAJO_AIRE.bin` queda como
-  anti-ejemplo (stub inerte).
+  `doble_abajo_aire` (v2c, estado en `$1B0(a5)`), SHA1
+  `A77F5611C235EDB29E348CA6E4DDF064BEB68732` (126 parches, 108 bytes
+  distintos, checksum `$182D`). `verificar_desensamblado.py`: OK.
+  Chequeo a mano del hook, del stub completo y del re-anclaje con
+  capstone en el ROM final: OK. Ademas: cero hits de `$85B0`/`$89B0`/
+  `$8DB0`/`$91B0` (los absolutos de ese run del struct) en codigo.
+- Las versiones anteriores quedan como anti-ejemplos: la v2
+  `32_china_TEST_DOBLE_ABAJO_AIRE.bin` (stub inerte por los dos bugs)
+  y la v2b con SHA1 `80A34460...` (el estado en `$A044` apaga el
+  doble-arriba y el tornado).
 - LIMITACIONES (igual que el bisector): no exige ventana de tiempo
-  entre los dos abajos, la FSM es global (dos Jin la comparten), y NO
+  entre los dos abajos, y NO
   cubre el estado de flotar `$30` (ahi el dive lo dispara la maquina
   del flotar con `$48/$4C`). El dive del bisector no cobra mana (el
   gasto "igual que el movimiento aereo" de la beta va en la receta
   final).
 - **Pendiente: el test del usuario en FBNeo** (Jin vs CPU: saltar y
   doble abajo en el aire).
+**AVISO para el AURA** (usa los bits 5-7 de `$A042` y el byte `$A043`):
+es la MISMA zona del buzon `$FFA040-$FFA0FF`. En juego estuvo OK
+(v9-8 validada por el usuario), pero si un dia el aura empieza a fallar
+de forma rara, mirar el buzon primero. El addi.b de bits 5-7 es un
+read-modify-write del byte ENTERO: si el dueno invisible de `$FFA042`
+escribe concurrido podeis pisar bits (esto es hipotesis, no ha pasado).
