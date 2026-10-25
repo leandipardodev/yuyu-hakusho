@@ -26,7 +26,7 @@ Ninguno de los dos se lee entero. Este índice dice **qué leer para qué**.
 | [`04-DATOS/`](04-DATOS/DIRECCIONES.md) | las tablas y las direcciones: el mapa maestro, los moves, las colisiones |
 | [`05-PARCHES/`](05-PARCHES/PARCHES.md) | los parches: el manifiesto, las recetas, cómo hacer uno |
 | [`06-HERRAMIENTAS/`](06-HERRAMIENTAS/HERRAMIENTAS.md) | el desensamblado, las sondas de Lua, el verificador de la documentación |
-| [`07-INVESTIGACION/`](07-INVESTIGACION/PLAN.md) | los informes, las fuentes externas, **los errores** |
+| [`07-INVESTIGACION/`](07-INVESTIGACION/PLAN.md) | los informes, las fuentes externas, **los errores** y la [comparativa de repositorios](../07-INVESTIGACION/COMPARATIVA-AKARA.md) |
 | [`08-DIARIO/`](08-DIARIO/SESIONES.md) | la bitácora por sesión, la memoria del proyecto, lo pendiente |
 
 ## 2. Lo primero que hay que saber

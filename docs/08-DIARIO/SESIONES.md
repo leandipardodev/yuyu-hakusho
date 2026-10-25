@@ -1592,3 +1592,6 @@ la lectura del struct depende del DOMINIO de memoria del emulador
   y re-instala el watch de `$5F/$6B/FSM(P1)` frame a frame que la v1
   tenía y la v4 había perdido (en v4 solo se veían en las líneas
   MANDO y se escapaban los intermedios).
+
+- Comparativa de los repositorios públicos de Akara1996 y contexto listo para
+  compartir con su IA: `docs/07-INVESTIGACION/COMPARATIVA-AKARA.md`.
